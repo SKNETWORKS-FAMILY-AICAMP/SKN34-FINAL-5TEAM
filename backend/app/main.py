@@ -1,12 +1,24 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import chat, listings, loans, recommendations
+from app.data_pipeline.scheduler import start_scheduler, stop_scheduler
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    start_scheduler()
+    yield
+    stop_scheduler()
+
 
 app = FastAPI(
     title="청약 전략 플랫폼 API",
     description="청약홈 + 내집다오 통합 추천 서비스 백엔드",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

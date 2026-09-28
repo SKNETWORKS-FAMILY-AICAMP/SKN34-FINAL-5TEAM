@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, Numeric
+from sqlalchemy import String, Integer, Numeric, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -21,3 +21,17 @@ class HistoricalResult(Base):
 
     competition_rate: Mapped[float] = mapped_column(Numeric(8, 2), nullable=True)  # 경쟁률
     cutoff_score: Mapped[int] = mapped_column(Integer, nullable=True)  # 당첨가점 커트라인
+
+    house_ty: Mapped[str] = mapped_column(String(30), nullable=True)  # 주택형
+    reside_secd: Mapped[str] = mapped_column(String(10), nullable=True)  # 거주구분
+    subscrpt_rank: Mapped[str] = mapped_column(String(10), nullable=True)  # 순위
+
+    __table_args__ = (
+        UniqueConstraint(
+            "complex_id",
+            "house_ty",
+            "reside_secd",
+            "subscrpt_rank",
+            name="uq_historical_result_slot",
+        ),
+    )
