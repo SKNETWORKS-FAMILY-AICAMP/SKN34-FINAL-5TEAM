@@ -34,6 +34,7 @@ SPSPLY_CATEGORIES = {
 SPSPLY_REGIONS = {"CRSPAREA": "해당지역", "CTPRVN": "기타경기", "ETC_AREA": "기타지역"}
 
 EMPTY_ROW = {
+    "model_no": None, "result_status": None, "detail": None,
     "category_label": None, "reside_secd": None, "subscrpt_rank": None,
     "supply_count": None, "apply_count": None, "competition_rate": None,
     "is_undersubscribed": False, "raw_cmpet_rate": None,
@@ -62,6 +63,7 @@ def _base(row: dict, house_type: str, result_type: str) -> dict:
         "unit_type": unit_type,
         "house_type": house_type,
         "result_type": result_type,
+        "model_no": row.get("MODEL_NO"),
         "exclusive_area_sqm": parse_exclusive_area(unit_type),
     }
 
@@ -123,6 +125,7 @@ def map_spsply_row(row: dict) -> list[dict]:
                 continue
             item = _base(row, "APT", "특별공급")
             item.update(
+                result_status=row.get("SUBSCRPT_RESULT_NM"),
                 category_label=f"{category} - {region_label}",
                 supply_count=supply,
                 apply_count=apply_count,
@@ -130,6 +133,25 @@ def map_spsply_row(row: dict) -> list[dict]:
                 is_undersubscribed=bool(supply and total_apply < supply),
             )
             out.append(item)
+
+    # 지역 구분이 없는 두 종류: 기관추천(신청 건수 대신 확정·예비 건수), 이전기관 종사자(신청 건수 있음)
+    recommend_supply = to_int(row.get("INSTT_RECOMEND_HSHLDCO"))
+    decided, reserve = to_int(row.get("INSTT_RECOMEND_DCSN_CNT")), to_int(row.get("INSTT_RECOMEND_PREPAR_CNT"))
+    if recommend_supply or decided or reserve:
+        item = _base(row, "APT", "특별공급")
+        item.update(result_status=row.get("SUBSCRPT_RESULT_NM"), category_label="기관추천",
+                    supply_count=recommend_supply, detail={"확정": decided, "예비": reserve})
+        out.append(item)
+    transfer_supply, transfer_apply = to_int(row.get("TRANSR_INSTT_ENFSN_HSHLDCO")), to_int(row.get("TRANSR_INSTT_ENFSN_CNT"))
+    if transfer_supply or transfer_apply:
+        item = _base(row, "APT", "특별공급")
+        item.update(
+            result_status=row.get("SUBSCRPT_RESULT_NM"), category_label="이전기관",
+            supply_count=transfer_supply, apply_count=transfer_apply,
+            competition_rate=round(transfer_apply / transfer_supply, 2) if transfer_supply and transfer_apply is not None else None,
+            is_undersubscribed=bool(transfer_supply and transfer_apply is not None and transfer_apply < transfer_supply),
+        )
+        out.append(item)
     return out
 
 

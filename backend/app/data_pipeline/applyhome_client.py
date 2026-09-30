@@ -162,12 +162,18 @@ def map_notice(row: dict, house_type: str) -> dict:
         "region_code": row.get("SUBSCRPT_AREA_CODE"),
         "region_name": row.get("SUBSCRPT_AREA_CODE_NM"),
         "supply_type": supply_type[:50] if supply_type else None,
+        "rent_type": row.get("RENT_SECD_NM"),
+        "house_code": row.get("HOUSE_SECD"),
+        "house_detail_code": _first(row, "HOUSE_DTL_SECD", "HOUSE_DETAIL_SECD"),
+        "search_house_code": row.get("SEARCH_HOUSE_SECD"),
+        "zip_code": row.get("HSSPLY_ZIP"),
         "address": row.get("HSSPLY_ADRES"),
         "notice_url": row.get("PBLANC_URL"),
         "homepage_url": row.get("HMPG_ADRES"),
         "developer": row.get("BSNS_MBY_NM"),
         "constructor": row.get("CNSTRCT_ENTRPS_NM"),
         "contact_phone": row.get("MDHS_TELNO"),
+        "newspaper": row.get("NSPRC_NM") or None,
         "total_household_count": to_int(row.get("TOT_SUPLY_HSHLDCO")),
         "recruit_date": parse_date(row.get("RCRIT_PBLANC_DE")),
         "receipt_start": parse_date(_first(row, "RCEPT_BGNDE", "SUBSCRPT_RCEPT_BGNDE", "GNRL_RCEPT_BGNDE")),
@@ -183,6 +189,10 @@ def map_notice(row: dict, house_type: str) -> dict:
         "is_adjusted_area": yn(row.get("MDAT_TRGET_AREA_SECD")),
         "is_price_capped": yn(row.get("PARCPRC_ULS_AT")),
         "is_public_housing_district": yn(row.get("PUBLIC_HOUSE_EARTH_AT")),
+        "is_redevelopment": yn(row.get("IMPRMN_BSNS_AT")),
+        "is_large_housing_site": yn(row.get("LRSCL_BLDLND_AT")),
+        "is_public_housing_special_act": yn(row.get("PUBLIC_HOUSE_SPCLW_APPLC_AT")),
+        "is_metro_private_public_district": yn(row.get("NPLN_PRVOPR_PUBLIC_HOUSE_AT")),
     }
 
 
@@ -190,6 +200,8 @@ def map_unit(row: dict, house_type: str) -> dict:
     """주택형 1행 → listings의 주택형 단위 컬럼."""
     unit_type = (_first(row, "HOUSE_TY", "TP") or "").strip() or None
     price = to_float(_first(row, "LTTOT_TOP_AMOUNT", "SUPLY_AMOUNT"))
+    deposit = to_float(row.get("SUBSCRPT_REQST_AMOUNT"))
+    group = (row.get("GP") or "").strip()
     exclusive = to_float(row.get("EXCLUSE_AR")) or parse_exclusive_area(unit_type)
 
     if house_type == "공공지원민간임대":
@@ -212,12 +224,19 @@ def map_unit(row: dict, house_type: str) -> dict:
         "unit_type": unit_type,
         "unit_size_sqm": to_float(row.get("SUPLY_AR")),
         "exclusive_area_sqm": exclusive,
+        "contract_area_sqm": to_float(row.get("CNTRCT_AR")),
+        "unit_group": group if group not in ("", "-") else None,
         "unit_count": total or 0,
         "general_supply_count": general,
         "special_supply_count": special,
         "special_supply_detail": detail or None,
         "sale_price": int(price * 10000) if price is not None else None,
+        "subscription_deposit": int(deposit * 10000) if deposit is not None else None,
     }
+
+
+# 주택형 정보가 없는 공고도 같은 컬럼을 갖도록 (한 번에 upsert하려면 모든 행의 컬럼이 같아야 함)
+EMPTY_UNIT = {key: None for key in map_unit({}, "APT")}
 
 
 def _date_cond(from_date: date | None, date_format: str) -> dict:
@@ -258,7 +277,7 @@ def fetch_listings(house_type: str, from_date: date | None = None) -> tuple[list
         base = map_notice(notice, house_type)
         units = units_by_notice.get(base["external_id"])
         if not units:
-            rows.append({**base, "model_no": None, "unit_type": None, "unit_count": base["total_household_count"] or 0})
+            rows.append({**base, **EMPTY_UNIT, "unit_count": base["total_household_count"] or 0})
             continue
         rows.extend({**base, **map_unit(unit, house_type)} for unit in units)
     print(f"[청약홈 {house_type}] 공고 {len(notices)}건 → listings {len(rows)}행", flush=True)

@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -25,6 +25,7 @@ class HistoricalResult(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     external_id: Mapped[str] = mapped_column(String(50), index=True)  # 청약홈 공고번호 (listings.external_id와 같음)
     unit_type: Mapped[str] = mapped_column(String(30), nullable=True)  # 주택형 (listings.unit_type과 같음)
+    model_no: Mapped[str] = mapped_column(String(10), nullable=True)  # 모델번호 (listings.model_no와 연결)
     house_type: Mapped[str] = mapped_column(String(30), index=True)
     result_type: Mapped[str] = mapped_column(String(10), index=True)  # 경쟁률 / 당첨가점 / 특별공급
     category_label: Mapped[str] = mapped_column(String(50), nullable=True)  # "해당지역 1순위", "신혼부부 - 기타경기" …
@@ -44,3 +45,6 @@ class HistoricalResult(Base):
     avg_score: Mapped[float] = mapped_column(Numeric(6, 2), nullable=True)  # 평균 당첨가점
     cutoff_score: Mapped[float] = mapped_column(Numeric(6, 2), nullable=True)  # 최저 당첨가점(커트라인)
     top_score: Mapped[float] = mapped_column(Numeric(6, 2), nullable=True)  # 최고 당첨가점
+
+    result_status: Mapped[str] = mapped_column(String(30), nullable=True)  # 청약 결과 상태 (특별공급, 예: 청약접수 종료)
+    detail: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # 기관추천 확정·예비 건수 등 추가 값

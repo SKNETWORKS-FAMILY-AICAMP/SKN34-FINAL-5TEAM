@@ -58,11 +58,13 @@ SELECT
     l.region_code, l.region_name,
     CASE WHEN split_part(l.address, ' ', 2) ~ '[시군구]$' THEN split_part(l.address, ' ', 2) END AS sigungu,
     l.supply_type,
+    l.rent_type,
     coalesce(l.supply_type LIKE '%민영%', false) AS is_private,
     l.exclusive_area_sqm,
     l.area_band,
     l.filled_unit_size_sqm AS unit_size_sqm,
     l.unit_size_source,
+    l.contract_area_sqm,
     round(l.exclusive_area_sqm / 3.3058, 1) AS exclusive_pyeong,
     round(l.filled_unit_size_sqm / 3.3058, 1) AS supply_pyeong,
     l.sale_price,
@@ -70,10 +72,12 @@ SELECT
     round(l.sale_price / nullif(l.exclusive_area_sqm, 0) * 3.3058) AS price_per_exclusive_pyeong,
     round(l.sale_price / nullif(l.filled_unit_size_sqm, 0) * 3.3058) AS price_per_supply_pyeong,
     round(l.sale_price * 0.1) AS contract_deposit_10pct,
+    l.subscription_deposit,
     l.unit_count, l.general_supply_count, l.special_supply_count, l.special_supply_detail,
     l.recruit_date, l.special_receipt_start, l.special_receipt_end, l.receipt_start, l.receipt_end,
     l.announce_date, l.contract_start, l.contract_end, l.move_in_date,
-    l.is_speculative_area, l.is_adjusted_area, l.is_price_capped,
+    l.is_speculative_area, l.is_adjusted_area, l.is_price_capped, l.is_public_housing_district,
+    l.is_redevelopment, l.is_large_housing_site, l.is_public_housing_special_act, l.is_metro_private_public_district,
     l.notice_url, l.notice_status
 FROM filled l
 """
