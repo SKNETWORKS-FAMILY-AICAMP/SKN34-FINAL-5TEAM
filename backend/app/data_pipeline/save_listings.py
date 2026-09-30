@@ -9,7 +9,7 @@
 수집이 끝나면 가공 레이어(app/db/views.py)의 구체화 뷰를 다시 계산한다.
 """
 
-from datetime import date, timedelta
+from datetime import date
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert
@@ -124,24 +124,8 @@ def print_stats() -> None:
             print(f"  loan_products[{product_type}] {count}개", flush=True)
 
 
-def collect_recent(days: int = 90) -> None:
-    """스케줄러용: 최근 공고만 (청약홈 모집공고일 기준 days일, LH, SH)."""
-    init_tables()
-    _run(save_applyhome_listings, date.today() - timedelta(days=days))
-    _run(save_lh_listings)
-    _run(save_sh_listings)
-    _run(refresh_views, engine)
-
-
-def collect_results_and_loans() -> None:
-    """스케줄러용: 경쟁률·당첨가점·특별공급 전체 + 대출 상품."""
-    init_tables()
-    _run(save_historical_results)
-    _run(save_loan_products)
-    _run(refresh_views, engine)
-
-
 def collect_all() -> None:
+    """전체 수집 + 가공 레이어 갱신. 스케줄러가 매일 오전 6시에 실행한다."""
     init_tables()
     notice_index = _run(save_applyhome_listings)
     _run(save_historical_results, notice_index)
