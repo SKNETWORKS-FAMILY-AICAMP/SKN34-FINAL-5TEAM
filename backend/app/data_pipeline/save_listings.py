@@ -6,6 +6,7 @@
   - LH 공고 목록 (최근 1년) → listings (source=lh), 공고별 상세·공급정보 원본 → lh_notice_details
   - SH 분양·임대 게시판 전체 글 (첨부파일·본문 포함) → sh_notices
   - 접수 예정·접수 중인 공고의 공고문 PDF → notice_documents, 주택형별 계약금 → notice_costs
+    (LH 매입임대 등 주택별 금액은 첨부 주택목록 엑셀 → lh_rental_houses)
   - 파인 대출 상품 + 금리 옵션 → loan_products, loan_rate_options
 수집이 끝나면 가공 레이어(app/db/views.py)의 구체화 뷰를 다시 계산한다.
 """
@@ -30,6 +31,7 @@ from app.data_pipeline.document_client import (
     sh_document,
 )
 from app.data_pipeline.finlife_client import fetch_loan_products
+from app.data_pipeline.house_list_client import house_costs, house_list_files, read_house_list
 from app.data_pipeline.lh_client import fetch_lh_notices, fetch_notice_detail, map_listing_rows
 from app.data_pipeline.sh_client import fetch_attachment_links, fetch_sh_notices, is_recruitment
 from app.db.base import Base
@@ -38,7 +40,7 @@ from app.db.views import create_views, refresh_views
 from app.models.historical_result import HistoricalResult
 from app.models.listing import Listing
 from app.models.loan_product import LoanProduct, LoanRateOption
-from app.models.notice_sources import LhNoticeDetail, NoticeCost, NoticeDocument, ShNotice
+from app.models.notice_sources import LhNoticeDetail, LhRentalHouse, NoticeCost, NoticeDocument, ShNotice
 
 BATCH_SIZE = 1000
 LISTING_KEY = ("source", "external_id", "model_no")
@@ -190,23 +192,78 @@ def save_notice_costs(reparse_only: bool = False) -> None:
         print(f"[공고문] 새로 {len(documents)}건 — " + ", ".join(
             f"{status} {count}" for status, count in Counter(d["status"] for d in documents).items()), flush=True)
 
+    lh_ids = sorted(t.external_id for t in targets if t.source == "lh")
+    if not reparse_only:
+        save_lh_house_lists(lh_ids)
+
     ids = {(t.source, t.external_id) for t in targets}
     with SessionLocal() as db:
-        docs = [d for d in db.scalars(select(NoticeDocument).where(NoticeDocument.status == "ok"))
-                if (d.source, d.external_id) in ids]
+        texts = {(d.source, d.external_id): d.text or ""
+                 for d in db.scalars(select(NoticeDocument).where(NoticeDocument.status == "ok"))
+                 if (d.source, d.external_id) in ids}
+        houses = {}
+        for house in db.scalars(select(LhRentalHouse).where(LhRentalHouse.pan_id.in_(lh_ids))):
+            houses.setdefault(("lh", house.pan_id), []).append(
+                {c: getattr(house, c) for c in ("address", "ho", "house_label", "exclusive_area_sqm", "rent_deposit",
+                                                "condition_group")})
+        notices = set(texts) | set(houses)
         costs = []
-        for doc in docs:
-            units = db.execute(select(Listing.source, Listing.external_id, Listing.model_no, Listing.unit_type,
-                                      Listing.sale_price, Listing.rent_deposit)
-                               .where(Listing.source == doc.source, Listing.external_id == doc.external_id)).mappings().all()
-            costs.extend(listing_costs(doc.text or "", [dict(u) for u in units]))
+        for source, external_id in notices:
+            units = [dict(u) for u in db.execute(
+                select(Listing.source, Listing.external_id, Listing.model_no, Listing.unit_type, Listing.sale_price,
+                       Listing.rent_deposit, Listing.address, Listing.complex_name, Listing.exclusive_area_sqm)
+                .where(Listing.source == source, Listing.external_id == external_id)).mappings()]
+            found = listing_costs(texts.get((source, external_id), ""), units)
+            # 공고문에서 못 찾은 행은 첨부 주택목록의 임대보증금으로 (매입임대 등)
+            covered = {c["model_no"] for c in found}
+            found += house_costs([u for u in units if u["model_no"] not in covered], houses.get((source, external_id), []))
+            costs.extend(found)
         # 다시 계산한 공고의 이전 결과는 지운다 (규칙이 바뀌어 더 이상 안 잡히는 행이 남지 않도록)
-        for source, external_id in {(d.source, d.external_id) for d in docs}:
+        for source, external_id in notices:
             db.execute(delete(NoticeCost).where(NoticeCost.source == source, NoticeCost.external_id == external_id))
         db.commit()
     saved = upsert(NoticeCost, costs, ("source", "external_id", "model_no"), "uq_notice_cost_listing")
-    print(f"[계약금] 공고문 {len(docs)}건에서 주택형 {saved}행 — " + ", ".join(
+    print(f"[계약금] 공고문·주택목록 {len(notices)}건에서 주택형 {saved}행 — " + ", ".join(
         f"{method} {count}" for method, count in Counter(c["method"] for c in costs).items()), flush=True)
+
+
+def save_lh_house_lists(pan_ids: list[str]) -> None:
+    """LH 공고 첨부 주택목록 엑셀 → lh_rental_houses. 아직 안 읽은 공고만 (실패한 공고는 다음 수집 때 다시).
+
+    내려받기 상태는 notice_documents에 source='lh_list'로 남긴다 (page_count = 읽은 주택 수).
+    """
+    with SessionLocal() as db:
+        done = set(db.scalars(select(NoticeDocument.external_id).where(
+            NoticeDocument.source == "lh_list", NoticeDocument.status != "error")))
+        details = dict(db.execute(select(LhNoticeDetail.pan_id, LhNoticeDetail.detail)
+                                  .where(LhNoticeDetail.pan_id.in_([p for p in pan_ids if p not in done]))).all())
+    if not details:
+        return
+    documents, houses = [], []
+    with httpx.Client(timeout=60.0, follow_redirects=True) as client:
+        for pan_id, detail in details.items():
+            files = house_list_files(detail)
+            row = {"source": "lh_list", "external_id": pan_id, "file_name": ", ".join(n for n, _ in files)[:300] or None,
+                   "url": files[0][1] if files else None, "status": "no_document", "error": None, "page_count": None,
+                   "text": None}
+            try:
+                found = []
+                for name, url in files:
+                    response = client.get(url)
+                    response.raise_for_status()
+                    found += [{"pan_id": pan_id, "file_name": name[:300], **h} for h in read_house_list(response.content)]
+                if files:
+                    row.update(status="ok", page_count=len(found))
+                    houses += found
+            except Exception as exc:  # noqa: BLE001 — 한 파일 실패가 전체를 멈추지 않게
+                row.update(status="error", error=f"{exc.__class__.__name__}: {exc}"[:300])
+            documents.append(row)
+    read = {h["pan_id"] for h in houses}
+    with engine.begin() as conn:
+        conn.execute(delete(LhRentalHouse).where(LhRentalHouse.pan_id.in_(read)))
+    upsert(LhRentalHouse, houses, ("pan_id", "file_name", "sheet", "seq"), "uq_lh_rental_house")
+    upsert(NoticeDocument, documents, ("source", "external_id"), "uq_notice_document_source_external")
+    print(f"[주택목록] LH 공고 {len(documents)}건 확인 — 주택목록 있음 {len(read)}건, 주택 {len(houses)}호", flush=True)
 
 
 def save_sh_recruitments(days: int = 90) -> None:

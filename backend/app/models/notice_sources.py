@@ -69,6 +69,38 @@ class NoticeDocument(Base):
     fetched_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
+class LhRentalHouse(Base):
+    """LH 공고 첨부 "공급대상 주택목록" 엑셀의 주택 1호 = 1행 (주로 매입임대·든든전세).
+
+    공고문 본문에는 "첨부 주택목록 참조"만 있고 주택별 임대보증금·월임대료는 이 엑셀에만 있다.
+    자격(수급자 / 소득 70% 이하 등)마다 금액이 다르면 conditions에 모두 남기고, rent_deposit·monthly_rent는
+    보증금이 가장 낮은 조건의 값이다. 내려받기 상태는 notice_documents(source='lh_list')에 남긴다.
+    """
+
+    __tablename__ = "lh_rental_houses"
+    __table_args__ = (UniqueConstraint("pan_id", "file_name", "sheet", "seq", name="uq_lh_rental_house"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pan_id: Mapped[str] = mapped_column(String(30), index=True)  # listings.external_id (source='lh')
+    file_name: Mapped[str] = mapped_column(String(300))
+    sheet: Mapped[str] = mapped_column(String(100))
+    seq: Mapped[int] = mapped_column(Integer)  # 엑셀의 순번
+    address: Mapped[str] = mapped_column(String(300), nullable=True)
+    dong: Mapped[str] = mapped_column(String(30), nullable=True)
+    ho: Mapped[str] = mapped_column(String(30), nullable=True)
+    house_label: Mapped[str] = mapped_column(String(50), nullable=True)  # 주택형·공급형·주택군 (예: 1형, 60~70㎡)
+    house_kind: Mapped[str] = mapped_column(String(50), nullable=True)  # 주택유형 (다가구주택, 오피스텔 등)
+    exclusive_area_sqm: Mapped[float] = mapped_column(Numeric(8, 4), nullable=True)
+    common_area_sqm: Mapped[float] = mapped_column(Numeric(8, 4), nullable=True)
+    rooms: Mapped[str] = mapped_column(String(10), nullable=True)
+    floor: Mapped[str] = mapped_column(String(20), nullable=True)
+    rent_deposit: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 임대보증금(원), 가장 낮은 조건
+    monthly_rent: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 월임대료(원), 같은 조건
+    condition_group: Mapped[str] = mapped_column(String(100), nullable=True)  # 그 조건의 자격 구분
+    conditions: Mapped[list] = mapped_column(JSON(none_as_null=True), nullable=True)  # [{"group", "deposit", "rent"}]
+    fetched_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
 class NoticeCost(Base):
     """공고문에서 읽은 공고 x 주택형별 계약금. listings와 (source, external_id, model_no)로 연결.
 
@@ -77,6 +109,8 @@ class NoticeCost(Base):
       공고문 표·최솟값 = 표는 찾았지만 주택형을 연결하지 못해 공고 안 최솟값을 씀
       공고문 정액     = "계약금 1,000만원 정액" 같은 문장
       공고문 비율     = "계약금(10%)" 같은 문장 x 분양가 또는 임대보증금
+      주택목록 보증금 / 주택목록 주택형 최솟값 / 주택목록 최솟값
+                    = 공고문에 없어서 첨부 주택목록(lh_rental_houses)의 임대보증금 전액을 필요 자금으로 씀 (매입임대 등)
     """
 
     __tablename__ = "notice_costs"
