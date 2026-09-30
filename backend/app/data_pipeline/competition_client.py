@@ -88,7 +88,8 @@ def map_cmpet_row(row: dict, house_type: str) -> dict:
         supply = to_int(row.get("SPSPLY_KND_HSHLDCO")) or supply
 
     apply_count = to_int(row.get("REQ_CNT"))
-    if rate is None and not undersub and supply and apply_count is not None:
+    # 원본 문자열이 없거나 미달("(△209)")이면 신청 ÷ 공급으로 계산 (미달이면 1 미만). 공급이 0이면 계산 불가
+    if rate is None and supply and apply_count is not None:
         rate = round(apply_count / supply, 2)
     out.update(supply_count=supply, apply_count=apply_count, competition_rate=rate,
                is_undersubscribed=undersub, raw_cmpet_rate=row.get("CMPET_RATE"))

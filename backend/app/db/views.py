@@ -1,6 +1,7 @@
 """가공 레이어: 원본 테이블(listings, historical_results …)은 그대로 두고, 서비스에서 쓰기 좋게 계산한 뷰를 만든다.
 
   listing_features        (구체화 뷰) 전체 공고 + 평형 구간·시군구·㎡당/평당 분양가·계약금·민영 여부
+                          + API에 없는 공급면적 보완 (unit_size_source: API / 같은 단지 APT / 추정)
   recommendable_listings  (일반 뷰)   listing_features 중 접수 예정·접수 중인 공고만 (조회 시점의 한국 날짜 기준)
   cutoff_stats            (구체화 뷰) APT 당첨가점 커트라인 통계: 지역 x 시군구 x 평형 구간 x 민영 여부 x 거주구분 x 연도
   competition_stats       (구체화 뷰) 경쟁률 통계: 주택 유형 x 지역 x 시군구 x 평형 구간 x 세부구분 x 연도
@@ -17,8 +18,52 @@ AREA_BAND = """CASE WHEN {col} IS NULL THEN NULL
        WHEN {col} <= 85 THEN '60~85㎡'
        ELSE '85㎡ 초과' END"""
 
+# 공급면적 보완 순서 (원본 listings.unit_size_sqm은 API 값 그대로 둔다)
+#   1) API 값
+#   2) 같은 단지 APT 공고의 같은 주택형 값 — 무순위·임의공급은 대부분 APT 분양의 남은 세대라서 실제 값이 있다
+#      (검증: API 값이 있는 무순위 74행 중 72행 일치)
+#   3) 추정 = 전용면적 x APT 평형 구간별 공급/전용 비율 중앙값 (검증: APT 실제 값 대비 평균 오차 2.5~5%)
 LISTING_FEATURES = f"""
 CREATE MATERIALIZED VIEW IF NOT EXISTS listing_features AS
+WITH apt_by_address AS (
+    SELECT DISTINCT ON (unit_type, address) unit_type, address, unit_size_sqm
+    FROM listings
+    WHERE house_type = 'APT' AND unit_size_sqm > 0
+    ORDER BY unit_type, address, recruit_date DESC
+),
+apt_by_name AS (
+    SELECT DISTINCT ON (unit_type, replace(complex_name, ' ', '')) unit_type,
+           replace(complex_name, ' ', '') AS name_key, unit_size_sqm
+    FROM listings
+    WHERE house_type = 'APT' AND unit_size_sqm > 0
+    ORDER BY unit_type, replace(complex_name, ' ', ''), recruit_date DESC
+),
+area_ratio AS (
+    SELECT {AREA_BAND.format(col="exclusive_area_sqm")} AS area_band,
+           percentile_cont(0.5) WITHIN GROUP (ORDER BY unit_size_sqm / exclusive_area_sqm) AS ratio
+    FROM listings
+    WHERE house_type = 'APT' AND unit_size_sqm > 0 AND exclusive_area_sqm > 0
+    GROUP BY 1
+),
+filled AS (
+    SELECT l.*,
+           {AREA_BAND.format(col="l.exclusive_area_sqm")} AS area_band,
+           CASE WHEN l.unit_size_sqm IS NOT NULL THEN l.unit_size_sqm
+                WHEN a1.unit_size_sqm IS NOT NULL THEN a1.unit_size_sqm
+                WHEN a2.unit_size_sqm IS NOT NULL THEN a2.unit_size_sqm
+                ELSE round((l.exclusive_area_sqm * r.ratio)::numeric, 4) END AS filled_unit_size_sqm,
+           CASE WHEN l.unit_size_sqm IS NOT NULL THEN 'API'
+                WHEN a1.unit_size_sqm IS NOT NULL OR a2.unit_size_sqm IS NOT NULL THEN '같은 단지 APT'
+                WHEN l.exclusive_area_sqm IS NOT NULL THEN '추정'
+           END AS unit_size_source
+    FROM listings l
+    LEFT JOIN apt_by_address a1
+           ON l.unit_size_sqm IS NULL AND a1.unit_type = l.unit_type AND a1.address = l.address
+    LEFT JOIN apt_by_name a2
+           ON l.unit_size_sqm IS NULL AND a1.unit_size_sqm IS NULL
+          AND a2.unit_type = l.unit_type AND a2.name_key = replace(l.complex_name, ' ', '')
+    LEFT JOIN area_ratio r ON r.area_band = {AREA_BAND.format(col="l.exclusive_area_sqm")}
+)
 SELECT
     l.id, l.source, l.external_id, l.model_no, l.unit_type, l.house_type, l.complex_name,
     l.region_code, l.region_name,
@@ -26,18 +71,19 @@ SELECT
     l.supply_type,
     coalesce(l.supply_type LIKE '%민영%', false) AS is_private,
     l.exclusive_area_sqm,
-    {AREA_BAND.format(col="l.exclusive_area_sqm")} AS area_band,
-    l.unit_size_sqm,
+    l.area_band,
+    l.filled_unit_size_sqm AS unit_size_sqm,
+    l.unit_size_source,
     l.sale_price,
     round(l.sale_price / nullif(l.exclusive_area_sqm, 0)) AS price_per_exclusive_sqm,
-    round(l.sale_price / nullif(l.unit_size_sqm, 0) * 3.3058) AS price_per_pyeong,
+    round(l.sale_price / nullif(l.filled_unit_size_sqm, 0) * 3.3058) AS price_per_pyeong,
     round(l.sale_price * 0.1) AS contract_deposit_10pct,
     l.unit_count, l.general_supply_count, l.special_supply_count, l.special_supply_detail,
     l.recruit_date, l.special_receipt_start, l.special_receipt_end, l.receipt_start, l.receipt_end,
     l.announce_date, l.contract_start, l.contract_end, l.move_in_date,
     l.is_speculative_area, l.is_adjusted_area, l.is_price_capped,
     l.notice_url, l.notice_status
-FROM listings l
+FROM filled l
 """
 
 RECOMMENDABLE_LISTINGS = """
