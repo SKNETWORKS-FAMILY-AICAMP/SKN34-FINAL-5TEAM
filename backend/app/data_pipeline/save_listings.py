@@ -6,6 +6,7 @@
   - LH 공고 목록 (최근 1년) → listings (source=lh)
   - SH 게시판 공고 → listings (source=sh)
   - 파인 대출 상품 + 금리 옵션 → loan_products, loan_rate_options
+수집이 끝나면 가공 레이어(app/db/views.py)의 구체화 뷰를 다시 계산한다.
 """
 
 from datetime import date, timedelta
@@ -21,6 +22,7 @@ from app.data_pipeline.lh_client import fetch_lh_notices
 from app.data_pipeline.sh_client import fetch_sh_listings
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
+from app.db.views import create_views, refresh_views
 from app.models.historical_result import HistoricalResult
 from app.models.listing import Listing
 from app.models.loan_product import LoanProduct, LoanRateOption
@@ -32,6 +34,7 @@ RESULT_KEY = ("external_id", "unit_type", "result_type", "category_label")
 
 def init_tables() -> None:
     Base.metadata.create_all(bind=engine)
+    create_views(engine)
 
 
 def upsert(model, rows: list[dict], key: tuple[str, ...], constraint: str) -> int:
@@ -127,6 +130,7 @@ def collect_recent(days: int = 90) -> None:
     _run(save_applyhome_listings, date.today() - timedelta(days=days))
     _run(save_lh_listings)
     _run(save_sh_listings)
+    _run(refresh_views, engine)
 
 
 def collect_results_and_loans() -> None:
@@ -134,6 +138,7 @@ def collect_results_and_loans() -> None:
     init_tables()
     _run(save_historical_results)
     _run(save_loan_products)
+    _run(refresh_views, engine)
 
 
 def collect_all() -> None:
@@ -143,6 +148,7 @@ def collect_all() -> None:
     _run(save_lh_listings)
     _run(save_sh_listings)
     _run(save_loan_products)
+    _run(refresh_views, engine)
     print_stats()
 
 
