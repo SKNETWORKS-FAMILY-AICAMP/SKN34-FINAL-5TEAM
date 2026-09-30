@@ -109,13 +109,15 @@ def map_spsply_row(row: dict) -> list[dict]:
     """평형당 1행(종류 x 지역이 컬럼) → 종류 x 지역 조합당 1행.
 
     신청 건수 필드가 없는 조합(기관추천은 지역별 신청 건수가 없음)과 배정·신청이 모두 0인 조합은 뺀다.
-    배정 세대수는 listings.special_supply_detail에도 있다.
+    배정 세대수는 지역 구분 없이 종류별 합계라서, competition_rate는 "그 지역 신청 / 전체 배정"이고
+    미달 여부는 세 지역 신청 합계로 판단한다. 배정 세대수는 listings.special_supply_detail에도 있다.
     """
     out = []
     for category, (cnt_prefix, hshldco_field) in SPSPLY_CATEGORIES.items():
         supply = to_int(row.get(hshldco_field))
-        for region_prefix, region_label in SPSPLY_REGIONS.items():
-            apply_count = to_int(row.get(f"{region_prefix}_{cnt_prefix}_CNT"))
+        applies = {label: to_int(row.get(f"{prefix}_{cnt_prefix}_CNT")) for prefix, label in SPSPLY_REGIONS.items()}
+        total_apply = sum(v for v in applies.values() if v is not None)
+        for region_label, apply_count in applies.items():
             if apply_count is None or (not supply and not apply_count):
                 continue
             item = _base(row, "APT", "특별공급")
@@ -124,7 +126,7 @@ def map_spsply_row(row: dict) -> list[dict]:
                 supply_count=supply,
                 apply_count=apply_count,
                 competition_rate=round(apply_count / supply, 2) if supply and apply_count is not None else None,
-                is_undersubscribed=bool(supply and apply_count is not None and apply_count < supply),
+                is_undersubscribed=bool(supply and total_apply < supply),
             )
             out.append(item)
     return out

@@ -45,7 +45,7 @@ class Listing(Base):
     unit_count: Mapped[int] = mapped_column(Integer, default=0)  # 이 주택형 공급 세대수 (일반 + 특별)
     general_supply_count: Mapped[int] = mapped_column(Integer, nullable=True)  # 일반공급 세대수
     special_supply_count: Mapped[int] = mapped_column(Integer, nullable=True)  # 특별공급 세대수
-    special_supply_detail: Mapped[dict] = mapped_column(JSON, nullable=True)  # {"신혼부부": 3, "생애최초": 1, …}
+    special_supply_detail: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # {"신혼부부": 3, "생애최초": 1, …}
     total_household_count: Mapped[int] = mapped_column(Integer, nullable=True)  # 공고 전체 공급 세대수
     sale_price: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 분양가(원)
 
@@ -58,7 +58,7 @@ class Listing(Base):
     contract_start: Mapped[Date] = mapped_column(Date, nullable=True)  # 계약 시작일
     contract_end: Mapped[Date] = mapped_column(Date, nullable=True)
     move_in_date: Mapped[Date] = mapped_column(Date, nullable=True)  # 입주 예정월 (1일로 저장)
-    schedule: Mapped[dict] = mapped_column(JSON, nullable=True)  # APT 순위·지역별 접수일 {"1순위 해당지역": ["2026-09-28", "2026-09-28"], …}
+    schedule: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # APT 순위·지역별 접수일 {"1순위 해당지역": ["2026-09-28", "2026-09-28"], …}
 
     is_speculative_area: Mapped[bool] = mapped_column(Boolean, nullable=True)  # 투기과열지구 (APT만 제공)
     is_adjusted_area: Mapped[bool] = mapped_column(Boolean, nullable=True)  # 조정대상지역 (APT만 제공)

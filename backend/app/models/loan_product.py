@@ -52,4 +52,4 @@ class LoanRateOption(Base):
     rate_min: Mapped[float] = mapped_column(Numeric(6, 3), nullable=True)
     rate_max: Mapped[float] = mapped_column(Numeric(6, 3), nullable=True)
     rate_avg: Mapped[float] = mapped_column(Numeric(6, 3), nullable=True)  # 전월 취급 평균금리
-    credit_grade_rates: Mapped[dict] = mapped_column(JSON, nullable=True)  # 신용대출: 신용점수 구간별 금리
+    credit_grade_rates: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # 신용대출: 신용점수 구간별 금리
