@@ -20,7 +20,7 @@ from app.data_pipeline.applyhome_client import (
     bundle_from_notice,
     winner_cutoff,
 )
-from app.data_pipeline.finlife_client import fetch_mortgage_products
+from app.data_pipeline.finlife_client import fetch_mortgage_products, fetch_rent_house_products
 from app.data_pipeline.lh_client import fetch_lh_notices
 from app.data_pipeline.sh_client import fetch_sh_listings
 
@@ -437,7 +437,7 @@ def save_finlife_loans(limit: int = 10) -> None:
     added = 0
     seen_names: set[str] = set()
     try:
-        for row in fetch_mortgage_products(limit=limit):
+        for row in fetch_mortgage_products(limit=limit) + fetch_rent_house_products(limit=limit):
             name = row["name"]
             if name in seen_names:
                 continue

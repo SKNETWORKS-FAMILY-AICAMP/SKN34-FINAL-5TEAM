@@ -12,8 +12,8 @@ scheduler = BackgroundScheduler()
 
 
 def sync_listings_job():
-    save_all_sources(per_kind=20, include_other=False)
-    print("[scheduler] 청약홈 최근 공고 수집을 한 바퀴 돌렸습니다.", flush=True)
+    save_all_sources(per_kind=20, include_other=True)
+    print("[scheduler] 청약홈 최근 공고 + LH·대출·SH를 한 바퀴 돌렸습니다.", flush=True)
 
 
 def start_scheduler():
