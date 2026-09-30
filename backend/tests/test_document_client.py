@@ -47,10 +47,55 @@ def test_table_entries_ignores_household_counts():
     assert table_entries("39(주거약자) 3 1 2\n40.6561 20 1 19") == []
 
 
+def test_table_entries_other_column_orders():
+    # 목포 국민임대: 계약금 잔금 합계 순서
+    (rent,) = table_entries("목포옥암1 51 1,229,000 23,366,000 24,595,000 163,110")
+    assert (rent["label"], rent["contract"], rent["total"]) == ("51", 1_229_000, 24_595_000)
+    # 양산 매각 붙임1: 계약금(10%) 잔금 총 주택가격
+    (sale,) = table_entries("1 102 701 110.8458 84.9879 25.8579 22.065 132.9108 14,650,000 131,850,000 146,500,000")
+    assert (sale["contract"], sale["total"]) == (14_650_000, 146_500_000)
+    # 아산 오피스텔: 계약금 할부금 잔금 합계
+    (installment,) = table_entries("33A 3~11층 13 5,000,000 14,260,000 77,040,000 96,300,000")
+    assert (installment["contract"], installment["total"], installment["balance"]) == (5_000_000, 96_300_000, 91_300_000)
+
+
+def test_table_entries_splits_glued_numbers():
+    # 제주 행복주택 (두 단 편집 PDF, 천원 단위): "28,8661,443" = 계 28,866 + 계약금 1,443
+    (entry,) = table_entries("대학생 28,8661,443 27,423 132,300")
+    assert (entry["contract"], entry["total"]) == (1_443_000, 28_866_000)
+
+
 def test_fixed_amount():
     assert fixed_amount("선착순 동호지정 및 계약 (계약금 1,000만원 정액제)") == 10_000_000
     assert fixed_amount("안내받은 계좌번호에 계약금(50만원) 입금") == 500_000
     assert fixed_amount("감리금액(계약금액 기준)") is None
+    assert fixed_amount("계약시 계약금[주택가격(1천만원)] → 입주시 입주잔금") == 10_000_000
+    # 원주무실 공공분양: 주택 계약금은 10%이고 1백만원은 발코니 확장 계약금
+    assert fixed_amount("※ 주택공급금액의 10% + 발코니확장비용 계약금(1백만원) + 추가선택품목 계약금 10% 입금") is None
+    assert fixed_amount("아산배방LH4단지오피스텔잔여세대선착순동호지정공고(계약금500만원,3년무이자할부).pdf") == 5_000_000
+
+
+def test_fallback_cost():
+    from app.data_pipeline.document_client import fallback_cost
+
+    def row(supply, name="", sale_price=None):
+        return {"source": "lh", "external_id": "1", "model_no": None, "supply_type": supply,
+                "complex_name": name, "sale_price": sale_price}
+
+    youth = fallback_cost(row("전세임대"), "■ 기본임대조건(입주자부담)\n- 임대보증금 : 100만원\n- 월 임대료 : …")
+    assert (youth["method"], youth["contract_deposit"]) == ("공고문 본인부담 보증금", 1_000_000)
+    family = fallback_cost(row("전세임대"), "■ 기본임대조건(입주자부담)\n7. 지원대상\n- 임대보증금 : 지원한도액 범위 내 전세보증금의 2%")
+    assert (family["method"], family["contract_deposit"], family["contract_ratio"]) == ("주택 선택 후 결정", None, 2)
+    # SH 주택목록(상세): "… 일반형 재공급 19,530,000 2 54,400 32,560,000 …" (임대료 칸이 쪼개져 나와도 보증금만 읽음)
+    sh_list = "1 강동구 서도휴빌 42C … 0201 44.42 2 일반형 재공급 19,530,000 2 54,400 32,560,000 424,100\n" \
+              "2 강동구 서도휴빌 47C … 0303 45.75 2 일반형 신규 20,320,000 2 64,700 33,870,000 441,300"
+    sh = fallback_cost(row("SH 임대", "신혼·신생아 매입임대주택Ⅰ 입주자 모집공고"), sh_list)
+    assert (sh["method"], sh["contract_deposit"]) == ("공고문 보증금 최솟값", 19_530_000)
+    dorm = fallback_cost(row("SH 임대"), "13형 13.25 1,090,000 110,000~111,100\n갈현공공기숙사 18형 18.04 1,090,000 150,000")
+    assert dorm["contract_deposit"] == 1_090_000
+    reserve = fallback_cost(row("매입임대"), "예비입주자 모집공고 (주택별 임대조건은 계약 시 안내)")
+    assert (reserve["method"], reserve["contract_deposit"]) == ("배정 시 안내", None)
+    assert fallback_cost(row("국민임대"), "임대조건 표 없음") is None
 
 
 def test_ratio_percent():
@@ -75,6 +120,20 @@ def test_listing_costs_priority_table_over_fixed_and_ratio():
     matched, fallback = listing_costs(text, listings)
     assert (matched["method"], matched["contract_deposit"]) == ("공고문 표", 1_121_000)
     assert (fallback["method"], fallback["contract_deposit"]) == ("공고문 표·최솟값", 866_350)
+
+
+def test_listing_costs_sale_rows_need_table_total_near_price():
+    # 충정로역자이르네: 계약금 잔금 계 모양이지만 계 2.29억은 분양가 24.3억과 무관한 표 → 비율 규칙으로
+    # 리아츠 더 인천: 분양가 = 대지비 195,219,000 + 건축비 → 계약금이 분양가의 36%일 수는 없음
+    text = ("5,000,000 178,700,000 228,700,000\n계약금 (10%) 입주잔금 (90%)\n84B 244,350,000 24,435,000 219,915,000\n"
+            "84B 545,000,000 195,219,000 349,781,000")
+    rows = [{"source": "applyhome", "external_id": "3", "model_no": "01", "unit_type": "084.9972A",
+             "sale_price": 2_433_000_000, "rent_deposit": None},
+            {"source": "applyhome", "external_id": "3", "model_no": "02", "unit_type": "084.9965B",
+             "sale_price": 244_350_000, "rent_deposit": None}]
+    far, near = listing_costs(text, rows)
+    assert (far["method"], far["contract_deposit"]) == ("공고문 비율", 243_300_000)
+    assert (near["method"], near["contract_deposit"]) == ("공고문 표", 24_435_000)
 
 
 def test_listing_costs_ratio_uses_sale_price_and_skips_unknown():

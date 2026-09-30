@@ -97,6 +97,7 @@ SELECT
 FROM listing_features f
 LEFT JOIN notice_costs c ON c.source = f.source AND c.external_id = f.external_id AND c.model_no IS NOT DISTINCT FROM f.model_no
 WHERE f.receipt_end >= (now() AT TIME ZONE 'Asia/Seoul')::date
+  AND coalesce(f.complex_name, '') NOT LIKE '%취소공고%'  -- 취소된 공고는 접수 기간이 남아 있어도 제외
 """
 
 # 경쟁률·가점 행에 공고의 시군구·평형 구간·민영 여부를 붙이기 위한 주택형 단위 목록

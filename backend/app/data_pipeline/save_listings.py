@@ -24,11 +24,14 @@ from app.data_pipeline.applyhome_client import fetch_all_listings, fetch_notice_
 from app.data_pipeline.competition_client import fetch_historical_results
 from app.data_pipeline.document_client import (
     applyhome_document,
+    fallback_cost,
     lh_document,
+    lh_extra_documents,
     listing_costs,
     read_pdf,
     receipt_period,
     sh_document,
+    sh_extra_documents,
 )
 from app.data_pipeline.finlife_client import fetch_loan_products
 from app.data_pipeline.house_list_client import house_costs, house_list_files, read_house_list
@@ -154,19 +157,27 @@ def save_loan_products() -> None:
 def _document_for(source: str, external_id: str, notice_url: str | None, client: httpx.Client) -> dict:
     row = {"source": source, "external_id": external_id, "file_name": None, "url": None,
            "status": "no_document", "error": None, "page_count": None, "text": None}
+    extras = []
     try:
         if source == "lh":
             with SessionLocal() as db:
                 detail = db.scalar(select(LhNoticeDetail.detail).where(LhNoticeDetail.pan_id == external_id))
             row["file_name"], row["url"] = lh_document(detail)
+            extras = lh_extra_documents(detail)
         elif source == "sh":
             with SessionLocal() as db:
                 links = db.scalar(select(ShNotice.attachment_links).where(ShNotice.seq == external_id))
             row["file_name"], row["url"] = sh_document(links)
+            extras = sh_extra_documents(links)
         else:
             row["file_name"], row["url"] = applyhome_document(notice_url, client)
         if row["url"]:
             row["text"], row["page_count"] = read_pdf(row["url"], client)
+            # 호별 금액이 있는 첨부(공급가격·주택목록)는 공고문 텍스트 뒤에 이어 붙인다
+            for name, url in extras:
+                if url != row["url"]:
+                    extra_text, _ = read_pdf(url, client)
+                    row["text"] += f"\n\n[첨부] {name}\n{extra_text}"
             row["status"] = "ok"
     except Exception as exc:  # noqa: BLE001 — 한 공고문 실패가 전체를 멈추지 않게
         row.update(status="error", error=f"{exc.__class__.__name__}: {exc}"[:300])
@@ -196,27 +207,32 @@ def save_notice_costs(reparse_only: bool = False) -> None:
     if not reparse_only:
         save_lh_house_lists(lh_ids)
 
-    ids = {(t.source, t.external_id) for t in targets}
+    notices = {(t.source, t.external_id) for t in targets}
     with SessionLocal() as db:
-        texts = {(d.source, d.external_id): d.text or ""
+        # 파일명에도 계약금이 적힌 경우가 있다 (예: "…선착순동호지정공고(계약금500만원,3년무이자할부).pdf")
+        texts = {(d.source, d.external_id): f"{d.file_name or ''}\n{d.text or ''}"
                  for d in db.scalars(select(NoticeDocument).where(NoticeDocument.status == "ok"))
-                 if (d.source, d.external_id) in ids}
+                 if (d.source, d.external_id) in notices}
         houses = {}
         for house in db.scalars(select(LhRentalHouse).where(LhRentalHouse.pan_id.in_(lh_ids))):
             houses.setdefault(("lh", house.pan_id), []).append(
                 {c: getattr(house, c) for c in ("address", "ho", "house_label", "exclusive_area_sqm", "rent_deposit",
                                                 "condition_group")})
-        notices = set(texts) | set(houses)
         costs = []
         for source, external_id in notices:
+            doc_text = texts.get((source, external_id), "")
             units = [dict(u) for u in db.execute(
                 select(Listing.source, Listing.external_id, Listing.model_no, Listing.unit_type, Listing.sale_price,
-                       Listing.rent_deposit, Listing.address, Listing.complex_name, Listing.exclusive_area_sqm)
+                       Listing.rent_deposit, Listing.address, Listing.complex_name, Listing.exclusive_area_sqm,
+                       Listing.supply_type)
                 .where(Listing.source == source, Listing.external_id == external_id)).mappings()]
-            found = listing_costs(texts.get((source, external_id), ""), units)
+            found = listing_costs(doc_text, units)
             # 공고문에서 못 찾은 행은 첨부 주택목록의 임대보증금으로 (매입임대 등)
             covered = {c["model_no"] for c in found}
             found += house_costs([u for u in units if u["model_no"] not in covered], houses.get((source, external_id), []))
+            # 그래도 없으면 보증금만 있는 표 / 전세임대 본인부담 / 배정 시 안내
+            covered = {c["model_no"] for c in found}
+            found += [c for u in units if u["model_no"] not in covered for c in [fallback_cost(u, doc_text)] if c]
             costs.extend(found)
         # 다시 계산한 공고의 이전 결과는 지운다 (규칙이 바뀌어 더 이상 안 잡히는 행이 남지 않도록)
         for source, external_id in notices:
