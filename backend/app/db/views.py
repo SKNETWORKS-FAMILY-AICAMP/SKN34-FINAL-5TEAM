@@ -1,6 +1,7 @@
 """가공 레이어: 원본 테이블(listings, historical_results …)은 그대로 두고, 서비스에서 쓰기 좋게 계산한 뷰를 만든다.
 
-  listing_features        (구체화 뷰) 전체 공고 + 평형 구간·시군구·㎡당/평당 분양가·계약금·민영 여부
+  listing_features        (구체화 뷰) 전체 공고 + 평형 구간·시군구·계약금·민영 여부
+                          + 전용/공급 탭용 평 단위 면적·평당 분양가 (1평 = 3.3058㎡)
                           + API에 없는 공급면적 보완 (unit_size_source: API / 같은 단지 APT / 추정)
   recommendable_listings  (일반 뷰)   listing_features 중 접수 예정·접수 중인 공고만 (조회 시점의 한국 날짜 기준)
   cutoff_stats            (구체화 뷰) APT 당첨가점 커트라인 통계: 지역 x 시군구 x 평형 구간 x 민영 여부 x 거주구분 x 연도
@@ -74,9 +75,12 @@ SELECT
     l.area_band,
     l.filled_unit_size_sqm AS unit_size_sqm,
     l.unit_size_source,
+    round(l.exclusive_area_sqm / 3.3058, 1) AS exclusive_pyeong,
+    round(l.filled_unit_size_sqm / 3.3058, 1) AS supply_pyeong,
     l.sale_price,
     round(l.sale_price / nullif(l.exclusive_area_sqm, 0)) AS price_per_exclusive_sqm,
-    round(l.sale_price / nullif(l.filled_unit_size_sqm, 0) * 3.3058) AS price_per_pyeong,
+    round(l.sale_price / nullif(l.exclusive_area_sqm, 0) * 3.3058) AS price_per_exclusive_pyeong,
+    round(l.sale_price / nullif(l.filled_unit_size_sqm, 0) * 3.3058) AS price_per_supply_pyeong,
     round(l.sale_price * 0.1) AS contract_deposit_10pct,
     l.unit_count, l.general_supply_count, l.special_supply_count, l.special_supply_detail,
     l.recruit_date, l.special_receipt_start, l.special_receipt_end, l.receipt_start, l.receipt_end,
