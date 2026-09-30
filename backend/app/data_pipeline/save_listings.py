@@ -5,30 +5,40 @@
   - 청약홈 경쟁률·당첨가점·특별공급 (전체 기간) → historical_results
   - LH 공고 목록 (최근 1년) → listings (source=lh), 공고별 상세·공급정보 원본 → lh_notice_details
   - SH 분양·임대 게시판 전체 글 (첨부파일·본문 포함) → sh_notices
+  - 접수 예정·접수 중인 공고의 공고문 PDF → notice_documents, 주택형별 계약금 → notice_costs
   - 파인 대출 상품 + 금리 옵션 → loan_products, loan_rate_options
 수집이 끝나면 가공 레이어(app/db/views.py)의 구체화 뷰를 다시 계산한다.
 """
 
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
+from datetime import date, timedelta
 
 import httpx
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.dialects.postgresql import insert
 
 import app.models  # noqa: F401 — create_all에 모든 테이블을 포함
 from app.data_pipeline.applyhome_client import fetch_all_listings, fetch_notice_index
 from app.data_pipeline.competition_client import fetch_historical_results
+from app.data_pipeline.document_client import (
+    applyhome_document,
+    lh_document,
+    listing_costs,
+    read_pdf,
+    receipt_period,
+    sh_document,
+)
 from app.data_pipeline.finlife_client import fetch_loan_products
 from app.data_pipeline.lh_client import fetch_lh_notices, fetch_notice_detail, map_listing_rows
-from app.data_pipeline.sh_client import fetch_sh_notices
+from app.data_pipeline.sh_client import fetch_attachment_links, fetch_sh_notices, is_recruitment
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.db.views import create_views, refresh_views
 from app.models.historical_result import HistoricalResult
 from app.models.listing import Listing
 from app.models.loan_product import LoanProduct, LoanRateOption
-from app.models.notice_sources import LhNoticeDetail, ShNotice
+from app.models.notice_sources import LhNoticeDetail, NoticeCost, NoticeDocument, ShNotice
 
 BATCH_SIZE = 1000
 LISTING_KEY = ("source", "external_id", "model_no")
@@ -139,6 +149,110 @@ def save_loan_products() -> None:
     print(f"[저장] 대출 상품 {len(products)}개", flush=True)
 
 
+def _document_for(source: str, external_id: str, notice_url: str | None, client: httpx.Client) -> dict:
+    row = {"source": source, "external_id": external_id, "file_name": None, "url": None,
+           "status": "no_document", "error": None, "page_count": None, "text": None}
+    try:
+        if source == "lh":
+            with SessionLocal() as db:
+                detail = db.scalar(select(LhNoticeDetail.detail).where(LhNoticeDetail.pan_id == external_id))
+            row["file_name"], row["url"] = lh_document(detail)
+        elif source == "sh":
+            with SessionLocal() as db:
+                links = db.scalar(select(ShNotice.attachment_links).where(ShNotice.seq == external_id))
+            row["file_name"], row["url"] = sh_document(links)
+        else:
+            row["file_name"], row["url"] = applyhome_document(notice_url, client)
+        if row["url"]:
+            row["text"], row["page_count"] = read_pdf(row["url"], client)
+            row["status"] = "ok"
+    except Exception as exc:  # noqa: BLE001 — 한 공고문 실패가 전체를 멈추지 않게
+        row.update(status="error", error=f"{exc.__class__.__name__}: {exc}"[:300])
+    return row
+
+
+def save_notice_costs(reparse_only: bool = False) -> None:
+    """접수 예정·접수 중인 공고 중 공고문을 아직 못 읽은 공고만 공고문을 받아 계약금을 추출한다.
+
+    reparse_only=True면 새로 내려받지 않고 저장된 공고문 텍스트로 계약금만 다시 계산한다 (추출 규칙을 고쳤을 때).
+    """
+    with SessionLocal() as db:
+        targets = db.execute(text(
+            "SELECT DISTINCT source, external_id, notice_url FROM recommendable_listings"
+        )).all()
+        done = set(db.execute(select(NoticeDocument.source, NoticeDocument.external_id)
+                              .where(NoticeDocument.status != "error")))
+    pending = [] if reparse_only else [t for t in targets if (t.source, t.external_id) not in done]
+    if pending:
+        with httpx.Client(timeout=60.0, follow_redirects=True) as client, ThreadPoolExecutor(max_workers=4) as pool:
+            documents = list(pool.map(lambda t: _document_for(t.source, t.external_id, t.notice_url, client), pending))
+        upsert(NoticeDocument, documents, ("source", "external_id"), "uq_notice_document_source_external")
+        print(f"[공고문] 새로 {len(documents)}건 — " + ", ".join(
+            f"{status} {count}" for status, count in Counter(d["status"] for d in documents).items()), flush=True)
+
+    ids = {(t.source, t.external_id) for t in targets}
+    with SessionLocal() as db:
+        docs = [d for d in db.scalars(select(NoticeDocument).where(NoticeDocument.status == "ok"))
+                if (d.source, d.external_id) in ids]
+        costs = []
+        for doc in docs:
+            units = db.execute(select(Listing.source, Listing.external_id, Listing.model_no, Listing.unit_type,
+                                      Listing.sale_price, Listing.rent_deposit)
+                               .where(Listing.source == doc.source, Listing.external_id == doc.external_id)).mappings().all()
+            costs.extend(listing_costs(doc.text or "", [dict(u) for u in units]))
+        # 다시 계산한 공고의 이전 결과는 지운다 (규칙이 바뀌어 더 이상 안 잡히는 행이 남지 않도록)
+        for source, external_id in {(d.source, d.external_id) for d in docs}:
+            db.execute(delete(NoticeCost).where(NoticeCost.source == source, NoticeCost.external_id == external_id))
+        db.commit()
+    saved = upsert(NoticeCost, costs, ("source", "external_id", "model_no"), "uq_notice_cost_listing")
+    print(f"[계약금] 공고문 {len(docs)}건에서 주택형 {saved}행 — " + ", ".join(
+        f"{method} {count}" for method, count in Counter(c["method"] for c in costs).items()), flush=True)
+
+
+def save_sh_recruitments(days: int = 90) -> None:
+    """최근 SH 모집 공고의 공고문에서 접수기간을 읽어 listings(source=sh)에 넣는다.
+
+    SH 게시판에는 접수일 필드가 없어서, 공고문 PDF(없으면 본문)의 "접수기간 …"을 읽는다.
+    접수기간을 찾은 공고만 listings에 들어가고, 접수 예정·접수 중이면 추천 대상이 된다.
+    """
+    since = date.today() - timedelta(days=days)
+    with SessionLocal() as db:
+        notices = [n for n in db.scalars(select(ShNotice).where(ShNotice.posted_date >= since)) if is_recruitment(n.title)]
+        docs = {d.external_id: (d.status, d.text)
+                for d in db.scalars(select(NoticeDocument).where(NoticeDocument.source == "sh"))}
+    # 링크가 없는 글(첨부 링크 저장 기능 이전에 받은 글)은 상세 페이지를 다시 읽어 링크를 채운다
+    missing = [n for n in notices if n.attachment_links is None and n.attachment_count]
+    for n in missing:
+        n.attachment_links = fetch_attachment_links(n.url)
+    if missing:
+        with engine.begin() as conn:
+            for n in missing:
+                conn.execute(update(ShNotice).where(ShNotice.board == n.board, ShNotice.seq == n.seq)
+                             .values(attachment_links=n.attachment_links))
+    pending = [n for n in notices if n.seq not in docs or docs[n.seq][0] == "error"]
+    with httpx.Client(timeout=60.0, follow_redirects=True) as client:
+        new_docs = [_document_for("sh", n.seq, n.url, client) for n in pending]
+    if new_docs:
+        upsert(NoticeDocument, new_docs, ("source", "external_id"), "uq_notice_document_source_external")
+        docs.update({d["external_id"]: (d["status"], d["text"]) for d in new_docs})
+
+    rows = []
+    for n in notices:
+        start, end = receipt_period(docs.get(n.seq, (None, None))[1] or "")
+        if end is None:
+            start, end = receipt_period(n.body_text or "")
+        if end is None:
+            continue
+        rows.append({
+            "source": "sh", "external_id": n.seq, "model_no": None, "unit_type": None,
+            "house_type": f"SH {n.board}", "complex_name": n.title[:255], "region_code": "100", "region_name": "서울",
+            "supply_type": f"SH {n.board}", "notice_url": n.url, "recruit_date": n.posted_date,
+            "receipt_start": start, "receipt_end": end, "unit_count": 0,
+        })
+    saved = upsert(Listing, rows, LISTING_KEY, "uq_listing_source_external_model")
+    print(f"[SH 모집] 최근 {days}일 모집 공고 {len(notices)}건 중 접수기간을 찾은 {saved}건을 listings에 저장", flush=True)
+
+
 def _run(step, *args):
     """한 출처가 실패해도 나머지 수집은 계속한다."""
     try:
@@ -171,8 +285,10 @@ def collect_all() -> None:
     _run(save_historical_results, notice_index)
     _run(save_lh_listings)
     _run(save_sh_notices)
+    _run(save_sh_recruitments)
     _run(save_loan_products)
     _run(refresh_views, engine)
+    _run(save_notice_costs)  # 가공 레이어(recommendable_listings)가 갱신된 뒤에 실행
     print_stats()
 
 

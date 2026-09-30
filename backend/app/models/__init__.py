@@ -2,6 +2,6 @@ from app.models.user import UserProfile
 from app.models.listing import Listing
 from app.models.historical_result import HistoricalResult
 from app.models.loan_product import LoanProduct, LoanRateOption
-from app.models.notice_sources import LhNoticeDetail, ShNotice
+from app.models.notice_sources import LhNoticeDetail, NoticeCost, NoticeDocument, ShNotice
 
-__all__ = ["UserProfile", "Listing", "HistoricalResult", "LoanProduct", "LoanRateOption", "ShNotice", "LhNoticeDetail"]
+__all__ = ["UserProfile", "Listing", "HistoricalResult", "LoanProduct", "LoanRateOption", "ShNotice", "LhNoticeDetail", "NoticeDocument", "NoticeCost"]

@@ -4,6 +4,7 @@
                           + 전용/공급 탭용 평 단위 면적·평당 분양가 (1평 = 3.3058㎡)
                           + API에 없는 공급면적 보완 (unit_size_source: API / 같은 단지 APT). 추정값은 넣지 않음
   recommendable_listings  (일반 뷰)   listing_features 중 접수 예정·접수 중인 공고만 (조회 시점의 한국 날짜 기준)
+                          + 계약금 (공고문에서 읽은 notice_costs, 없으면 분양가 10% 추정, 임대는 "공고문 확인 필요")
   cutoff_stats            (구체화 뷰) APT 당첨가점 커트라인 통계: 지역 x 시군구 x 평형 구간 x 민영 여부 x 거주구분 x 연도
   competition_stats       (구체화 뷰) 경쟁률 통계: 주택 유형 x 지역 x 시군구 x 평형 구간 x 세부구분 x 연도
 
@@ -73,6 +74,7 @@ SELECT
     round(l.sale_price / nullif(l.filled_unit_size_sqm, 0) * 3.3058) AS price_per_supply_pyeong,
     round(l.sale_price * 0.1) AS contract_deposit_10pct,
     l.subscription_deposit,
+    l.rent_deposit, l.monthly_rent,
     l.unit_count, l.general_supply_count, l.special_supply_count, l.special_supply_detail,
     l.recruit_date, l.special_receipt_start, l.special_receipt_end, l.receipt_start, l.receipt_end,
     l.announce_date, l.contract_start, l.contract_end, l.move_in_date,
@@ -88,8 +90,12 @@ SELECT
     f.*,
     CASE WHEN (now() AT TIME ZONE 'Asia/Seoul')::date < coalesce(f.special_receipt_start, f.receipt_start)
          THEN '접수 예정' ELSE '접수 중' END AS receipt_status,
-    coalesce(f.special_receipt_start, f.receipt_start) - (now() AT TIME ZONE 'Asia/Seoul')::date AS days_until_receipt
+    coalesce(f.special_receipt_start, f.receipt_start) - (now() AT TIME ZONE 'Asia/Seoul')::date AS days_until_receipt,
+    coalesce(c.contract_deposit, CASE WHEN f.sale_price IS NOT NULL THEN round(f.sale_price * 0.1) END) AS contract_deposit,
+    coalesce(c.method, CASE WHEN f.sale_price IS NOT NULL THEN '추정(분양가 10%)' ELSE '공고문 확인 필요' END) AS contract_deposit_method,
+    c.contract_ratio
 FROM listing_features f
+LEFT JOIN notice_costs c ON c.source = f.source AND c.external_id = f.external_id AND c.model_no IS NOT DISTINCT FROM f.model_no
 WHERE f.receipt_end >= (now() AT TIME ZONE 'Asia/Seoul')::date
 """
 
@@ -156,6 +162,7 @@ def create_views(engine: Engine) -> None:
     with engine.begin() as conn:
         conn.execute(text(LISTING_FEATURES))
         conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_listing_features_id ON listing_features (id)"))
+        conn.execute(text("DROP VIEW IF EXISTS recommendable_listings"))  # 컬럼이 바뀌면 CREATE OR REPLACE가 실패하므로
         conn.execute(text(RECOMMENDABLE_LISTINGS))
         conn.execute(text(CUTOFF_STATS))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_cutoff_stats_lookup ON cutoff_stats (region_code, area_band, year)"))

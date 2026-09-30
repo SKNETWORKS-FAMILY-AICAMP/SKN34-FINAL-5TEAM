@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import html as html_lib
+import json
 import re
 import time
 
@@ -31,6 +32,12 @@ _ROW_RE = re.compile(
     re.S,
 )
 _ATTACHMENT_RE = re.compile(r"existFile\('\d+'\); return false;\">\s*(.*?)\s*</a>", re.S)
+_DOWNLIST_RE = re.compile(r"initParam\.downList\s*=\s*(\[.*?\]);", re.S)
+# 첨부파일 원본 다운로드 주소 (홈페이지 innorix.config.js의 downUrl)
+DOWNLOAD_URL = SH_ORIGIN + "/com/file/innoFD.do?brdId={brdId}&seq={seq}&fileTp={fileTp}&fileSeq={fileSeq}"
+# 입주자 모집 공고 (당첨자 발표·경쟁률·계약·서류 안내 등은 제외)
+RECRUIT_TITLE = re.compile(r"모집")
+NOT_RECRUIT_TITLE = re.compile(r"당첨|발표|결과|경쟁률|계약|서류|명단|합격|선정|심사|현황|추첨|동호")
 
 
 def _clean(text: str) -> str:
@@ -65,6 +72,27 @@ def _list_page(client: httpx.Client, board: dict, page: int) -> list[dict]:
     return rows
 
 
+def attachment_links(page: str) -> list[dict] | None:
+    """상세 페이지의 initParam.downList → [{"name": 파일명, "url": 원본 다운로드 주소}]"""
+    match = _DOWNLIST_RE.search(page)
+    if not match:
+        return None
+    try:
+        files = json.loads(match.group(1))
+    except ValueError:
+        return None
+    return [{"name": f.get("oriFileNm"), "url": DOWNLOAD_URL.format(**f)} for f in files if f.get("fileSeq")] or None
+
+
+def fetch_attachment_links(url: str) -> list[dict] | None:
+    with httpx.Client(timeout=40.0, follow_redirects=True, headers={"User-Agent": USER_AGENT}) as client:
+        return attachment_links(client.get(url).text)
+
+
+def is_recruitment(title: str) -> bool:
+    return bool(RECRUIT_TITLE.search(title or "")) and not NOT_RECRUIT_TITLE.search(title or "")
+
+
 def _detail(client: httpx.Client, url: str) -> dict:
     page = client.get(url).text
     attachments = [_clean(a) for a in _ATTACHMENT_RE.findall(page)]
@@ -73,7 +101,8 @@ def _detail(client: httpx.Client, url: str) -> dict:
     last_attachment = table.rfind("미리보기")
     body = _clean(table[last_attachment:] if last_attachment > 0 else table)
     body = re.sub(r"^미리보기\s*", "", body)
-    return {"attachments": attachments or None, "attachment_count": len(attachments), "body_text": body or None}
+    return {"attachments": attachments or None, "attachment_count": len(attachments), "body_text": body or None,
+            "attachment_links": attachment_links(page)}
 
 
 def fetch_sh_notices(known_seqs: set[tuple[str, str]], max_pages: int | None = None) -> list[dict]:
