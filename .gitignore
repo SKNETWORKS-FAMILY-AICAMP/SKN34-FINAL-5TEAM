@@ -16,6 +16,7 @@ npm-debug.log*
 # DB
 *.sqlite3
 postgres_data/
+*.dump
 
 # OS / editor
 .DS_Store
