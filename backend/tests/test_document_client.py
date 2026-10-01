@@ -18,7 +18,7 @@ RENT_TABLE_WON = """임대조건 주 전환가능 단지명 택 임대보증금(
 # 양산 삼성파크빌 국민임대 (천원 단위): 계 18,551 = 계약금 500 + 잔금 18,051
 RENT_TABLE_THOUSAND = "(단위:천원)\n삼성파크빌 55 18,551 500 18,051 114,150 4,551 154,980 28,551 64,150"
 
-# 분양 공급가격 표: 계약금 + 잔금이 주택가격과 같지 않으므로(융자금 별도) 표 규칙에 걸리면 안 된다
+# 광주선운 신혼희망타운 공급가격 표 (천원): 주택가격 261,270 = 계약금 26,127 + 잔금 180,143 + 융자금 55,000
 SALE_TABLE = "A-1 055.8300A 55A 1층 261,270 26,127 180,143 55,000"
 
 
@@ -38,8 +38,30 @@ def test_table_entries_thousand_unit_scaled_to_won():
     assert entry["balance"] == 18_051_000
 
 
-def test_table_entries_ignores_sale_price_rows():
-    assert table_entries(SALE_TABLE) == []
+def test_table_entries_price_with_fund_loan():
+    (entry,) = table_entries(SALE_TABLE)
+    assert (entry["label"], entry["contract"], entry["total"]) == ("1층", 26_127_000, 261_270_000)
+
+
+def test_table_entries_skip_option_price_lines():
+    # 광주선운 옵션표: "거실+침실1 … 계약금 잔금"은 주택 계약금이 아니다
+    assert table_entries("55A 거실+침실1 1,130 113 1,017\n침실2붙박이장 2,060 206 1,854") == []
+
+
+def test_find_entry_by_area_in_line_and_type_letter():
+    from app.data_pipeline.document_client import find_entry
+
+    # 매각 표: 주택형 대신 계약면적(132.8905)이 표기로 잡히지만 같은 줄에 전용면적 84.9811이 있다
+    sale = table_entries("1 104 503 110.8274 84.9811 25.8463 22.0631 132.8905 14,450,000 130,050,000 144,500,000\n"
+                         "2 102 701 110.8458 84.9879 25.8579 22.065 132.9108 14,650,000 131,850,000 146,500,000")
+    entry, method = find_entry("084.9879", 84.9879, sale)
+    assert (method, entry["contract"]) == ("공고문 표(면적 일치)", 14_650_000)
+    # 국민임대: API 주택형이 "4600"처럼 와도 전용면적 46.90의 정수 46 + 타입 문자 B로 46B 줄
+    rent = table_entries("전주 46A 18,054,000 902,700 17,151,300\n전주 46B 19,122,000 956,100 18,165,900")
+    entry, method = find_entry("46.90B", 46.9, rent)
+    assert (method, entry["contract"]) == ("공고문 표", 956_100)
+    entry, method = find_entry("4600", 46.22, rent)
+    assert (method, entry["contract"]) == ("공고문 표(면적 일치)", 902_700)
 
 
 def test_table_entries_ignores_household_counts():
@@ -111,15 +133,17 @@ def test_match_entry_by_exact_label_then_area_number():
     assert match_entry("084.9972A", entries) is None
 
 
-def test_listing_costs_priority_table_over_fixed_and_ratio():
-    text = RENT_TABLE_WON + "\n계약금(20%) 계약금 100만원"
+def test_listing_costs_priority():
+    # 우선순위: 주택형이 맞는 표 > 정액 > 주택형을 못 맞춘 표의 최솟값 > 비율
     listings = [
         {"source": "lh", "external_id": "1", "model_no": "01-001", "unit_type": "46", "sale_price": None, "rent_deposit": None},
         {"source": "lh", "external_id": "1", "model_no": "01-002", "unit_type": "39", "sale_price": None, "rent_deposit": None},
     ]
-    matched, fallback = listing_costs(text, listings)
+    matched, fixed = listing_costs(RENT_TABLE_WON + "\n계약금(20%) 계약금 100만원", listings)
     assert (matched["method"], matched["contract_deposit"]) == ("공고문 표", 1_121_000)
-    assert (fallback["method"], fallback["contract_deposit"]) == ("공고문 표·최솟값", 866_350)
+    assert (fixed["method"], fixed["contract_deposit"]) == ("공고문 정액", 1_000_000)
+    _, lowest = listing_costs(RENT_TABLE_WON + "\n계약금(20%)", listings)
+    assert (lowest["method"], lowest["contract_deposit"]) == ("공고문 표·최솟값", 866_350)
 
 
 def test_listing_costs_sale_rows_need_table_total_near_price():

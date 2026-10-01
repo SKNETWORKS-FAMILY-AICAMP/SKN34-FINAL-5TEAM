@@ -35,6 +35,7 @@ MIN_TOTAL = 1_000_000
 MIN_CONTRACT = 100_000
 PRICE_TOLERANCE = 0.1  # 분양 행: 표의 계가 분양가 ±10% 안일 때만 그 표를 계약금 표로 본다
 MAX_SALE_RATIO = 0.2  # 분양 계약금은 보통 분양가의 5~20%
+MIN_SALE_TOTAL = 10_000_000  # 분양 행: 계가 1,000만원 미만인 표 줄은 주택가격이 아니다 (옵션 가격표)
 MIN_SALE_RATIO = 0.01  # 분양 행의 정액 계약금이 분양가의 1% 미만이면 다른 비용(옵션 등)으로 보고 쓰지 않는다
 SKIP_NAMES = ("팸플릿", "팜플렛", "안내문", "목록", "양식", "동의서", "신청서", "카탈로그", "배치도", "평면")
 
@@ -43,6 +44,9 @@ _LABEL = re.compile(r"\d")
 _FIXED = re.compile(r"계약금[^\d\n%]{0,12}?(\d[\d,]*)\s*(천만원|백만원|만원|천원)")
 _UNITS = {"천만원": 10_000_000, "백만원": 1_000_000, "만원": 10_000, "천원": 1_000}
 _OPTION_COST = re.compile(r"발코니|확장|옵션|선택품목")
+# 옵션·확장 가격표 줄 (붙박이장·침실 통합 등) — 계약금 표로 읽지 않는다
+_OPTION_LINE = re.compile(r"발코니|확장|옵션|선택품목|붙박이|침실|거실|욕실|주방|냉장고|에어컨|현관|알파룸|시스템")
+_AREA = re.compile(r"^\d{1,3}\.\d{2,4}$")
 # 계약금 규정 없이 임대보증금만 있는 표: SH 주택목록 "… 재공급 19,530,000 …", 임대조건 "13형 13.25 1,090,000 …"
 _LISTED_DEPOSIT = re.compile(r"(?:신규|재공급)\s+(\d{1,3}(?:,\d{3}){2,})(?!\d)"
                              r"|(?:^|\s)\d+[A-Z]?형\s+\d+\.\d+(?:~\d+\.\d+)?\s+(\d{1,3}(?:,\d{3}){2,})(?!\d)", re.M)
@@ -149,23 +153,29 @@ def _split_glued(token: str) -> list[str]:
 
 
 # 한 줄 안에서 금액 칸의 순서 (index 0이 계약금 위치를 가리킴)
-#   계 계약금 잔금 / 계약금 잔금 계 / 계약금 할부금(중도금) 잔금 계
+#   계 계약금 잔금 / 계약금 잔금 계 / 계약금 할부금(중도금) 잔금 계 / 계 계약금 잔금 융자금
 _LAYOUTS = (
     (3, lambda v: (v[1], v[0], v[1] + v[2] - v[0], v[2])),
     (3, lambda v: (v[0], v[2], v[0] + v[1] - v[2], v[1])),
     (4, lambda v: (v[0], v[3], v[0] + v[1] + v[2] - v[3], v[3] - v[0])),
+    (4, lambda v: (v[1], v[0], v[1] + v[2] + v[3] - v[0], v[0] - v[1])),
 )
 
 
 def table_entries(text: str) -> list[dict]:
     """계 = 계약금 + 잔금(+ 할부금)이 맞는 연속 숫자를 찾아 주택형 표기와 함께 반환.
 
-    칸 순서는 "계 계약금 잔금", "계약금 잔금 계", "계약금 할부금 잔금 계" 세 가지를 본다.
+    칸 순서는 "계 계약금 잔금", "계약금 잔금 계", "계약금 할부금 잔금 계", "계 계약금 잔금 융자금" 네 가지를 본다.
+    옵션·발코니 가격표 줄은 건너뛴다. 줄에 있는 면적 숫자는 areas로 같이 반환한다 (find_entry에서 사용).
     """
     entries = []
     for line in text.splitlines():
+        if _OPTION_LINE.search(line):
+            continue
         tokens = [piece for token in line.split() for piece in _split_glued(token)]
         values = [_number(t) for t in tokens]
+        # 같은 줄의 면적 숫자 (분양 매각 표는 주택형 대신 전용·공급·계약면적이 적혀 있다)
+        areas = [float(t) for t in tokens if _AREA.match(t)]
         i = 0
         while i < len(tokens):
             for width, pick in _LAYOUTS:
@@ -182,7 +192,7 @@ def table_entries(text: str) -> list[dict]:
                 label = next((tokens[j] for j in range(i - 1, max(i - 4, -1), -1)
                               if (values[j] is None and _LABEL.search(tokens[j]))
                               or (values[j] is not None and values[j] < 1000 and "," not in tokens[j])), None)
-                entries.append({"label": label, "contract": contract * scale,
+                entries.append({"label": label, "contract": contract * scale, "areas": areas,
                                 "total": total * scale, "balance": balance * scale})
                 i += width - 1
                 break
@@ -208,18 +218,46 @@ def _first_number(label: str | None) -> float | None:
     return float(match.group()) if match else None
 
 
-def match_entry(unit_type: str | None, entries: list[dict]) -> dict | None:
-    """listings.unit_type(예: 46, 084.9972A)과 공고문 표기(예: 46A, 84A)를 연결한다."""
-    if not unit_type or not entries:
-        return None
-    key = unit_type.replace(" ", "")
-    exact = [e for e in entries if e["label"] and e["label"].replace(" ", "") == key]
-    if exact:
-        return min(exact, key=lambda e: e["contract"])
+def _letter(text: str | None) -> str | None:
+    """주택형의 타입 문자: "29A" → A, "084.9972B" → B, "A형" → A, "26.37B" → B"""
+    match = re.search(r"\d(?:\.\d+)?([A-Z])", text or "") or re.match(r"([A-Z])형", text or "")
+    return match.group(1) if match else None
+
+
+def find_entry(unit_type: str | None, area, entries: list[dict]) -> tuple[dict | None, str | None]:
+    """listings 행(주택형·전용면적)과 공고문 표의 줄을 연결한다. 반환: (줄, method)
+
+    1) 표기가 같음 (46A = 46A)                          → 공고문 표
+    2) 표 줄 안에 같은 전용면적 숫자가 있음 (매각 표)     → 공고문 표(면적 일치)
+    3) 주택형의 첫 숫자 = 표기의 첫 숫자 (46 ↔ 46A)      → 공고문 표
+    4) 전용면적의 정수 = 표기의 첫 숫자 (46.22㎡ ↔ 46)   → 공고문 표(면적 일치)
+    후보가 여럿이면 타입 문자(A/B)가 같은 줄을 먼저, 그 안에서 계약금이 가장 낮은 줄.
+    """
+    if not entries:
+        return None, None
+    key = (unit_type or "").replace(" ", "")
     number = _first_number(unit_type)
-    same = [e for e in entries if number is not None and _first_number(e["label"]) is not None
-            and int(_first_number(e["label"])) == int(number)]
-    return min(same, key=lambda e: e["contract"]) if same else None
+    area = float(area) if area else None
+    steps = (
+        ("공고문 표", lambda e: bool(key) and (e["label"] or "").replace(" ", "") == key),
+        ("공고문 표(면적 일치)", lambda e: area is not None and any(abs(a - area) < 0.006 for a in e.get("areas", []))),
+        ("공고문 표", lambda e: number is not None and _first_number(e["label"]) is not None
+         and int(_first_number(e["label"])) == int(number)),
+        ("공고문 표(면적 일치)", lambda e: area is not None and _first_number(e["label"]) is not None
+         and int(_first_number(e["label"])) == int(area)),
+    )
+    letter = _letter(key)
+    for method, test in steps:
+        found = [e for e in entries if test(e)]
+        if found:
+            same_letter = [e for e in found if letter and _letter(e["label"]) == letter]
+            return min(same_letter or found, key=lambda e: e["contract"]), method
+    return None, None
+
+
+def match_entry(unit_type: str | None, entries: list[dict]) -> dict | None:
+    """주택형 표기만으로 연결 (전용면적 없이). find_entry 참고."""
+    return find_entry(unit_type, None, entries)[0]
 
 
 def listing_costs(text: str, listings: list[dict]) -> list[dict]:
@@ -237,23 +275,27 @@ def listing_costs(text: str, listings: list[dict]) -> list[dict]:
                 "contract_deposit": None, "contract_ratio": None, "deposit_total": None, "balance": None,
                 "method": None, "doc_label": None}
         price = float(row["sale_price"]) if row.get("sale_price") else None
-        # 분양가 = 대지비 + 건축비 같은 표를 피하려고 분양 행은 계약금 비율도 20% 이하만
-        entries = [e for e in all_entries if price is None or (abs(e["total"] - price) <= price * PRICE_TOLERANCE
-                                                                and e["contract"] <= e["total"] * MAX_SALE_RATIO)]
-        entry = match_entry(row.get("unit_type"), entries)
-        method = "공고문 표"
+        is_sale = price is not None or "분양" in (row.get("supply_type") or "") or "매각" in (row.get("complex_name") or "")
+        # 분양가 = 대지비 + 건축비 같은 표를 피하려고 분양 행은 계약금 비율도 20% 이하만,
+        # 분양가를 모르는 분양 행은 계 1,000만원 미만(옵션 가격표)을 버린다
+        entries = [e for e in all_entries
+                   if not is_sale or (e["contract"] <= e["total"] * MAX_SALE_RATIO and e["total"] >= MIN_SALE_TOTAL
+                                      and (price is None or abs(e["total"] - price) <= price * PRICE_TOLERANCE))]
+        entry, method = find_entry(row.get("unit_type"), row.get("exclusive_area_sqm"), entries)
         if entry is None and entries and price:
             entry, method = min(entries, key=lambda e: abs(e["total"] - price)), "공고문 표(가격 일치)"
+        fixed_ok = fixed and (price is None or fixed >= price * MIN_SALE_RATIO)
         if entry:
             base.update(contract_deposit=entry["contract"], deposit_total=entry["total"], balance=entry["balance"],
                         doc_label=(entry["label"] or "")[:50] or None, method=method,
                         contract_ratio=round(entry["contract"] * 100 / entry["total"], 2))
+        elif fixed_ok:
+            # 주택형을 연결하지 못한 표보다 공고 전체에 적힌 정액(제목·파일명 "계약금 1,000만원")을 먼저 쓴다
+            base.update(contract_deposit=fixed, method="공고문 정액")
         elif entries:
             low = min(entries, key=lambda e: e["contract"])
             base.update(contract_deposit=low["contract"], deposit_total=low["total"], balance=low["balance"],
                         doc_label=(low["label"] or "")[:50] or None, method="공고문 표·최솟값")
-        elif fixed and (price is None or fixed >= price * MIN_SALE_RATIO):
-            base.update(contract_deposit=fixed, method="공고문 정액")
         elif ratio:
             price = row.get("sale_price") or row.get("rent_deposit")
             if price:

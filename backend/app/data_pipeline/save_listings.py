@@ -226,6 +226,9 @@ def save_notice_costs(reparse_only: bool = False) -> None:
                        Listing.rent_deposit, Listing.address, Listing.complex_name, Listing.exclusive_area_sqm,
                        Listing.supply_type)
                 .where(Listing.source == source, Listing.external_id == external_id)).mappings()]
+            # 제목에도 계약금이 적힌 경우가 있다 (예: "(계약금 1,000만원)청주지북B1블록 공공분양 …")
+            if units and units[0]["complex_name"]:
+                doc_text = units[0]["complex_name"] + "\n" + doc_text
             found = listing_costs(doc_text, units)
             # 공고문에서 못 찾은 행은 첨부 주택목록의 임대보증금으로 (매입임대 등)
             covered = {c["model_no"] for c in found}
