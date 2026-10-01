@@ -133,3 +133,26 @@ class NoticeCost(Base):
     balance: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 표의 잔금(원)
     method: Mapped[str] = mapped_column(String(30))
     doc_label: Mapped[str] = mapped_column(String(50), nullable=True)  # 공고문 표에서 매칭한 주택형 표기
+    source_line: Mapped[str] = mapped_column(String(300), nullable=True)  # 근거: 값을 읽은 공고문 원문 줄 (주택목록이면 파일/시트/순번)
+
+
+class NoticeOptionCost(Base):
+    """분양 공고문의 옵션(발코니 확장·추가 선택품목) 계약금 원문. 공고문 표의 한 줄 또는 문장 = 1행.
+
+    주택 계약금(notice_costs)과 합치지 않는다. 옵션은 선택이고 품목에 따라 금액이 달라서,
+    "계약금 + 옵션 선택 시 추가" 같은 계산은 화면·가공 레이어에서 한다.
+    """
+
+    __tablename__ = "notice_option_costs"
+    __table_args__ = (UniqueConstraint("source", "external_id", "seq", name="uq_notice_option_cost"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source: Mapped[str] = mapped_column(String(20))
+    external_id: Mapped[str] = mapped_column(String(50), index=True)
+    seq: Mapped[int] = mapped_column(Integer)  # 공고문 안에서 나온 순서
+    kind: Mapped[str] = mapped_column(String(20))  # 발코니 확장 / 선택품목
+    label: Mapped[str] = mapped_column(String(50), nullable=True)  # 줄 앞의 주택형·품목 표기 (원문 그대로)
+    total: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 옵션 금액 계(원), 문장이면 없음
+    contract: Mapped[int] = mapped_column(Numeric(14, 0))  # 옵션 계약금(원)
+    balance: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)
+    source_line: Mapped[str] = mapped_column(String(300))  # 공고문 원문 줄

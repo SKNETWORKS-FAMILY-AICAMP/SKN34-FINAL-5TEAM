@@ -47,6 +47,11 @@ _OPTION_COST = re.compile(r"발코니|확장|옵션|선택품목")
 # 옵션·확장 가격표 줄 (붙박이장·침실 통합 등) — 계약금 표로 읽지 않는다
 _OPTION_LINE = re.compile(r"발코니|확장|옵션|선택품목|붙박이|침실|거실|욕실|주방|냉장고|에어컨|현관|알파룸|시스템")
 _AREA = re.compile(r"^\d{1,3}\.\d{2,4}$")
+# 옵션 가격표 구역: 발코니·옵션 제목 줄부터 다음 주택가격·임대조건 제목 전까지 (최대 OPTION_SECTION_LINES줄)
+_OPTION_HEADER = re.compile(r"발코니|확장|옵션|선택품목")
+_PRICE_HEADER = re.compile(r"주택가격|분양가격|공급가격|공급금액|분양대금|임대조건|임대보증금|공급대상")
+OPTION_SECTION_LINES = 20
+MAX_OPTION_TOTAL = 50_000_000
 # 계약금 규정 없이 임대보증금만 있는 표: SH 주택목록 "… 재공급 19,530,000 …", 임대조건 "13형 13.25 1,090,000 …"
 _LISTED_DEPOSIT = re.compile(r"(?:신규|재공급)\s+(\d{1,3}(?:,\d{3}){2,})(?!\d)"
                              r"|(?:^|\s)\d+[A-Z]?형\s+\d+\.\d+(?:~\d+\.\d+)?\s+(\d{1,3}(?:,\d{3}){2,})(?!\d)", re.M)
@@ -162,16 +167,21 @@ _LAYOUTS = (
 )
 
 
-def table_entries(text: str) -> list[dict]:
-    """계 = 계약금 + 잔금(+ 할부금)이 맞는 연속 숫자를 찾아 주택형 표기와 함께 반환.
+def _scan_entries(text: str) -> list[dict]:
+    """계 = 계약금 + 잔금(+ 할부금·융자금)이 맞는 연속 숫자를 찾아 주택형 표기·원문 줄과 함께 반환.
 
     칸 순서는 "계 계약금 잔금", "계약금 잔금 계", "계약금 할부금 잔금 계", "계 계약금 잔금 융자금" 네 가지를 본다.
-    옵션·발코니 가격표 줄은 건너뛴다. 줄에 있는 면적 숫자는 areas로 같이 반환한다 (find_entry에서 사용).
+    option=True: 옵션 가격표 줄 — 줄에 발코니·침실 같은 말이 있거나, 발코니·옵션 제목 아래 구역
+    (다음 주택가격·임대조건 제목 전, 최대 OPTION_SECTION_LINES줄)에 있는 줄.
     """
     entries = []
-    for line in text.splitlines():
-        if _OPTION_LINE.search(line):
-            continue
+    option_until, header = -1, ""
+    for n, line in enumerate((text or "").splitlines()):
+        if _OPTION_HEADER.search(line):
+            option_until, header = n + OPTION_SECTION_LINES, line
+        elif _PRICE_HEADER.search(line):
+            option_until, header = -1, ""
+        option = n <= option_until or bool(_OPTION_LINE.search(line))
         tokens = [piece for token in line.split() for piece in _split_glued(token)]
         values = [_number(t) for t in tokens]
         # 같은 줄의 면적 숫자 (분양 매각 표는 주택형 대신 전용·공급·계약면적이 적혀 있다)
@@ -193,24 +203,67 @@ def table_entries(text: str) -> list[dict]:
                               if (values[j] is None and _LABEL.search(tokens[j]))
                               or (values[j] is not None and values[j] < 1000 and "," not in tokens[j])), None)
                 entries.append({"label": label, "contract": contract * scale, "areas": areas,
-                                "total": total * scale, "balance": balance * scale})
+                                "total": total * scale, "balance": balance * scale,
+                                "line": line.strip()[:300], "option": option,
+                                "header": header.strip()[:300] if n <= option_until else ""})
                 i += width - 1
                 break
             i += 1
     return entries
 
 
+def table_entries(text: str) -> list[dict]:
+    """주택 계약금 표의 줄 (옵션 가격표 줄 제외). 줄의 면적 숫자(areas)와 원문(line)을 같이 반환한다."""
+    return [e for e in _scan_entries(text) if not e["option"]]
+
+
+def option_entries(text: str) -> list[dict]:
+    """옵션(발코니 확장·추가 선택품목) 가격표 줄. 주택 계약금과 별도로 notice_option_costs에 원문 그대로 저장한다."""
+    return [e for e in _scan_entries(text) if e["option"]]
+
+
+def _line_at(text: str, pos: int) -> str:
+    start = text.rfind("\n", 0, pos) + 1
+    end = text.find("\n", pos)
+    return text[start:end if end >= 0 else len(text)].strip()[:300]
+
+
+def _fixed_matches(text: str) -> list[tuple[int, bool, str]]:
+    """"계약금 1,000만원" 문장들 → [(금액, 옵션 계약금 여부, 원문 줄)]"""
+    found = []
+    for m in _FIXED.finditer(text or ""):
+        amount = int(m.group(1).replace(",", "")) * _UNITS[m.group(2)]
+        if 100_000 <= amount <= 500_000_000:
+            # "발코니확장비용 계약금(1백만원)", "추가선택품목 계약금"은 주택 계약금이 아니라 옵션 계약금
+            option = bool(_OPTION_COST.search(text[max(0, m.start() - 15):m.start()]))
+            found.append((amount, option, _line_at(text, m.start())))
+    return found
+
+
+def fixed_match(text: str) -> tuple[int | None, str | None]:
+    """주택 계약금 정액 (가장 많이 나온 금액)과 그 금액이 처음 나온 원문 줄"""
+    found = [(amount, line) for amount, option, line in _fixed_matches(text) if not option]
+    if not found:
+        return None, None
+    amount = Counter(a for a, _ in found).most_common(1)[0][0]
+    return amount, next(line for a, line in found if a == amount)
+
+
 def fixed_amount(text: str) -> int | None:
-    # "발코니확장비용 계약금(1백만원)", "추가선택품목 계약금"은 주택 계약금이 아니다
-    amounts = [int(m.group(1).replace(",", "")) * _UNITS[m.group(2)] for m in _FIXED.finditer(text)
-               if not _OPTION_COST.search(text[max(0, m.start() - 15):m.start()])]
-    amounts = [a for a in amounts if 100_000 <= a <= 500_000_000]
-    return Counter(amounts).most_common(1)[0][0] if amounts else None
+    return fixed_match(text)[0]
+
+
+def ratio_match(text: str) -> tuple[float | None, str | None]:
+    found = [(float(m.group(1)), _line_at(text, m.start())) for m in _RATIO.finditer(text or "")
+             if 1 <= float(m.group(1)) <= 50]
+    if not found:
+        return None, None
+    ratio = Counter(r for r, _ in found).most_common(1)[0][0]
+    return ratio, next(line for r, line in found if r == ratio)
 
 
 def ratio_percent(text: str) -> float | None:
-    ratios = [float(r) for r in _RATIO.findall(text) if 1 <= float(r) <= 50]
-    return Counter(ratios).most_common(1)[0][0] if ratios else None
+    return ratio_match(text)[0]
 
 
 def _first_number(label: str | None) -> float | None:
@@ -227,10 +280,11 @@ def _letter(text: str | None) -> str | None:
 def find_entry(unit_type: str | None, area, entries: list[dict]) -> tuple[dict | None, str | None]:
     """listings 행(주택형·전용면적)과 공고문 표의 줄을 연결한다. 반환: (줄, method)
 
-    1) 표기가 같음 (46A = 46A)                          → 공고문 표
-    2) 표 줄 안에 같은 전용면적 숫자가 있음 (매각 표)     → 공고문 표(면적 일치)
-    3) 주택형의 첫 숫자 = 표기의 첫 숫자 (46 ↔ 46A)      → 공고문 표
-    4) 전용면적의 정수 = 표기의 첫 숫자 (46.22㎡ ↔ 46)   → 공고문 표(면적 일치)
+    금액은 모두 공고문 원문 숫자이고, 아래 method는 "어느 줄이 이 주택형인가"를 어떻게 판단했는지다.
+    1) 표기가 같음 (51A = 51A)                              → 공고문 표                    (확실)
+    2) 표 줄 안에 같은 전용면적 숫자가 있음 (매각 표)         → 공고문 표(면적 일치)          (같은 줄의 같은 숫자)
+    3) 주택형의 첫 숫자 = 표기의 첫 숫자 (26A(청년) ↔ 26A)   → 공고문 표(주택형 숫자 일치)   (대부분 확실)
+    4) 전용면적의 정수 = 표기의 첫 숫자 (4600·46.22㎡ ↔ 46)  → 공고문 표(면적 추정 연결)    (API 주택형이 깨져 면적으로 추론)
     후보가 여럿이면 타입 문자(A/B)가 같은 줄을 먼저, 그 안에서 계약금이 가장 낮은 줄.
     """
     if not entries:
@@ -241,9 +295,9 @@ def find_entry(unit_type: str | None, area, entries: list[dict]) -> tuple[dict |
     steps = (
         ("공고문 표", lambda e: bool(key) and (e["label"] or "").replace(" ", "") == key),
         ("공고문 표(면적 일치)", lambda e: area is not None and any(abs(a - area) < 0.006 for a in e.get("areas", []))),
-        ("공고문 표", lambda e: number is not None and _first_number(e["label"]) is not None
+        ("공고문 표(주택형 숫자 일치)", lambda e: number is not None and _first_number(e["label"]) is not None
          and int(_first_number(e["label"])) == int(number)),
-        ("공고문 표(면적 일치)", lambda e: area is not None and _first_number(e["label"]) is not None
+        ("공고문 표(면적 추정 연결)", lambda e: area is not None and _first_number(e["label"]) is not None
          and int(_first_number(e["label"])) == int(area)),
     )
     letter = _letter(key)
@@ -267,13 +321,11 @@ def listing_costs(text: str, listings: list[dict]) -> list[dict]:
     주택형 표기로 연결되지 않으면 계가 분양가에 가장 가까운 줄을 쓴다.
     """
     all_entries = table_entries(text)
-    fixed = fixed_amount(text)
-    ratio = ratio_percent(text)
+    fixed, fixed_line = fixed_match(text)
+    ratio, ratio_line = ratio_match(text)
     costs = []
     for row in listings:
-        base = {"source": row["source"], "external_id": row["external_id"], "model_no": row["model_no"],
-                "contract_deposit": None, "contract_ratio": None, "deposit_total": None, "balance": None,
-                "method": None, "doc_label": None}
+        base = _empty_cost(row)
         price = float(row["sale_price"]) if row.get("sale_price") else None
         is_sale = price is not None or "분양" in (row.get("supply_type") or "") or "매각" in (row.get("complex_name") or "")
         # 분양가 = 대지비 + 건축비 같은 표를 피하려고 분양 행은 계약금 비율도 20% 이하만,
@@ -287,29 +339,64 @@ def listing_costs(text: str, listings: list[dict]) -> list[dict]:
         fixed_ok = fixed and (price is None or fixed >= price * MIN_SALE_RATIO)
         if entry:
             base.update(contract_deposit=entry["contract"], deposit_total=entry["total"], balance=entry["balance"],
-                        doc_label=(entry["label"] or "")[:50] or None, method=method,
+                        doc_label=(entry["label"] or "")[:50] or None, method=method, source_line=entry["line"],
                         contract_ratio=round(entry["contract"] * 100 / entry["total"], 2))
         elif fixed_ok:
             # 주택형을 연결하지 못한 표보다 공고 전체에 적힌 정액(제목·파일명 "계약금 1,000만원")을 먼저 쓴다
-            base.update(contract_deposit=fixed, method="공고문 정액")
+            base.update(contract_deposit=fixed, method="공고문 정액", source_line=fixed_line)
         elif entries:
             low = min(entries, key=lambda e: e["contract"])
             base.update(contract_deposit=low["contract"], deposit_total=low["total"], balance=low["balance"],
-                        doc_label=(low["label"] or "")[:50] or None, method="공고문 표·최솟값")
+                        doc_label=(low["label"] or "")[:50] or None, method="공고문 표·최솟값", source_line=low["line"])
         elif ratio:
             price = row.get("sale_price") or row.get("rent_deposit")
             if price:
-                base.update(contract_deposit=round(float(price) * ratio / 100), contract_ratio=ratio, method="공고문 비율")
+                base.update(contract_deposit=round(float(price) * ratio / 100), contract_ratio=ratio,
+                            method="공고문 비율", source_line=ratio_line)
         if base["method"]:
             costs.append(base)
     return costs
 
 
+def _empty_cost(row: dict) -> dict:
+    return {"source": row["source"], "external_id": row["external_id"], "model_no": row["model_no"],
+            "contract_deposit": None, "contract_ratio": None, "deposit_total": None, "balance": None,
+            "method": None, "doc_label": None, "source_line": None}
+
+
+def option_costs(text: str) -> list[dict]:
+    """분양 공고문의 옵션 계약금 원문 → notice_option_costs 행 (합산하지 않고 줄마다 그대로).
+
+    kind: 발코니 확장 / 선택품목. 표 줄은 계·계약금·잔금, "발코니확장비용 계약금(1백만원)" 같은 문장은 계약금만.
+    """
+    rows = []
+    for e in option_entries(text):
+        # 옵션 금액은 계 5,000만원 이하·계약금 20% 이하 (그 밖은 옵션 구역에 걸린 할부표나 두 단 편집으로 깨진 줄)
+        if e["total"] > MAX_OPTION_TOTAL or e["contract"] > e["total"] * MAX_SALE_RATIO:
+            continue
+        rows.append({"kind": _option_kind(e["line"] + " " + e["header"]), "label": (e["label"] or "")[:50] or None,
+                     "total": e["total"], "contract": e["contract"], "balance": e["balance"], "source_line": e["line"]})
+    for amount, option, line in _fixed_matches(text):
+        if option:
+            rows.append({"kind": _option_kind(line), "label": None, "total": None, "contract": amount,
+                         "balance": None, "source_line": line})
+    return rows
+
+
+def _option_kind(line: str) -> str:
+    return "발코니 확장" if re.search(r"발코니|확장", line) else "선택품목"
+
+
+def listed_deposit_match(text: str) -> tuple[int | None, str | None]:
+    """계약금 규정 없이 호별·주택형별 임대보증금만 있는 표의 최솟값과 원문 줄 (SH 주택목록, 공공기숙사 임대조건 등)"""
+    found = [(int((m.group(1) or m.group(2)).replace(",", "")), _line_at(text, m.start()))
+             for m in _LISTED_DEPOSIT.finditer(text or "")]
+    found = [f for f in found if MIN_CONTRACT <= f[0] <= 500_000_000]
+    return min(found) if found else (None, None)
+
+
 def listed_deposit(text: str) -> int | None:
-    """계약금 규정 없이 호별·주택형별 임대보증금만 있는 표의 최솟값 (SH 주택목록, 공공기숙사 임대조건 등)"""
-    amounts = [int((a or b).replace(",", "")) for a, b in _LISTED_DEPOSIT.findall(text or "")]
-    amounts = [a for a in amounts if MIN_CONTRACT <= a <= 500_000_000]
-    return min(amounts) if amounts else None
+    return listed_deposit_match(text)[0]
 
 
 def fallback_cost(row: dict, text: str) -> dict | None:
@@ -320,9 +407,7 @@ def fallback_cost(row: dict, text: str) -> dict | None:
     - 임대보증금만 있는 표(SH 주택목록 등): 보증금 최솟값을 필요 자금으로
     - 매입임대: 주택을 나중에 배정하는 예비입주자 모집 등 → 금액 없이 "배정 시 안내"
     """
-    base = {"source": row["source"], "external_id": row["external_id"], "model_no": row["model_no"],
-            "contract_deposit": None, "contract_ratio": None, "deposit_total": None, "balance": None,
-            "method": None, "doc_label": None}
+    base = _empty_cost(row)
     supply = row.get("supply_type") or ""
     if "전세임대" in supply:
         fixed = _JEONSE_FIXED.search(text or "")
@@ -330,13 +415,14 @@ def fallback_cost(row: dict, text: str) -> dict | None:
         if fixed:
             amount = int(fixed.group(1).replace(",", "")) * 10_000
             return {**base, "contract_deposit": amount, "deposit_total": amount, "contract_ratio": 100,
-                    "method": "공고문 본인부담 보증금"}
-        return {**base, "contract_ratio": int(ratio.group(1)) if ratio else None, "method": "주택 선택 후 결정"}
+                    "method": "공고문 본인부담 보증금", "source_line": _line_at(text, fixed.end() - 1)}
+        return {**base, "contract_ratio": int(ratio.group(1)) if ratio else None, "method": "주택 선택 후 결정",
+                "source_line": _line_at(text, ratio.start()) if ratio else None}
     if row.get("sale_price") is None:
-        deposit = listed_deposit(text)
+        deposit, line = listed_deposit_match(text)
         if deposit:
             return {**base, "contract_deposit": deposit, "deposit_total": deposit, "contract_ratio": 100,
-                    "method": "공고문 보증금 최솟값"}
+                    "method": "공고문 보증금 최솟값", "source_line": line}
     if "매입임대" in supply or "매입임대" in (row.get("complex_name") or ""):
         return {**base, "method": "배정 시 안내"}
     return None

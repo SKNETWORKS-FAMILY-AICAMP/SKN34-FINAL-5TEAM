@@ -221,5 +221,8 @@ def house_costs(listings: list[dict], houses: list[dict]) -> list[dict]:
             "contract_deposit": house["rent_deposit"], "contract_ratio": 100, "deposit_total": house["rent_deposit"],
             "balance": None, "method": method,
             "doc_label": (house.get("condition_group") or house.get("house_label") or "")[:50] or None,
+            # 근거: 주택목록 엑셀의 어느 행인지 (lh_rental_houses에서 같은 file_name·sheet·seq로 원본 확인)
+            "source_line": f"{house.get('file_name') or ''} / {house.get('sheet') or ''} / 순번 {house.get('seq')} / "
+                           f"{house.get('address') or ''} {house.get('ho') or ''}".strip()[:300],
         })
     return costs

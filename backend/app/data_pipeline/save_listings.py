@@ -28,6 +28,7 @@ from app.data_pipeline.document_client import (
     lh_document,
     lh_extra_documents,
     listing_costs,
+    option_costs,
     read_pdf,
     receipt_period,
     sh_document,
@@ -43,7 +44,7 @@ from app.db.views import create_views, refresh_views
 from app.models.historical_result import HistoricalResult
 from app.models.listing import Listing
 from app.models.loan_product import LoanProduct, LoanRateOption
-from app.models.notice_sources import LhNoticeDetail, LhRentalHouse, NoticeCost, NoticeDocument, ShNotice
+from app.models.notice_sources import LhNoticeDetail, LhRentalHouse, NoticeCost, NoticeDocument, NoticeOptionCost, ShNotice
 
 BATCH_SIZE = 1000
 LISTING_KEY = ("source", "external_id", "model_no")
@@ -217,8 +218,8 @@ def save_notice_costs(reparse_only: bool = False) -> None:
         for house in db.scalars(select(LhRentalHouse).where(LhRentalHouse.pan_id.in_(lh_ids))):
             houses.setdefault(("lh", house.pan_id), []).append(
                 {c: getattr(house, c) for c in ("address", "ho", "house_label", "exclusive_area_sqm", "rent_deposit",
-                                                "condition_group")})
-        costs = []
+                                                "condition_group", "file_name", "sheet", "seq")})
+        costs, options = [], []
         for source, external_id in notices:
             doc_text = texts.get((source, external_id), "")
             units = [dict(u) for u in db.execute(
@@ -237,13 +238,22 @@ def save_notice_costs(reparse_only: bool = False) -> None:
             covered = {c["model_no"] for c in found}
             found += [c for u in units if u["model_no"] not in covered for c in [fallback_cost(u, doc_text)] if c]
             costs.extend(found)
+            # 분양 공고는 옵션(발코니 확장·선택품목) 계약금 원문도 따로 저장 (주택 계약금과 합치지 않음)
+            if any(u["sale_price"] or "분양" in (u["supply_type"] or "") or "매각" in (u["complex_name"] or "")
+                   for u in units):
+                options += [{"source": source, "external_id": external_id, "seq": i, **o}
+                            for i, o in enumerate(option_costs(texts.get((source, external_id), "")), 1)]
         # 다시 계산한 공고의 이전 결과는 지운다 (규칙이 바뀌어 더 이상 안 잡히는 행이 남지 않도록)
         for source, external_id in notices:
-            db.execute(delete(NoticeCost).where(NoticeCost.source == source, NoticeCost.external_id == external_id))
+            for model in (NoticeCost, NoticeOptionCost):
+                db.execute(delete(model).where(model.source == source, model.external_id == external_id))
         db.commit()
     saved = upsert(NoticeCost, costs, ("source", "external_id", "model_no"), "uq_notice_cost_listing")
+    upsert(NoticeOptionCost, options, ("source", "external_id", "seq"), "uq_notice_option_cost")
     print(f"[계약금] 공고문·주택목록 {len(notices)}건에서 주택형 {saved}행 — " + ", ".join(
         f"{method} {count}" for method, count in Counter(c["method"] for c in costs).items()), flush=True)
+    print(f"[옵션 계약금] 분양 공고 {len({(o['source'], o['external_id']) for o in options})}건에서 "
+          f"{len(options)}줄 (발코니 확장·선택품목 원문)", flush=True)
 
 
 def save_lh_house_lists(pan_ids: list[str]) -> None:

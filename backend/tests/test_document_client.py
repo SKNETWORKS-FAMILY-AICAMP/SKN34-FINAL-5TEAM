@@ -59,9 +59,9 @@ def test_find_entry_by_area_in_line_and_type_letter():
     # 국민임대: API 주택형이 "4600"처럼 와도 전용면적 46.90의 정수 46 + 타입 문자 B로 46B 줄
     rent = table_entries("전주 46A 18,054,000 902,700 17,151,300\n전주 46B 19,122,000 956,100 18,165,900")
     entry, method = find_entry("46.90B", 46.9, rent)
-    assert (method, entry["contract"]) == ("공고문 표", 956_100)
+    assert (method, entry["contract"]) == ("공고문 표(주택형 숫자 일치)", 956_100)
     entry, method = find_entry("4600", 46.22, rent)
-    assert (method, entry["contract"]) == ("공고문 표(면적 일치)", 902_700)
+    assert (method, entry["contract"]) == ("공고문 표(면적 추정 연결)", 902_700)
 
 
 def test_table_entries_ignores_household_counts():
@@ -140,7 +140,7 @@ def test_listing_costs_priority():
         {"source": "lh", "external_id": "1", "model_no": "01-002", "unit_type": "39", "sale_price": None, "rent_deposit": None},
     ]
     matched, fixed = listing_costs(RENT_TABLE_WON + "\n계약금(20%) 계약금 100만원", listings)
-    assert (matched["method"], matched["contract_deposit"]) == ("공고문 표", 1_121_000)
+    assert (matched["method"], matched["contract_deposit"]) == ("공고문 표(주택형 숫자 일치)", 1_121_000)
     assert (fixed["method"], fixed["contract_deposit"]) == ("공고문 정액", 1_000_000)
     _, lowest = listing_costs(RENT_TABLE_WON + "\n계약금(20%)", listings)
     assert (lowest["method"], lowest["contract_deposit"]) == ("공고문 표·최솟값", 866_350)
@@ -157,7 +157,7 @@ def test_listing_costs_sale_rows_need_table_total_near_price():
              "sale_price": 244_350_000, "rent_deposit": None}]
     far, near = listing_costs(text, rows)
     assert (far["method"], far["contract_deposit"]) == ("공고문 비율", 243_300_000)
-    assert (near["method"], near["contract_deposit"]) == ("공고문 표", 24_435_000)
+    assert (near["method"], near["contract_deposit"]) == ("공고문 표(주택형 숫자 일치)", 24_435_000)
 
 
 def test_listing_costs_ratio_uses_sale_price_and_skips_unknown():
@@ -169,6 +169,7 @@ def test_listing_costs_ratio_uses_sale_price_and_skips_unknown():
     assert costs == [{
         "source": "applyhome", "external_id": "2", "model_no": "01", "contract_deposit": 35_699_000,
         "contract_ratio": 10.0, "deposit_total": None, "balance": None, "method": "공고문 비율", "doc_label": None,
+        "source_line": "주택가격 계약금 (10%) 입주잔금 (90%)",
     }]
 
 
@@ -209,3 +210,20 @@ def test_sh_document_and_recruitment_title():
     assert is_recruitment("2026년 하반기 신혼·신생아 매입임대주택Ⅱ 입주자 모집공고")
     assert not is_recruitment("2026년 2차 행복주택 입주자 모집 최종 청약 경쟁률 게시")
     assert not is_recruitment("청년 매입임대주택 예비자 공급 계약대상자 발표")
+
+
+def test_option_costs_kept_separately_with_source_line():
+    from app.data_pipeline.document_client import listing_costs, option_costs
+
+    # 리아츠 더 인천: 발코니 확장 표의 금액 줄에는 "발코니"가 없고 위 제목 줄에만 있다
+    text = ("약식표기(타입) 발코니 확장 공급금액\n계약 시 입주지정 시\n59B 12,500,000 1,250,000 11,250,000\n"
+            "※ 주택공급금액의 10% + 발코니확장비용 계약금(1백만원) + 추가선택품목 계약금 10% 입금\n"
+            "주택형 주택가격 계약금 잔금\n59B 368,000,000 36,800,000 331,200,000")
+    options = option_costs(text)
+    assert [(o["kind"], o["label"], o["contract"]) for o in options] == [
+        ("발코니 확장", "59B", 1_250_000), ("발코니 확장", None, 1_000_000)]
+    assert options[0]["source_line"] == "59B 12,500,000 1,250,000 11,250,000"
+    (cost,) = listing_costs(text, [{"source": "applyhome", "external_id": "4", "model_no": "01", "unit_type": "059B",
+                                    "sale_price": 368_000_000, "rent_deposit": None}])
+    # 주택 계약금에는 옵션이 섞이지 않고, 근거 줄이 남는다
+    assert (cost["contract_deposit"], cost["source_line"]) == (36_800_000, "59B 368,000,000 36,800,000 331,200,000")
