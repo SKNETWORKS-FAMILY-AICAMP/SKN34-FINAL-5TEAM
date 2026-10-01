@@ -39,10 +39,21 @@ from app.data_pipeline.document_client import (
 from app.data_pipeline.finlife_client import fetch_loan_products
 from app.data_pipeline.house_list_client import house_costs, house_list_files, read_house_list
 from app.data_pipeline.lh_client import fetch_lh_notices, fetch_notice_detail, map_listing_rows
+from app.data_pipeline.stats_client import (
+    BANKBOOK_ENDPOINTS,
+    BANKBOOK_MONTH,
+    SUBSCRIPTION_ENDPOINTS,
+    SUBSCRIPTION_MONTH,
+    NotApproved,
+    fetch_pages,
+    map_bankbook_row,
+    map_subscription_row,
+)
 from app.data_pipeline.sh_client import fetch_attachment_links, fetch_sh_notices, is_recruitment
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.db.views import create_views, refresh_views
+from app.models.applyhome_stat import BankbookStat, SubscriptionStat
 from app.models.historical_result import HistoricalResult
 from app.models.listing import Listing
 from app.models.loan_product import LoanProduct, LoanRateOption
@@ -362,6 +373,34 @@ def save_sh_recruitments(days: int = 90) -> None:
     print(f"[SH 모집] 최근 {days}일 모집 공고 {len(notices)}건 중 접수기간을 찾은 {saved}건을 listings에 저장", flush=True)
 
 
+def save_applyhome_stats() -> None:
+    """청약통장 통계 + 청약 신청·당첨자 통계 (월별) → bankbook_stats, subscription_stats.
+
+    처음에는 전체 기간을 받고, 그 뒤에는 저장된 마지막 달부터 다시 받는다 (마지막 달 수치가 바뀔 수 있어서 그 달도 다시).
+    기능 하나는 한 트랜잭션으로 넣어서, 중간에 실패하면 그 기능은 이전 상태 그대로 남는다.
+    활용신청이 안 된 서비스(401)는 건너뛴다.
+    """
+    groups = ((BankbookStat, BANKBOOK_ENDPOINTS, BANKBOOK_MONTH, map_bankbook_row),
+              (SubscriptionStat, SUBSCRIPTION_ENDPOINTS, SUBSCRIPTION_MONTH, map_subscription_row))
+    with httpx.Client(timeout=120.0) as client:
+        for model, endpoints, month_field, mapper in groups:
+            for kind, path in endpoints.items():
+                with SessionLocal() as db:
+                    since = db.scalar(select(func.max(model.year_month)).where(model.kind == kind))
+                try:
+                    saved = 0
+                    with engine.begin() as conn:
+                        if since:
+                            conn.execute(delete(model).where(model.kind == kind, model.year_month >= since))
+                        for page in fetch_pages(path, month_field, since, client):
+                            conn.execute(insert(model), [mapper(row, kind) for row in page])
+                            saved += len(page)
+                    print(f"[통계] {model.__tablename__} {kind}: {since or '전체 기간'}부터 {saved}행", flush=True)
+                except NotApproved as exc:
+                    print(f"[통계] {exc} 서비스는 활용신청(또는 승인 반영) 전이라 건너뜁니다.", flush=True)
+                    break
+
+
 def _run(step, *args):
     """한 출처가 실패해도 나머지 수집은 계속한다."""
     try:
@@ -383,6 +422,9 @@ def print_stats() -> None:
             select(LoanProduct.product_type, func.count()).group_by(LoanProduct.product_type)
         ):
             print(f"  loan_products[{product_type}] {count}개", flush=True)
+        for model in (BankbookStat, SubscriptionStat):
+            for kind, count in db.execute(select(model.kind, func.count()).group_by(model.kind)):
+                print(f"  {model.__tablename__}[{kind}] {count}행", flush=True)
         print(f"  sh_notices {db.scalar(select(func.count()).select_from(ShNotice))}건", flush=True)
         print(f"  lh_notice_details {db.scalar(select(func.count()).select_from(LhNoticeDetail))}건", flush=True)
 
@@ -396,6 +438,7 @@ def collect_all() -> None:
     _run(save_sh_notices)
     _run(save_sh_recruitments)
     _run(save_loan_products)
+    _run(save_applyhome_stats)
     _run(refresh_views, engine)
     _run(save_notice_costs)  # 가공 레이어(recommendable_listings)가 갱신된 뒤에 실행
     print_stats()
