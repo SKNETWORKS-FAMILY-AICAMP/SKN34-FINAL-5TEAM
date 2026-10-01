@@ -52,8 +52,10 @@ class SubscriptionStat(Base):
     age_60: Mapped[int] = mapped_column(Integer, nullable=True)  # 60대 이상
     special_supply_count: Mapped[int] = mapped_column(Integer, nullable=True)  # SPSPLY_HSHLDCO 특별공급 공급세대수 (지역별 경쟁률)
     special_apply_count: Mapped[int] = mapped_column(Integer, nullable=True)  # SPSPLY_REQ_CNT
-    special_rate: Mapped[float] = mapped_column(Numeric(10, 2), nullable=True)  # SPSPLY_CMPET_RATE
+    special_rate: Mapped[float] = mapped_column(Numeric(10, 2), nullable=True)  # SPSPLY_CMPET_RATE가 숫자일 때만
+    special_rate_text: Mapped[str] = mapped_column(String(20), nullable=True)  # 원문 그대로. "(△178)" = 178세대 미달
+    general_rate_text: Mapped[str] = mapped_column(String(20), nullable=True)  # SUPLY_CMPET_RATE 원문 그대로
     general_supply_count: Mapped[int] = mapped_column(Integer, nullable=True)  # SUPLY_HSHLDCO 일반공급 공급세대수
     general_apply_count: Mapped[int] = mapped_column(Integer, nullable=True)  # SUPLY_REQ_CNT
-    general_rate: Mapped[float] = mapped_column(Numeric(10, 2), nullable=True)  # SUPLY_CMPET_RATE
+    general_rate: Mapped[float] = mapped_column(Numeric(10, 2), nullable=True)  # SUPLY_CMPET_RATE가 숫자일 때만 (미달이면 NULL — 계산은 가공 레이어에서)
     raw: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # API 응답 행 원본 그대로

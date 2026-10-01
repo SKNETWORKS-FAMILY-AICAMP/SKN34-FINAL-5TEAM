@@ -89,5 +89,8 @@ def map_subscription_row(row: dict, kind: str) -> dict:
         "general_supply_count": to_int(row.get("SUPLY_HSHLDCO")),
         "general_apply_count": to_int(row.get("SUPLY_REQ_CNT")),
         "general_rate": to_float(row.get("SUPLY_CMPET_RATE")),
+        # 미달이면 경쟁률 자리에 "(△178)"(178세대 미달)이 온다 → 숫자 컬럼은 비우고 원문을 남긴다
+        "special_rate_text": row.get("SPSPLY_CMPET_RATE"),
+        "general_rate_text": row.get("SUPLY_CMPET_RATE"),
         "raw": row,
     }
