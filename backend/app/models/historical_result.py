@@ -48,3 +48,4 @@ class HistoricalResult(Base):
 
     result_status: Mapped[str] = mapped_column(String(30), nullable=True)  # 청약 결과 상태 (특별공급, 예: 청약접수 종료)
     detail: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # 기관추천 확정·예비 건수 등 추가 값
+    raw: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # API 응답 행 원본 그대로 (특별공급은 평형 1행이 종류 x 지역 여러 행으로 나뉘므로 같은 원본이 반복됨)

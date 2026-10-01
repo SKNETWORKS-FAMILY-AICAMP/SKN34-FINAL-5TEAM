@@ -50,6 +50,10 @@ def map_option(option: dict) -> dict:
         "rate_max": rate_max,
         "rate_avg": _to_float(option.get("lend_rate_avg") or option.get("crdt_grad_avg")),
         "credit_grade_rates": grades or None,
+        "collateral_code": option.get("mrtg_type"),
+        "repay_code": option.get("rpay_type"),
+        "rate_type_code": option.get("lend_rate_type") or option.get("crdt_lend_rate_type"),
+        "raw": option,  # API 금리 옵션 행 원본 그대로
     }
 
 
@@ -73,6 +77,13 @@ def map_product(base: dict, product_type: str, fin_group: str, options: list[dic
         "prepayment_fee_text": base.get("erly_rpay_fee"),
         "delay_rate_text": base.get("dly_rate"),
         "disclosure_month": base.get("dcls_month"),
+        "disclosure_start": base.get("dcls_strt_day"),
+        "disclosure_end": base.get("dcls_end_day"),
+        "submitted_at": base.get("fin_co_subm_day"),
+        "credit_product_type": base.get("crdt_prdt_type"),
+        "credit_product_type_name": base.get("crdt_prdt_type_nm"),
+        "cb_name": base.get("cb_name"),
+        "raw": base,  # API 상품 행 원본 그대로
         "interest_rate_min": min(mins) if mins else None,
         "interest_rate_max": max(maxs) if maxs else None,
         "options": options,

@@ -31,6 +31,13 @@ class LoanProduct(Base):
     prepayment_fee_text: Mapped[str] = mapped_column(String(1000), nullable=True)  # 중도상환 수수료
     delay_rate_text: Mapped[str] = mapped_column(String(1000), nullable=True)  # 연체 이자율
     disclosure_month: Mapped[str] = mapped_column(String(6), nullable=True)  # 공시 제출월 (YYYYMM)
+    disclosure_start: Mapped[str] = mapped_column(String(8), nullable=True)  # 공시 시작일 (dcls_strt_day, YYYYMMDD)
+    disclosure_end: Mapped[str] = mapped_column(String(8), nullable=True)  # 공시 종료일 (dcls_end_day, 없으면 공시 중)
+    submitted_at: Mapped[str] = mapped_column(String(14), nullable=True)  # 금융회사 제출일시 (fin_co_subm_day)
+    credit_product_type: Mapped[str] = mapped_column(String(10), nullable=True)  # 신용대출 상품 구분 코드 (crdt_prdt_type)
+    credit_product_type_name: Mapped[str] = mapped_column(String(50), nullable=True)  # 일반신용대출 / 마이너스한도대출 등
+    cb_name: Mapped[str] = mapped_column(String(50), nullable=True)  # 신용대출 금리 산정에 쓴 신용평가회사
+    raw: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # API 상품 행(baseList) 원본 그대로
 
     eligibility: Mapped[dict] = mapped_column(JSON, default=dict)  # 대상조건(소득/자산/지역)
     limit_amount: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 한도(원) — 파인은 금액이 아닌 문장으로만 제공
@@ -53,3 +60,7 @@ class LoanRateOption(Base):
     rate_max: Mapped[float] = mapped_column(Numeric(6, 3), nullable=True)
     rate_avg: Mapped[float] = mapped_column(Numeric(6, 3), nullable=True)  # 전월 취급 평균금리
     credit_grade_rates: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # 신용대출: 신용점수 구간별 금리
+    collateral_code: Mapped[str] = mapped_column(String(10), nullable=True)  # mrtg_type
+    repay_code: Mapped[str] = mapped_column(String(10), nullable=True)  # rpay_type
+    rate_type_code: Mapped[str] = mapped_column(String(10), nullable=True)  # lend_rate_type / crdt_lend_rate_type
+    raw: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # API 금리 옵션 행(optionList) 원본 그대로

@@ -14,7 +14,7 @@
 LH API 3개는 공공데이터포털에서 따로 활용 신청한 계정의 키로만 호출된다 (다른 키면 403 SERVICE_KEY_IS_NOT_REGISTERED_ERROR).
 """
 
-from datetime import date, timedelta
+from datetime import date
 
 import httpx
 
@@ -26,7 +26,9 @@ NOTICE_PATH = "lhLeaseNoticeInfo1/lhLeaseNoticeInfo1"
 DETAIL_PATH = "lhLeaseNoticeDtlInfo1/getLeaseNoticeDtlInfo1"
 SUPPLY_PATH = "lhLeaseNoticeSplInfo1/getLeaseNoticeSplInfo1"
 DETAIL_PARAMS = ("PAN_ID", "CCR_CNNT_SYS_DS_CD", "SPL_INF_TP_CD", "UPP_AIS_TP_CD", "AIS_TP_CD")
-PAGE_SIZE = 100
+PAGE_SIZE = 1000  # 목록 API는 1,000건씩 받아도 1초 정도 (2026-10 확인)
+# 목록 API가 주는 가장 오래된 공고: 2010년 (2000~2009년 조회 결과 0건, 2026-10 확인)
+LH_START = date(2010, 1, 1)
 # 공고 대분류 중 주택 관련만 (01 토지, 22 상가 제외)
 HOUSING_CATEGORIES = {"05": "분양주택", "06": "임대주택", "13": "주거복지", "39": "공공분양(신혼희망)"}
 
@@ -92,13 +94,13 @@ def map_notice(row: dict) -> dict:
     }
 
 
-def fetch_lh_notices(days: int = 365) -> list[dict]:
-    """최근 days일 동안 게시된 주택 관련 LH 공고 목록 원본 (dsList 행)."""
+def fetch_lh_notices(since: date = LH_START) -> list[dict]:
+    """since 이후 게시된 주택 관련 LH 공고 목록 원본 (dsList 행). 기본은 API가 주는 전체 기간."""
     if not lh_key():
         print("[LH] 인증키가 없어 건너뜁니다.", flush=True)
         return []
     end = date.today()
-    start = end - timedelta(days=days)
+    start = since
     rows_all: list[dict] = []
     with httpx.Client(timeout=30.0) as client:
         for code, name in HOUSING_CATEGORIES.items():
@@ -162,6 +164,7 @@ def map_listing_rows(notice: dict, detail: dict | None, supply: dict | None) -> 
         "total_household_count": to_int(first_complex.get("HSH_CNT")),
         "move_in_date": parse_month(first_complex.get("MVIN_XPC_YM")),
     })
+    base["raw"] = {"notice": notice, "unit": None}  # API 응답 원본 (상세·공급 전체 원본은 lh_notice_details)
     rows = []
     for list_name in sorted(k for k in (supply or {}) if k.startswith("dsList") and not k.endswith("Nm")):
         for index, unit in enumerate(supply[list_name] or [], start=1):
@@ -188,6 +191,7 @@ def map_listing_rows(notice: dict, detail: dict | None, supply: dict | None) -> 
                 "sale_price": _won(unit.get("SIL_AMT")),
                 "rent_deposit": _won(unit.get("LS_GMY")),
                 "monthly_rent": _won(_first(unit, "RFE", "MM_RFE")),
+                "raw": {"notice": notice, "unit": unit},
             })
     return rows or [base]
 

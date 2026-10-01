@@ -65,6 +65,7 @@ def _base(row: dict, house_type: str, result_type: str) -> dict:
         "result_type": result_type,
         "model_no": row.get("MODEL_NO"),
         "exclusive_area_sqm": parse_exclusive_area(unit_type),
+        "raw": row,  # API 응답 행 원본 그대로
     }
 
 
@@ -111,17 +112,19 @@ def map_score_row(row: dict) -> dict:
 def map_spsply_row(row: dict) -> list[dict]:
     """평형당 1행(종류 x 지역이 컬럼) → 종류 x 지역 조합당 1행.
 
-    신청 건수 필드가 없는 조합(기관추천은 지역별 신청 건수가 없음)과 배정·신청이 모두 0인 조합은 뺀다.
+    API 응답에 있는 조합은 배정·신청이 0이어도 모두 남긴다 (원본 그대로 — 0건 필터는 가공 레이어에서).
+    응답에 신청 건수 필드 자체가 없는 조합(기관추천은 지역별 신청 건수가 없음)만 만들지 않는다.
     배정 세대수는 지역 구분 없이 종류별 합계라서, competition_rate는 "그 지역 신청 / 전체 배정"이고
     미달 여부는 세 지역 신청 합계로 판단한다. 배정 세대수는 listings.special_supply_detail에도 있다.
     """
     out = []
     for category, (cnt_prefix, hshldco_field) in SPSPLY_CATEGORIES.items():
         supply = to_int(row.get(hshldco_field))
-        applies = {label: to_int(row.get(f"{prefix}_{cnt_prefix}_CNT")) for prefix, label in SPSPLY_REGIONS.items()}
+        fields = {label: f"{prefix}_{cnt_prefix}_CNT" for prefix, label in SPSPLY_REGIONS.items()}
+        applies = {label: to_int(row.get(field)) for label, field in fields.items()}
         total_apply = sum(v for v in applies.values() if v is not None)
         for region_label, apply_count in applies.items():
-            if apply_count is None or (not supply and not apply_count):
+            if fields[region_label] not in row:
                 continue
             item = _base(row, "APT", "특별공급")
             item.update(
@@ -137,13 +140,13 @@ def map_spsply_row(row: dict) -> list[dict]:
     # 지역 구분이 없는 두 종류: 기관추천(신청 건수 대신 확정·예비 건수), 이전기관 종사자(신청 건수 있음)
     recommend_supply = to_int(row.get("INSTT_RECOMEND_HSHLDCO"))
     decided, reserve = to_int(row.get("INSTT_RECOMEND_DCSN_CNT")), to_int(row.get("INSTT_RECOMEND_PREPAR_CNT"))
-    if recommend_supply or decided or reserve:
+    if any(k in row for k in ("INSTT_RECOMEND_HSHLDCO", "INSTT_RECOMEND_DCSN_CNT", "INSTT_RECOMEND_PREPAR_CNT")):
         item = _base(row, "APT", "특별공급")
         item.update(result_status=row.get("SUBSCRPT_RESULT_NM"), category_label="기관추천",
                     supply_count=recommend_supply, detail={"확정": decided, "예비": reserve})
         out.append(item)
     transfer_supply, transfer_apply = to_int(row.get("TRANSR_INSTT_ENFSN_HSHLDCO")), to_int(row.get("TRANSR_INSTT_ENFSN_CNT"))
-    if transfer_supply or transfer_apply:
+    if "TRANSR_INSTT_ENFSN_HSHLDCO" in row or "TRANSR_INSTT_ENFSN_CNT" in row:
         item = _base(row, "APT", "특별공급")
         item.update(
             result_status=row.get("SUBSCRPT_RESULT_NM"), category_label="이전기관",
@@ -173,11 +176,12 @@ def fetch_historical_results(notice_index: dict[str, dict]) -> list[dict]:
             rows.extend(map_cmpet_row(r, house_type) for r in raw)
             print(f"[경쟁률 {house_type}] {len(raw)}행", flush=True)
 
+        # 점수가 모두 "-"인 행(발표 전·추첨제)도 원본 그대로 남긴다 — 통계(cutoff_stats)는 점수 있는 행만 쓴다
         raw = fetch_all_pages(f"{CMPET_SVC}/{SCORE_ENDPOINT}", client=client)
         scores = [map_score_row(r) for r in raw]
-        scores = [s for s in scores if any(s[k] is not None for k in ("avg_score", "cutoff_score", "top_score"))]
         rows.extend(scores)
-        print(f"[당첨가점 APT] {len(raw)}행 중 점수 있는 {len(scores)}행", flush=True)
+        with_score = sum(1 for s in scores if s["cutoff_score"] is not None)
+        print(f"[당첨가점 APT] {len(raw)}행 (점수 있는 행 {with_score})", flush=True)
 
         raw = fetch_all_pages(f"{CMPET_SVC}/{SPSPLY_ENDPOINT}", client=client)
         before = len(rows)

@@ -163,6 +163,7 @@ def map_notice(row: dict, house_type: str) -> dict:
         "region_name": row.get("SUBSCRPT_AREA_CODE_NM"),
         "supply_type": supply_type[:50] if supply_type else None,
         "rent_type": row.get("RENT_SECD_NM"),
+        "rent_type_code": row.get("RENT_SECD"),
         "house_code": row.get("HOUSE_SECD"),
         "house_detail_code": _first(row, "HOUSE_DTL_SECD", "HOUSE_DETAIL_SECD"),
         "search_house_code": row.get("SEARCH_HOUSE_SECD"),
@@ -276,10 +277,12 @@ def fetch_listings(house_type: str, from_date: date | None = None) -> tuple[list
     for notice in notices:
         base = map_notice(notice, house_type)
         units = units_by_notice.get(base["external_id"])
+        # raw: API 응답 원본 그대로 (컬럼으로 옮기지 않은 필드도 모두 남음)
         if not units:
-            rows.append({**base, **EMPTY_UNIT, "unit_count": base["total_household_count"] or 0})
+            rows.append({**base, **EMPTY_UNIT, "unit_count": base["total_household_count"] or 0,
+                         "raw": {"notice": notice, "unit": None}})
             continue
-        rows.extend({**base, **map_unit(unit, house_type)} for unit in units)
+        rows.extend({**base, **map_unit(unit, house_type), "raw": {"notice": notice, "unit": unit}} for unit in units)
     print(f"[청약홈 {house_type}] 공고 {len(notices)}건 → listings {len(rows)}행", flush=True)
     return rows, notices
 

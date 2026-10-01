@@ -3,7 +3,9 @@
 터미널에서 전체 수집:  cd backend && python -m app.data_pipeline.save_listings
   - 청약홈 공고 x 주택형 (전체 기간) → listings (source=applyhome)
   - 청약홈 경쟁률·당첨가점·특별공급 (전체 기간) → historical_results
-  - LH 공고 목록 (최근 1년) → listings (source=lh), 공고별 상세·공급정보 원본 → lh_notice_details
+  - LH 공고 목록 (API가 주는 전체 기간, 2010년~) → listings (source=lh), 공고별 상세·공급정보 원본 → lh_notice_details
+    (전체 기간 첫 수집은 일일 호출 한도 때문에 며칠에 걸쳐 최신 공고부터 채워진다)
+  - 청약홈·LH·파인 행에는 API 응답 원본(raw JSON)을 같이 저장한다. 행 필터 없이 응답 그대로
   - SH 분양·임대 게시판 전체 글 (첨부파일·본문 포함) → sh_notices
   - 접수 예정·접수 중인 공고의 공고문 PDF → notice_documents, 주택형별 계약금 → notice_costs
     (LH 매입임대 등 주택별 금액은 첨부 주택목록 엑셀 → lh_rental_houses)
@@ -49,6 +51,7 @@ from app.models.notice_sources import LhNoticeDetail, LhRentalHouse, NoticeCost,
 BATCH_SIZE = 1000
 LISTING_KEY = ("source", "external_id", "model_no")
 RESULT_KEY = ("external_id", "unit_type", "result_type", "category_label")
+VOLATILE = ("RNUM", "ALL_CNT")  # LH 목록 행에서 공고 내용과 무관하게 매번 바뀌는 필드
 
 
 def init_tables() -> None:
@@ -94,18 +97,38 @@ def save_lh_listings() -> None:
     notices = fetch_lh_notices()
     if not notices:
         return
-    # 1) 상세·공급정보 원본: 아직 성공적으로 받지 못한 공고만 호출
+    # 1) 상세·공급정보 원본: 아직 받지 못했거나 실패한 공고 + 목록 행이 바뀐 공고(상태·일정 변경)만 호출
     with SessionLocal() as db:
-        done = set(db.scalars(select(LhNoticeDetail.pan_id).where(LhNoticeDetail.error.is_(None))))
-    pending = [n for n in notices if str(n.get("PAN_ID")) not in done]
+        stored_notices = dict(db.execute(select(LhNoticeDetail.pan_id, LhNoticeDetail.notice)
+                                         .where(LhNoticeDetail.error.is_(None))).all())
+    # 목록 행의 RNUM(행 번호)·ALL_CNT(전체 건수)는 날마다 바뀌므로 비교에서 뺀다
+    def same(a, b):
+        return a is not None and {k: v for k, v in a.items() if k not in VOLATILE} == \
+            {k: v for k, v in b.items() if k not in VOLATILE}
+    pending = [n for n in notices if not same(stored_notices.get(str(n.get("PAN_ID"))), n)]
+    # 최신 공고부터 (전체 기간 첫 수집은 일일 호출 한도 때문에 며칠에 걸쳐 끝나므로 최근 것을 먼저 채운다)
+    pending.sort(key=lambda n: str(n.get("PAN_NT_ST_DT") or ""), reverse=True)
     # LH 서버 응답이 호출당 2초 이상이라 5개씩 동시에 호출하고, 중간에 멈춰도 남도록 100건마다 저장
     saved = failed = 0
     with httpx.Client(timeout=60.0) as client, ThreadPoolExecutor(max_workers=5) as pool:
         for start in range(0, len(pending), 100):
             details = list(pool.map(lambda n: fetch_notice_detail(n, client), pending[start:start + 100]))
-            saved += upsert(LhNoticeDetail, details, ("pan_id",), "uq_lh_notice_detail_pan_id")
-            failed += sum(1 for d in details if d["error"])
-            print(f"  LH 상세·공급정보 {start + len(details)}/{len(pending)}", flush=True)
+            ok = [d for d in details if not d["error"]]
+            saved += upsert(LhNoticeDetail, ok, ("pan_id",), "uq_lh_notice_detail_pan_id")
+            # 실패한 공고는 예전 원본을 덮어쓰지 않고 오류만 남긴다 (처음 받는 공고면 행을 새로 만듦)
+            for d in (d for d in details if d["error"]):
+                if str(d["pan_id"]) in stored_notices:
+                    with engine.begin() as conn:
+                        conn.execute(update(LhNoticeDetail).where(LhNoticeDetail.pan_id == d["pan_id"])
+                                     .values(error=d["error"]))
+                else:
+                    upsert(LhNoticeDetail, [d], ("pan_id",), "uq_lh_notice_detail_pan_id")
+            failed += len(details) - len(ok)
+            print(f"  LH 상세·공급정보 {start + len(details)}/{len(pending)} (실패 {failed})", flush=True)
+            if not ok:
+                # 100건이 모두 실패 = 일일 호출 한도 초과나 서버 장애. 남은 공고는 다음 수집 때 이어서 받는다
+                print(f"[LH] 100건 연속 실패로 중단 — 남은 {len(pending) - start - len(details)}건은 다음 수집 때 이어서", flush=True)
+                break
     print(f"[저장] LH 상세·공급정보 {saved}건 (실패 {failed}건은 다음 수집 때 다시 시도)", flush=True)
 
     # 2) listings: 공고 x 주택형

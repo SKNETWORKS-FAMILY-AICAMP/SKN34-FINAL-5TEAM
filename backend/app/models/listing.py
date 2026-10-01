@@ -33,6 +33,7 @@ class Listing(Base):
     region_name: Mapped[str] = mapped_column(String(30), nullable=True)
     supply_type: Mapped[str] = mapped_column(String(50), nullable=True)  # 공급유형 (APT 민영, 국민임대 …)
     rent_type: Mapped[str] = mapped_column(String(20), nullable=True)  # 분양/임대 구분 (APT만 제공, 예: 분양주택)
+    rent_type_code: Mapped[str] = mapped_column(String(10), nullable=True)  # 분양/임대 구분 코드 (RENT_SECD)
     house_code: Mapped[str] = mapped_column(String(10), nullable=True)  # 주택 구분 코드 (HOUSE_SECD)
     house_detail_code: Mapped[str] = mapped_column(String(10), nullable=True)  # 주택 상세 구분 코드 (HOUSE_DTL_SECD)
     search_house_code: Mapped[str] = mapped_column(String(10), nullable=True)  # 검색용 주택 구분 코드 (오피스텔·민간임대)
@@ -70,6 +71,9 @@ class Listing(Base):
     contract_end: Mapped[Date] = mapped_column(Date, nullable=True)
     move_in_date: Mapped[Date] = mapped_column(Date, nullable=True)  # 입주 예정월 (1일로 저장)
     schedule: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # APT 순위·지역별 접수일 {"1순위 해당지역": ["2026-09-28", "2026-09-28"], …}
+    # API 응답 원본 그대로. 청약홈 {"notice": 공고상세 행, "unit": 주택형 행}, LH {"notice": 목록 행, "unit": 공급정보 행}
+    # 위 컬럼에 없는 필드나 API에 새로 생긴 필드도 여기에는 모두 남는다
+    raw: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)
 
     is_speculative_area: Mapped[bool] = mapped_column(Boolean, nullable=True)  # 투기과열지구 (APT만 제공)
     is_adjusted_area: Mapped[bool] = mapped_column(Boolean, nullable=True)  # 조정대상지역 (APT만 제공)
