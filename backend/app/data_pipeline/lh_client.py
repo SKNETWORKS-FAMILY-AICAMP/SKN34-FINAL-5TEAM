@@ -14,6 +14,7 @@
 LH API 3개는 공공데이터포털에서 따로 활용 신청한 계정의 키로만 호출된다 (다른 키면 403 SERVICE_KEY_IS_NOT_REGISTERED_ERROR).
 """
 
+import time
 from datetime import date
 
 import httpx
@@ -29,6 +30,7 @@ DETAIL_PARAMS = ("PAN_ID", "CCR_CNNT_SYS_DS_CD", "SPL_INF_TP_CD", "UPP_AIS_TP_CD
 PAGE_SIZE = 1000  # 목록 API는 1,000건씩 받아도 1초 정도 (2026-10 확인)
 # 목록 API가 주는 가장 오래된 공고: 2010년 (2000~2009년 조회 결과 0건, 2026-10 확인)
 LH_START = date(2010, 1, 1)
+RETRY_WAITS = (10, 30, 60)  # 429를 받았을 때 다시 시도하기 전에 쉬는 시간(초)
 # 공고 대분류 중 주택 관련만 (01 토지, 22 상가 제외)
 HOUSING_CATEGORIES = {"05": "분양주택", "06": "임대주택", "13": "주거복지", "39": "공공분양(신혼희망)"}
 
@@ -131,6 +133,12 @@ def fetch_notice_detail(notice: dict, client: httpx.Client) -> dict:
     for field, path in (("detail", DETAIL_PATH), ("supply", SUPPLY_PATH)):
         try:
             response = client.get(f"{LH_BASE_URL}/{path}", params=params)
+            # 429 = 짧은 시간에 요청이 몰려 잠시 차단됨 (일일 한도와 다름). 잠깐 쉬었다가 다시 시도한다
+            for wait in RETRY_WAITS:
+                if response.status_code != 429:
+                    break
+                time.sleep(wait)
+                response = client.get(f"{LH_BASE_URL}/{path}", params=params)
             if response.status_code == 200:
                 result[field] = flatten(response.json())
             else:
