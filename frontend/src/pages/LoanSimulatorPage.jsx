@@ -1,19 +1,48 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { fetchLoanMatches } from "../store/loansSlice";
 
 // 기획안 4장 화면 ④ 대출 시뮬레이션
 export default function LoanSimulatorPage() {
   const dispatch = useDispatch();
+  const userId = useSelector((state) => state.user.id);
   const { matches, status, error } = useSelector((state) => state.loans);
-  const [listingId, setListingId] = useState("");
+  const [searchParams] = useSearchParams();
+  const listingFromQuery = searchParams.get("listingId") || "";
+  const [listingId, setListingId] = useState(listingFromQuery);
+
+  useEffect(() => {
+    if (listingFromQuery) {
+      setListingId(listingFromQuery);
+    }
+  }, [listingFromQuery]);
+
+  useEffect(() => {
+    if (!userId || !listingFromQuery) {
+      return;
+    }
+    dispatch(fetchLoanMatches({ userId, listingId: Number(listingFromQuery) }));
+  }, [dispatch, listingFromQuery, userId]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // TODO: 실제 로그인/세션에서 user_id를 가져오도록 교체
-    dispatch(fetchLoanMatches({ userId: 1, listingId: Number(listingId) }));
+    if (!userId || !listingId) {
+      return;
+    }
+    dispatch(fetchLoanMatches({ userId, listingId: Number(listingId) }));
   };
+
+  if (!userId) {
+    return (
+      <div>
+        <h2>대출 시뮬레이션</h2>
+        <p>대출 매칭을 하려면 먼저 내 정보를 저장해 주세요.</p>
+        <Link to="/">내 정보 입력으로 이동</Link>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -24,7 +53,7 @@ export default function LoanSimulatorPage() {
           공고 ID
           <input value={listingId} onChange={(e) => setListingId(e.target.value)} />
         </label>
-        <button type="submit">대출 매칭하기</button>
+        <button type="submit" disabled={!listingId}>대출 매칭하기</button>
       </form>
 
       {status === "loading" && <p>매칭 중...</p>}

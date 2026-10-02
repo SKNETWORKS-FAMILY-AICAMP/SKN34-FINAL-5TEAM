@@ -1,20 +1,25 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { fetchRecommendations } from "../store/listingsSlice";
 
 // 기획안 4장 화면 ② 추천 대시보드
 export default function DashboardPage() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const userId = useSelector((state) => state.user.id);
   const { items, status, error } = useSelector((state) => state.listings);
 
   useEffect(() => {
-    // TODO: 실제 로그인/세션에서 user_id를 가져오도록 교체
-    const placeholderUserId = 1;
-    dispatch(fetchRecommendations(placeholderUserId));
-  }, [dispatch]);
+    if (!userId) {
+      navigate("/");
+      return;
+    }
+    dispatch(fetchRecommendations(userId));
+  }, [dispatch, navigate, userId]);
 
+  if (!userId) return null;
   if (status === "loading") return <p>추천 공고를 불러오는 중...</p>;
   if (status === "failed") return <p>불러오기 실패: {error}</p>;
 

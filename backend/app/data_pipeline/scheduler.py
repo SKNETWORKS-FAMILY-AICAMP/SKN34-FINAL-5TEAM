@@ -8,7 +8,7 @@ APScheduler로 청약홈 API를 주기적으로 폴링해서, 새로 올라온 �
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.data_pipeline.applyhome_client import fetch_all_house_types, save_listings
-from app.data_pipeline.save_listings import save_all_sources
+from app.data_pipeline.other_ingest import sync_other_sources
 
 scheduler = BackgroundScheduler()
 
@@ -23,7 +23,7 @@ def sync_listings_job():
         print(f"[scheduler] 청약홈 동기화 실패: {exc}", flush=True)
 
     try:
-        save_all_sources(per_kind=20, include_other=True)
+        sync_other_sources()
         print("[scheduler] LH·대출·SH 동기화 완료.", flush=True)
     except Exception as exc:
         print(f"[scheduler] LH·대출·SH 동기화 실패: {exc}", flush=True)

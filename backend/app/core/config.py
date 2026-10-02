@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg2://cheongyak:cheongyak@localhost:5432/cheongyak"
     applyhome_api_key: str = ""
     fine_api_key: str = ""
+    openai_api_key: str = ""
+    rag_embedding_model: str = ""
 
 
 settings = Settings()

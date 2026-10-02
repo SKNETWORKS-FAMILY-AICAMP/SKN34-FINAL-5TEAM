@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import { setUserField } from "../store/userSlice";
+import { saveUserProfile, setUserField } from "../store/userSlice";
 
 // 기획안 4장 화면 ① 입력 폼
 export default function InputFormPage() {
@@ -14,10 +14,12 @@ export default function InputFormPage() {
     dispatch(setUserField({ field, value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: 백엔드 /users 엔드포인트에 저장 후 발급받은 user_id로 이동
-    navigate("/dashboard");
+    const saved = await dispatch(saveUserProfile(user));
+    if (saveUserProfile.fulfilled.match(saved)) {
+      navigate("/dashboard");
+    }
   };
 
   return (
@@ -25,6 +27,16 @@ export default function InputFormPage() {
       <h2>내 정보 입력</h2>
       <p>자격 필터링과 가점 계산에 필요한 정보입니다. (기획안 4장 참고)</p>
       <form onSubmit={handleSubmit}>
+        <label>
+          이메일
+          <input
+            type="email"
+            required
+            value={user.email}
+            onChange={handleChange("email")}
+          />
+        </label>
+        <br />
         <label>
           무주택 기간(개월)
           <input
@@ -80,7 +92,10 @@ export default function InputFormPage() {
           />
         </label>
         <br />
-        <button type="submit">추천 받기</button>
+        <button type="submit" disabled={user.saveStatus === "loading"}>
+          {user.saveStatus === "loading" ? "저장 중..." : "추천 받기"}
+        </button>
+        {user.saveStatus === "failed" && <p>저장 실패: {user.saveError}</p>}
       </form>
     </div>
   );
