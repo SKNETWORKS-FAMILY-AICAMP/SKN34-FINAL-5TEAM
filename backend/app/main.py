@@ -4,14 +4,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import chat, listings, loans, recommendations
-from app.data_pipeline.scheduler import start_scheduler
+from app.data_pipeline.scheduler import start_scheduler, stop_scheduler
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    # 서버가 켜질 때 스케줄러도 같이 시작 → 6시간마다 청약홈 최신 공고 자동 동기화
+async def lifespan(_app: FastAPI):
     start_scheduler()
     yield
+    stop_scheduler()
 
 
 app = FastAPI(

@@ -26,6 +26,8 @@ class Listing(Base):
     house_type: Mapped[str] = mapped_column(String(30), default="APT", index=True)  # APT/오피스텔·도시형생활주택/무순위·잔여세대
 
     complex_name: Mapped[str] = mapped_column(String(255))  # 단지명
+    address: Mapped[str] = mapped_column(String(255), nullable=True) # 공급위치
+    notice_url: Mapped[str] = mapped_column(String(500), nullable=True) # 공고 원문
     region_code: Mapped[str] = mapped_column(String(20), index=True)  # 지역코드
     supply_type: Mapped[str] = mapped_column(String(50))  # 공급유형(일반/특별공급 세부)
 
