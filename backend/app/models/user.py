@@ -29,3 +29,6 @@ class UserProfile(Base):
 
     is_newlywed: Mapped[bool] = mapped_column(Boolean, default=False)  # 신혼특공 해당여부
     is_first_time_buyer: Mapped[bool] = mapped_column(Boolean, default=False)  # 생애최초 해당여부
+
+    workplace_address: Mapped[str] = mapped_column(String(255), nullable=True)  # 직장 주소 (출퇴근 경로)
+    home_address: Mapped[str] = mapped_column(String(255), nullable=True)  # 현재 집 주소 (출퇴근 비교)

@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg2://cheongyak:cheongyak@localhost:5432/cheongyak"
     applyhome_api_key: str = ""
     fine_api_key: str = ""
+    openai_api_key: str = ""
+    rag_embedding_model: str = ""
+    kakao_rest_api_key: str = ""  # 주소 → 좌표 (카카오 로컬)
+    odsay_api_key: str = ""  # 대중교통 경로 (ODsay LAB, 서버용 키)
 
 
 settings = Settings()
