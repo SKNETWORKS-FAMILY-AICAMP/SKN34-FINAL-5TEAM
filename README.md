@@ -62,13 +62,7 @@ docker compose up --build
 
 ## 지금 여기까지 되어 있는 것 / 아직 안 되어 있는 것
 
-- ✅ FastAPI 기본 골격, 라우터 4개(recommendations/listings/loans/chat) 스텁, 헬스체크
-- ✅ SQLAlchemy 모델 4종 (User, Listing, HistoricalResult, LoanProduct) — 기획안 5장 데이터 스키마 반영
-- ✅ 매칭 엔진 서비스 파일 3개 (자격필터/확률추정/대출매칭) — 함수 시그니처와 TODO만 있는 상태
-- ✅ React + Redux Toolkit 기본 골격, 화면 4개 라우트(입력폼/대시보드/상세/대출시뮬레이션) 자리만 잡음
-- ⬜ 청약홈 공공데이터 API 실제 연동 (`app/data_pipeline/applyhome_client.py`에 TODO)
-- ⬜ 실제 DB 마이그레이션(Alembic) 설정
-- ⬜ 인증/로그인
-- ⬜ 스타일링, 실제 화면 디자인
+진행 상태와 API 표는 `docs/요구사항_정의서.md`, `docs/프론트_API_연동표.md` 를 본다.
 
-로드맵 1단계(자격 필터링 + 가점 계산기)부터 채워나가면 됩니다.
+- 됨: 수집 코드, 사용자·공고·추천·대출 API, 계약금 10% 가정치, D-day, 준비 서류, 공고 질문 분류·검색
+- 안 됨: Docker가 꺼져 있으면 로컬 listings 확인 불가, 클라우드 배포, 단지별 실제 계약금 PDF, LangGraph

@@ -110,7 +110,6 @@ export default function ListingDetailPage() {
         <div className="card">
           <div className="row">
             <div className="card-title">분양가 {price ? formatWon(price) : "미정"}</div>
-            {listing.deposit_is_estimate && <span className="muted small">계약금은 공고 기준 가정치</span>}
           </div>
           {depositPct != null ? (
             <>
@@ -130,7 +129,13 @@ export default function ListingDetailPage() {
               </dl>
             </>
           ) : (
-            <p className="muted">분양가 정보가 없어 구성을 표시할 수 없습니다.</p>
+            <p className="muted">
+              {listing.deposit_status === "later"
+                ? "추후공지"
+                : listing.deposit_status === "none"
+                  ? "공고에 비율 없음"
+                  : "공고 확인 전"}
+            </p>
           )}
         </div>
 

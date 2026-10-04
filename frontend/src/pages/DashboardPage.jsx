@@ -43,11 +43,18 @@ function ListingCard({ item, assets }) {
       <dl className="kv">
         <dt>분양가</dt>
         <dd>{listing.sale_price ? formatWon(listing.sale_price) : "미정"}</dd>
-        <dt>
-          계약금 {listing.deposit_is_estimate && <span className="muted small">(가정치)</span>}
-        </dt>
+        <dt>계약금</dt>
         <dd>
-          <b>{listing.contract_deposit != null ? formatWon(listing.contract_deposit) : "미정"}</b>
+          <b>
+            {listing.contract_deposit != null
+            ? formatWon(listing.contract_deposit)
+            : listing.deposit_status === "later"
+             ? "추후공지"
+             : listing.deposit_status === "none"
+              ? "공고에 비율 없음"
+              : "공고 확인 전"}
+
+          </b>
         </dd>
       </dl>
       {!eligible ? (
@@ -189,11 +196,6 @@ export default function DashboardPage() {
         <div className="card card-dark">
           <div className="small">내 가용자산</div>
           <div className="summary-value">{formatWon(assets)}</div>
-          {assets > 0 && (
-            <div className="small">
-              계약금 10% 기준 <b>분양가 {formatWon(assets * 10)} 이하</b>
-            </div>
-          )}
         </div>
         <div className="card">
           <div className="card-title">내 청약 정보</div>

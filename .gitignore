@@ -21,3 +21,6 @@ postgres_data/
 .DS_Store
 .vscode/
 .idea/
+
+# DB dump
+*.dump

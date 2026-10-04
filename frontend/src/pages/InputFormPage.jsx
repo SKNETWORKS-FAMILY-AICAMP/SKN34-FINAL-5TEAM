@@ -158,7 +158,7 @@ export default function InputFormPage() {
               <h2>자금과 희망 지역을 알려주세요</h2>
               <Field
                 label="가용자산 (원)"
-                hint="계약금으로 바로 쓸 수 있는 현금입니다. 공고의 계약금(분양가의 약 10%, 가정치)과 비교합니다."
+                hint="계약금으로 바로 쓸 수 있는 현금입니다."
               >
                 <input
                   type="number"
@@ -217,13 +217,6 @@ export default function InputFormPage() {
         </form>
 
         <div className="onboarding-summary">
-          <div className="card">
-            <div className="muted small">입력한 가용자산 기준</div>
-            <div className="summary-value">
-              {assets > 0 ? `분양가 ${formatWon(assets * 10)} 이하` : "-"}
-            </div>
-            <p className="field-hint">계약금 10% 가정으로 계산한 대략적인 범위입니다.</p>
-          </div>
           <div className="card">
             <div className="card-title">입력 요약</div>
             <dl className="kv">

@@ -59,7 +59,7 @@ export default function Layout({ children }) {
         <div className="footer-inner">
           <b>청약 전략 플랫폼</b>
           <p>
-            공고 데이터 출처: 청약홈, LH, SH, 금융감독원. 자격·위치(상/중/하)·계약금은 참고용 가정치이며
+            공고 데이터 출처: 청약홈, LH, SH, 금융감독원. 자격·위치(상/중/하)는 참고용이며
             실제 당첨과 대출 승인을 보장하지 않습니다. 정확한 내용은 공고문 원문을 확인하세요.
           </p>
         </div>
