@@ -8,6 +8,7 @@ APScheduler로 청약홈 API를 주기적으로 폴링해서, 새로 올라온 �
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.data_pipeline.applyhome_client import fetch_all_house_types, save_listings
+from app.data_pipeline.notice_parser import sync_missing_deposits
 from app.data_pipeline.other_ingest import sync_other_sources
 
 scheduler = BackgroundScheduler()
@@ -27,6 +28,12 @@ def sync_listings_job():
         print("[scheduler] LH·대출·SH 동기화 완료.", flush=True)
     except Exception as exc:
         print(f"[scheduler] LH·대출·SH 동기화 실패: {exc}", flush=True)
+
+    try:
+        updated = sync_missing_deposits()
+        print(f"[scheduler] 계약금 숫자를 읽은 공고 행 {updated}건.", flush=True)
+    except Exception as exc:
+        print(f"[scheduler] 계약금 공고문 읽기 실패: {exc}", flush=True)
 
 
 def start_scheduler():
