@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import chat, listings, loans, recommendations, users
+from app.api.routes import chat, commute, listings, loans, recommendations, users
 from app.data_pipeline.scheduler import start_scheduler, stop_scheduler
 
 
@@ -34,6 +34,7 @@ app.include_router(users.router)
 app.include_router(listings.router)
 app.include_router(loans.router)
 app.include_router(chat.router)
+app.include_router(commute.router)
 
 
 @app.get("/health")

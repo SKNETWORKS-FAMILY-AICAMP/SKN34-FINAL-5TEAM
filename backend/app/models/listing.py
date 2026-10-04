@@ -35,6 +35,9 @@ class Listing(Base):
     exclusive_area_sqm: Mapped[float] = mapped_column(Numeric(6, 2), nullable=True)  # 전용면적(㎡, HOUSE_TY에서 추출)
     unit_count: Mapped[int] = mapped_column(Integer, default=0)  # 평형별 공급세대수
     sale_price: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 분양가(원 단위)
+    deposit_rate: Mapped[float | None] = mapped_column(Numeric(5, 4), nullable=True)  # 계약금 비율. 0.10 = 10%
+    deposit_amount_won: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)  # 공고에 적힌 계약금 총액(원). 1차 계약금은 넣지 않음
+    deposit_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # later = 추후공지, none = 숫자를 찾지 못함 
 
     receipt_start: Mapped[Date] = mapped_column(Date, nullable=True)  # 접수 시작일
     receipt_end: Mapped[Date] = mapped_column(Date, nullable=True)  # 접수 종료일

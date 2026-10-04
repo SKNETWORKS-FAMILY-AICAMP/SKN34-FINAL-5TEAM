@@ -28,4 +28,9 @@ export function askListingQuestion(question, listingId) {
   return apiClient.post("/chat/", { question, listing_id: listingId });
 }
 
+// 출발지(origin_address 또는 origin_listing_id) → 도착지(destination_address) 대중교통 경로
+export function fetchCommute(payload) {
+  return apiClient.post("/commute/", payload);
+}
+
 export default apiClient;

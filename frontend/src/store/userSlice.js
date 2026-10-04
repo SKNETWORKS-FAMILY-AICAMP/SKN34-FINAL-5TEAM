@@ -15,6 +15,8 @@ const initialState = {
   desiredRegionCode: "",
   isNewlywed: false,
   isFirstTimeBuyer: false,
+  workplaceAddress: "",
+  homeAddress: "",
   saveStatus: "idle",
   saveError: null,
 };
@@ -32,6 +34,8 @@ export function toUserPayload(user) {
     desired_region_code: user.desiredRegionCode || null,
     is_newlywed: Boolean(user.isNewlywed),
     is_first_time_buyer: Boolean(user.isFirstTimeBuyer),
+    workplace_address: (user.workplaceAddress || "").trim() || null,
+    home_address: (user.homeAddress || "").trim() || null,
   };
 }
 
