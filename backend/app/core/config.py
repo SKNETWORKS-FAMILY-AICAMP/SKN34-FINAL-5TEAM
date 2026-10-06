@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     app_env: str = "local"
     database_url: str = "postgresql+psycopg2://cheongyak:cheongyak@localhost:5432/cheongyak"
     applyhome_api_key: str = ""
+    lh_api_key: str = ""  # LH API를 다른 공공데이터포털 계정에서 승인받았을 때. 비어 있으면 applyhome_api_key 사용
     fine_api_key: str = ""
     openai_api_key: str = ""
     rag_embedding_model: str = ""

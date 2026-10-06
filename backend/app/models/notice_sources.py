@@ -1,0 +1,175 @@
+from sqlalchemy import JSON, Date, DateTime, Integer, Numeric, String, Text, UniqueConstraint, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.db.base import Base
+
+
+class ShNotice(Base):
+    """SH(서울주택도시공사) 분양·임대 게시판 글. 공식 API가 없어 홈페이지 목록·상세 페이지에서 수집.
+
+    청약 공고 외에 당첨자 발표·계약 안내·등기 안내 같은 공지도 함께 있다. 평형·금액은 첨부 공고문 안에만 있다.
+    """
+
+    __tablename__ = "sh_notices"
+    __table_args__ = (UniqueConstraint("board", "seq", name="uq_sh_notice_board_seq"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    board: Mapped[str] = mapped_column(String(10))  # 분양 / 임대
+    seq: Mapped[str] = mapped_column(String(20))  # 게시글 고유번호
+    number: Mapped[int] = mapped_column(Integer, nullable=True)  # 게시판에 보이는 글 번호
+    title: Mapped[str] = mapped_column(String(500))
+    department: Mapped[str] = mapped_column(String(100), nullable=True)  # 담당 부서
+    posted_date: Mapped[Date] = mapped_column(Date, nullable=True, index=True)  # 등록일
+    views: Mapped[int] = mapped_column(Integer, nullable=True)  # 조회수 (수집 시점)
+    attachment_count: Mapped[int] = mapped_column(Integer, nullable=True)
+    attachments: Mapped[list] = mapped_column(JSON(none_as_null=True), nullable=True)  # 첨부파일 이름 목록
+    attachment_links: Mapped[list] = mapped_column(JSON(none_as_null=True), nullable=True)  # [{"name", "url"}] 원본 파일 다운로드 링크
+    body_text: Mapped[str] = mapped_column(Text, nullable=True)  # 본문 텍스트 전체
+    url: Mapped[str] = mapped_column(String(500))
+
+
+class LhNoticeDetail(Base):
+    """LH 공고별 상세·공급정보 API 응답 원본 (lhLeaseNoticeDtlInfo1, lhLeaseNoticeSplInfo1).
+
+    응답 필드를 실제로 확인하기 전이라 원본 JSON 그대로 보관한다. 공고 목록 행(notice)에는 두 API를 호출할 때
+    필요한 코드(SPL_INF_TP_CD, CCR_CNNT_SYS_DS_CD, UPP_AIS_TP_CD, AIS_TP_CD)가 들어 있다.
+    """
+
+    __tablename__ = "lh_notice_details"
+    __table_args__ = (UniqueConstraint("pan_id", name="uq_lh_notice_detail_pan_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pan_id: Mapped[str] = mapped_column(String(30))  # listings.external_id (source='lh')
+    notice: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # 공고 목록 API 원본 행
+    detail: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # 상세정보 API 원본 응답
+    supply: Mapped[dict] = mapped_column(JSON(none_as_null=True), nullable=True)  # 공급정보 API 원본 응답
+    error: Mapped[str] = mapped_column(String(300), nullable=True)  # 호출 실패 사유 (있으면 다음 수집 때 다시 시도)
+    fetched_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class NoticeDocument(Base):
+    """공고문 파일 (접수 예정·접수 중인 공고만). 내려받은 PDF에서 뽑은 텍스트를 보관한다.
+
+    status: ok(텍스트 추출 성공) / no_document(공고문 PDF 없음, 예: HWP만 있음) / error(내려받기·읽기 실패, 다음 수집 때 재시도)
+    SH는 external_id = 게시글 seq (listings.external_id와 같음).
+    """
+
+    __tablename__ = "notice_documents"
+    __table_args__ = (UniqueConstraint("source", "external_id", name="uq_notice_document_source_external"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source: Mapped[str] = mapped_column(String(20))  # applyhome / lh
+    external_id: Mapped[str] = mapped_column(String(50))
+    file_name: Mapped[str] = mapped_column(String(300), nullable=True)
+    url: Mapped[str] = mapped_column(String(500), nullable=True)
+    status: Mapped[str] = mapped_column(String(20))
+    error: Mapped[str] = mapped_column(String(300), nullable=True)
+    page_count: Mapped[int] = mapped_column(Integer, nullable=True)
+    text: Mapped[str] = mapped_column(Text, nullable=True)
+    fetched_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class CollectRun(Base):
+    """전체 수집(collect_all) 실행 기록. 스케줄러가 "오늘 오전 6시 이후 수집했나"를 판단할 때 쓴다.
+
+    trigger: 정기(오전 6시) / 놓친 수집 보충 / 수동
+    status: running(진행 중) / done(끝남 — 일부 단계가 실패해도 끝까지 돌았으면 done, 실패 단계는 failed_steps)
+    """
+
+    __tablename__ = "collect_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    trigger: Mapped[str] = mapped_column(String(30))
+    status: Mapped[str] = mapped_column(String(10))
+    started_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+    finished_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=True)
+    failed_steps: Mapped[list] = mapped_column(JSON(none_as_null=True), nullable=True)
+
+
+class LhRentalHouse(Base):
+    """LH 공고 첨부 "공급대상 주택목록" 엑셀의 주택 1호 = 1행 (주로 매입임대·든든전세).
+
+    공고문 본문에는 "첨부 주택목록 참조"만 있고 주택별 임대보증금·월임대료는 이 엑셀에만 있다.
+    자격(수급자 / 소득 70% 이하 등)마다 금액이 다르면 conditions에 모두 남기고, rent_deposit·monthly_rent는
+    보증금이 가장 낮은 조건의 값이다. 내려받기 상태는 notice_documents(source='lh_list')에 남긴다.
+    """
+
+    __tablename__ = "lh_rental_houses"
+    __table_args__ = (UniqueConstraint("pan_id", "file_name", "sheet", "seq", name="uq_lh_rental_house"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pan_id: Mapped[str] = mapped_column(String(30), index=True)  # listings.external_id (source='lh')
+    file_name: Mapped[str] = mapped_column(String(300))
+    sheet: Mapped[str] = mapped_column(String(100))
+    seq: Mapped[int] = mapped_column(Integer)  # 엑셀의 순번
+    address: Mapped[str] = mapped_column(String(300), nullable=True)
+    dong: Mapped[str] = mapped_column(String(30), nullable=True)
+    ho: Mapped[str] = mapped_column(String(30), nullable=True)
+    house_label: Mapped[str] = mapped_column(String(50), nullable=True)  # 주택형·공급형·주택군 (예: 1형, 60~70㎡)
+    house_kind: Mapped[str] = mapped_column(String(50), nullable=True)  # 주택유형 (다가구주택, 오피스텔 등)
+    exclusive_area_sqm: Mapped[float] = mapped_column(Numeric(8, 4), nullable=True)
+    common_area_sqm: Mapped[float] = mapped_column(Numeric(8, 4), nullable=True)
+    rooms: Mapped[str] = mapped_column(String(10), nullable=True)
+    floor: Mapped[str] = mapped_column(String(20), nullable=True)
+    rent_deposit: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 임대보증금(원), 가장 낮은 조건
+    monthly_rent: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 월임대료(원), 같은 조건
+    condition_group: Mapped[str] = mapped_column(String(100), nullable=True)  # 그 조건의 자격 구분
+    conditions: Mapped[list] = mapped_column(JSON(none_as_null=True), nullable=True)  # [{"group", "deposit", "rent"}]
+    fetched_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class NoticeCost(Base):
+    """공고문에서 읽은 공고 x 주택형별 계약금. listings와 (source, external_id, model_no)로 연결.
+
+    method: 어떻게 구했는지
+      공고문 표      = 표에서 "계약금 + 잔금 = 보증금(주택가격)"이 맞는 숫자를 찾음 (주로 임대)
+      공고문 표·최솟값 = 표는 찾았지만 주택형을 연결하지 못해 공고 안 최솟값을 씀
+      공고문 정액     = "계약금 1,000만원 정액" 같은 문장
+      공고문 비율     = "계약금(10%)" 같은 문장 x 분양가 또는 임대보증금
+      주택목록 보증금 / 주택목록 주택형 최솟값 / 주택목록 최솟값
+                    = 공고문에 없어서 첨부 주택목록(lh_rental_houses)의 임대보증금 전액을 필요 자금으로 씀 (매입임대 등)
+      공고문 보증금 최솟값 = 계약금 규정 없이 보증금만 있는 표(SH 주택목록·공공기숙사 임대조건)의 최솟값
+      공고문 본인부담 보증금 = 전세임대의 입주자 부담 임대보증금 정액 (예: 청년 100만원)
+      주택 선택 후 결정 = 전세임대처럼 입주자가 고른 집의 전세금 x 비율(contract_ratio)이라 금액 없음
+      배정 시 안내   = 매입임대 예비입주자 모집처럼 주택을 나중에 배정해 공고에 금액이 없음
+    """
+
+    __tablename__ = "notice_costs"
+    __table_args__ = (
+        UniqueConstraint("source", "external_id", "model_no", name="uq_notice_cost_listing",
+                         postgresql_nulls_not_distinct=True),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source: Mapped[str] = mapped_column(String(20))
+    external_id: Mapped[str] = mapped_column(String(50), index=True)
+    model_no: Mapped[str] = mapped_column(String(10), nullable=True)
+    contract_deposit: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 계약금(원)
+    contract_ratio: Mapped[float] = mapped_column(Numeric(5, 2), nullable=True)  # 계약금 비율(%)
+    deposit_total: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 표의 보증금·주택가격 계(원)
+    balance: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 표의 잔금(원)
+    method: Mapped[str] = mapped_column(String(30))
+    doc_label: Mapped[str] = mapped_column(String(50), nullable=True)  # 공고문 표에서 매칭한 주택형 표기
+    source_line: Mapped[str] = mapped_column(String(300), nullable=True)  # 근거: 값을 읽은 공고문 원문 줄 (주택목록이면 파일/시트/순번)
+
+
+class NoticeOptionCost(Base):
+    """분양 공고문의 옵션(발코니 확장·추가 선택품목) 계약금 원문. 공고문 표의 한 줄 또는 문장 = 1행.
+
+    주택 계약금(notice_costs)과 합치지 않는다. 옵션은 선택이고 품목에 따라 금액이 달라서,
+    "계약금 + 옵션 선택 시 추가" 같은 계산은 화면·가공 레이어에서 한다.
+    """
+
+    __tablename__ = "notice_option_costs"
+    __table_args__ = (UniqueConstraint("source", "external_id", "seq", name="uq_notice_option_cost"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source: Mapped[str] = mapped_column(String(20))
+    external_id: Mapped[str] = mapped_column(String(50), index=True)
+    seq: Mapped[int] = mapped_column(Integer)  # 공고문 안에서 나온 순서
+    kind: Mapped[str] = mapped_column(String(20))  # 발코니 확장 / 선택품목
+    label: Mapped[str] = mapped_column(String(50), nullable=True)  # 줄 앞의 주택형·품목 표기 (원문 그대로)
+    total: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 옵션 금액 계(원), 문장이면 없음
+    contract: Mapped[int] = mapped_column(Numeric(14, 0))  # 옵션 계약금(원)
+    balance: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)
+    source_line: Mapped[str] = mapped_column(String(300))  # 공고문 원문 줄

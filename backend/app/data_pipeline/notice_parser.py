@@ -177,7 +177,7 @@ def sync_missing_deposits(db: Session | None = None, limit: int = BATCH_LIMIT) -
         seen: set[str] = set()
         targets: list[tuple[str, str]] = []
         for row in rows:
-            url = row.pblanc_url or row.notice_url
+            url = row.notice_url  # 통합 DB의 listings에는 pblanc_url 대신 notice_url
             if not url or row.external_id in seen:
                 continue
             seen.add(row.external_id)
