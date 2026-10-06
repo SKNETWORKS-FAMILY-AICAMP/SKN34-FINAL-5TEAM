@@ -69,6 +69,23 @@ class NoticeDocument(Base):
     fetched_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
+class CollectRun(Base):
+    """전체 수집(collect_all) 실행 기록. 스케줄러가 "오늘 오전 6시 이후 수집했나"를 판단할 때 쓴다.
+
+    trigger: 정기(오전 6시) / 놓친 수집 보충 / 수동
+    status: running(진행 중) / done(끝남 — 일부 단계가 실패해도 끝까지 돌았으면 done, 실패 단계는 failed_steps)
+    """
+
+    __tablename__ = "collect_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    trigger: Mapped[str] = mapped_column(String(30))
+    status: Mapped[str] = mapped_column(String(10))
+    started_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+    finished_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=True)
+    failed_steps: Mapped[list] = mapped_column(JSON(none_as_null=True), nullable=True)
+
+
 class LhRentalHouse(Base):
     """LH 공고 첨부 "공급대상 주택목록" 엑셀의 주택 1호 = 1행 (주로 매입임대·든든전세).
 

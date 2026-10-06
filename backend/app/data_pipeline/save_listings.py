@@ -57,7 +57,7 @@ from app.models.applyhome_stat import BankbookStat, SubscriptionStat
 from app.models.historical_result import HistoricalResult
 from app.models.listing import Listing
 from app.models.loan_product import LoanProduct, LoanRateOption
-from app.models.notice_sources import LhNoticeDetail, LhRentalHouse, NoticeCost, NoticeDocument, NoticeOptionCost, ShNotice
+from app.models.notice_sources import CollectRun, LhNoticeDetail, LhRentalHouse, NoticeCost, NoticeDocument, NoticeOptionCost, ShNotice
 
 BATCH_SIZE = 1000
 LISTING_KEY = ("source", "external_id", "model_no")
@@ -401,12 +401,16 @@ def save_applyhome_stats() -> None:
                     break
 
 
+_failed_steps: list[str] = []  # 이번 collect_all에서 실패한 단계 (collect_runs.failed_steps에 남김)
+
+
 def _run(step, *args):
     """한 출처가 실패해도 나머지 수집은 계속한다."""
     try:
         return step(*args)
     except Exception as exc:  # noqa: BLE001
         print(f"[실패] {step.__name__}: {exc.__class__.__name__} {exc}", flush=True)
+        _failed_steps.append(f"{step.__name__}: {exc.__class__.__name__}"[:200])
         return None
 
 
@@ -429,9 +433,28 @@ def print_stats() -> None:
         print(f"  lh_notice_details {db.scalar(select(func.count()).select_from(LhNoticeDetail))}건", flush=True)
 
 
-def collect_all() -> None:
-    """전체 수집 + 가공 레이어 갱신. 스케줄러가 매일 오전 6시에 실행한다."""
+def collect_all(trigger: str = "수동") -> None:
+    """전체 수집 + 가공 레이어 갱신. 스케줄러가 매일 오전 6시에 실행한다 (놓치면 켜진 뒤 보충, scheduler.py).
+
+    실행 기록은 collect_runs에 남긴다. trigger: 정기(오전 6시) / 놓친 수집 보충 / 수동
+    """
     init_tables()
+    _failed_steps.clear()
+    with SessionLocal() as db:
+        run = CollectRun(trigger=trigger, status="running")
+        db.add(run)
+        db.commit()
+        run_id = run.id
+    try:
+        _collect_steps()
+    finally:
+        with engine.begin() as conn:
+            conn.execute(update(CollectRun).where(CollectRun.id == run_id).values(
+                status="done", finished_at=func.now(), failed_steps=list(_failed_steps) or None))
+    print_stats()
+
+
+def _collect_steps() -> None:
     notice_index = _run(save_applyhome_listings)
     _run(save_historical_results, notice_index)
     _run(save_lh_listings)
@@ -441,7 +464,6 @@ def collect_all() -> None:
     _run(save_applyhome_stats)
     _run(refresh_views, engine)
     _run(save_notice_costs)  # 가공 레이어(recommendable_listings)가 갱신된 뒤에 실행
-    print_stats()
 
 
 if __name__ == "__main__":
