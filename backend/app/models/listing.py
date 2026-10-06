@@ -60,6 +60,10 @@ class Listing(Base):
     subscription_deposit: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 청약 신청금(원, 오피스텔·민간임대)
     rent_deposit: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 임대보증금(원, LH 공급정보)
     monthly_rent: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 월임대료(원, LH 공급정보)
+    # 계약금 — 팀원 방식(notice_parser.py): 공고문에서 읽은 숫자만, 10%로 채우지 않음
+    deposit_rate: Mapped[float | None] = mapped_column(Numeric(5, 4), nullable=True)  # 계약금 비율. 0.10 = 10%
+    deposit_amount_won: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)  # 공고에 적힌 계약금 총액(원). 1차 계약금은 넣지 않음
+    deposit_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # later = 추후공지, none = 숫자를 찾지 못함
 
     recruit_date: Mapped[Date] = mapped_column(Date, nullable=True)  # 모집공고일
     receipt_start: Mapped[Date] = mapped_column(Date, nullable=True)  # 청약 접수 시작일

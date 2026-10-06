@@ -9,6 +9,7 @@
   - SH 분양·임대 게시판 전체 글 (첨부파일·본문 포함) → sh_notices
   - 접수 예정·접수 중인 공고의 공고문 PDF → notice_documents, 주택형별 계약금 → notice_costs
     (LH 매입임대 등 주택별 금액은 첨부 주택목록 엑셀 → lh_rental_houses)
+    → 화면용 계약금 칸 listings.deposit_* (팀원 방식: 공고문에 적힌 숫자만, 10%로 채우지 않음)
   - 파인 대출 상품 + 금리 옵션 → loan_products, loan_rate_options
 수집이 끝나면 가공 레이어(app/db/views.py)의 구체화 뷰를 다시 계산한다.
 """
@@ -25,6 +26,7 @@ import app.models  # noqa: F401 — create_all에 모든 테이블을 포함
 from app.data_pipeline.applyhome_client import fetch_all_listings, fetch_notice_index
 from app.data_pipeline.competition_client import fetch_historical_results
 from app.data_pipeline.document_client import (
+    NO_AMOUNT_METHODS,
     applyhome_document,
     fallback_cost,
     lh_document,
@@ -39,6 +41,7 @@ from app.data_pipeline.document_client import (
 from app.data_pipeline.finlife_client import fetch_loan_products
 from app.data_pipeline.house_list_client import house_costs, house_list_files, read_house_list
 from app.data_pipeline.lh_client import fetch_lh_notices, fetch_notice_detail, map_listing_rows
+from app.data_pipeline.notice_parser import parse_deposit_text
 from app.data_pipeline.stats_client import (
     BANKBOOK_ENDPOINTS,
     BANKBOOK_MONTH,
@@ -151,6 +154,16 @@ def save_lh_listings() -> None:
         d = stored.get(str(notice.get("PAN_ID")))
         rows.extend(map_listing_rows(notice, d.detail if d else None, d.supply if d else None))
     # 공급정보가 바뀌면 주택형 행 구성도 바뀌므로, 이번에 받은 공고의 LH 행은 지우고 새로 넣는다
+    # 단, 넣어 둔 계약금(deposit_*, save_listing_deposits)은 같은 공고·주택형에 그대로 옮긴다
+    with SessionLocal() as db:
+        kept = {(eid, mno): (rate, amount, status) for eid, mno, rate, amount, status in db.execute(
+            select(Listing.external_id, Listing.model_no, Listing.deposit_rate, Listing.deposit_amount_won,
+                   Listing.deposit_status).where(Listing.source == "lh", Listing.external_id.in_(ids),
+                                                 (Listing.deposit_rate.is_not(None)) | (Listing.deposit_amount_won.is_not(None))
+                                                 | (Listing.deposit_status.is_not(None))))}
+    for row in rows:
+        if (row["external_id"], row.get("model_no")) in kept:
+            row["deposit_rate"], row["deposit_amount_won"], row["deposit_status"] = kept[(row["external_id"], row.get("model_no"))]
     with engine.begin() as conn:
         conn.execute(delete(Listing).where(Listing.source == "lh", Listing.external_id.in_(ids)))
     saved = upsert(Listing, rows, LISTING_KEY, "uq_listing_source_external_model")
@@ -329,6 +342,63 @@ def save_lh_house_lists(pan_ids: list[str]) -> None:
     print(f"[주택목록] LH 공고 {len(documents)}건 확인 — 주택목록 있음 {len(read)}건, 주택 {len(houses)}호", flush=True)
 
 
+# 계약금 칸에 넣는 notice_costs.method — 공고문 표·문장에 이 주택형의 계약금으로 적힌 숫자
+DEPOSIT_AMOUNT_METHODS = ("공고문 표", "공고문 표(가격 일치)", "공고문 표(면적 일치)", "공고문 표(주택형 숫자 일치)",
+                          "공고문 정액")
+DEPOSIT_RATE_METHODS = ("공고문 비율",)  # 비율만 넣는다 (금액은 화면에서 분양가 x 비율, services/listing_view.py)
+# 보증금 칸(rent_deposit)에 넣는 method — 이 주택형의 임대보증금이 그대로 적힌 경우 (계약금 칸에는 넣지 않음)
+RENT_DEPOSIT_METHODS = ("주택목록 보증금", "공고문 본인부담 보증금")
+# …최솟값·면적 추정 연결은 이 주택형의 숫자가 아니라서 어느 칸에도 넣지 않는다
+
+
+def save_listing_deposits() -> None:
+    """계약금 — 팀원 방식(notice_parser.py)의 칸 listings.deposit_rate / deposit_amount_won / deposit_status를 채운다.
+
+    10%로 채우지 않고 공고문에 적힌 숫자만 넣는다. 접수 예정·접수 중 공고는 수집 때마다 다시 계산한다:
+      1) 공고문 추출(notice_costs)이 이 주택형의 계약금 숫자를 찾았으면 그 숫자 (금액, 또는 비율)
+      2) 공고에 금액이 아직 없다고 적혀 있으면 (배정 시 안내·주택 선택 후 결정) deposit_status="later"
+      3) 그 밖에는 받아 둔 공고문 텍스트(notice_documents)에 팀원 규칙(parse_deposit_text)을 그대로 적용
+    임대보증금만 있는 행은 계약금 칸을 비워 두고, 그 주택형의 보증금을 rent_deposit(비어 있을 때만)에 넣는다.
+    화면·API의 계약금은 이 값을 쓴다 (services/listing_view.py).
+    """
+    with SessionLocal() as db:
+        ids = [row.id for row in db.execute(text("SELECT id FROM recommendable_listings"))]
+        rows = db.scalars(select(Listing).where(Listing.id.in_(ids))).all()
+        costs = {(c.source, c.external_id, c.model_no): c for c in db.scalars(select(NoticeCost))}
+        texts = {(d.source, d.external_id): f"{d.file_name or ''}\n{d.text or ''}"
+                 for d in db.scalars(select(NoticeDocument).where(NoticeDocument.status == "ok"))}
+        rule = {}  # 팀원 규칙은 공고 1건에 결과 1개
+        counts, rents = Counter(), 0
+        for row in rows:
+            cost = costs.get((row.source, row.external_id, row.model_no))
+            method = cost.method if cost else None
+            rate = amount = status = None
+            if method in DEPOSIT_AMOUNT_METHODS:
+                amount, how = int(cost.contract_deposit), "공고문 표·정액"
+            elif method in DEPOSIT_RATE_METHODS:
+                rate, how = float(cost.contract_ratio) / 100, "공고문 비율"
+            elif method in NO_AMOUNT_METHODS:
+                status, how = "later", "추후 안내"
+            else:
+                key = (row.source, row.external_id)
+                if key not in rule:
+                    rule[key] = parse_deposit_text(texts[key]) if key in texts else None
+                facts = rule[key]
+                if facts is None:
+                    how = "공고문 없음"
+                else:
+                    rate, amount, status = facts.rate, facts.amount_won, facts.status
+                    how = "팀원 규칙(숫자 없음)" if status == "none" else "팀원 규칙"
+            row.deposit_rate, row.deposit_amount_won, row.deposit_status = rate, amount, status
+            if method in RENT_DEPOSIT_METHODS and row.rent_deposit is None:
+                row.rent_deposit = int(cost.contract_deposit)
+                rents += 1
+            counts[how] += 1
+        db.commit()
+    print(f"[계약금(공고문 숫자)] 접수 예정·접수 중 {len(rows)}행 — " + ", ".join(
+        f"{how} {count}" for how, count in counts.most_common()) + f" / 임대보증금 칸 채움 {rents}행", flush=True)
+
+
 def save_sh_recruitments(days: int = 90) -> None:
     """최근 SH 모집 공고의 공고문에서 접수기간을 읽어 listings(source=sh)에 넣는다.
 
@@ -464,6 +534,7 @@ def _collect_steps() -> None:
     _run(save_applyhome_stats)
     _run(refresh_views, engine)
     _run(save_notice_costs)  # 가공 레이어(recommendable_listings)가 갱신된 뒤에 실행
+    _run(save_listing_deposits)  # notice_costs를 쓰므로 그 다음
 
 
 if __name__ == "__main__":
