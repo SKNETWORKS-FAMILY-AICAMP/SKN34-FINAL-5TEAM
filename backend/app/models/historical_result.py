@@ -24,6 +24,17 @@ class HistoricalResult(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    # 팀 DB(예전 구조)의 칸: save_listings.py가 쓰고 probability_estimator.py가 읽는다.
+    # 기존 63,450행의 지역·연도 데이터가 여기 들어 있어서 모델에서도 그대로 연결한다.
+    complex_id: Mapped[str] = mapped_column(String(50), nullable=True)  # 공고번호 (예전 이름)
+    unit_size_sqm: Mapped[float] = mapped_column(Numeric, nullable=True)  # 공급면적
+    region_code: Mapped[str] = mapped_column(String(20), nullable=True)  # 공급지역 코드
+    year: Mapped[int] = mapped_column(Integer, nullable=True)  # 모집공고 연도
+    house_ty: Mapped[str] = mapped_column(String(30), nullable=True)  # 주택형 (예전 이름)
+    reside_secd: Mapped[str] = mapped_column(String(10), nullable=True)  # 거주지역 구분
+    subscrpt_rank: Mapped[str] = mapped_column(String(10), nullable=True)  # 청약 순위
+
     external_id: Mapped[str] = mapped_column(String(50), index=True)  # 청약홈 공고번호(PBLANC_NO)
     unit_type: Mapped[str] = mapped_column(String(30), nullable=True)  # 주택형(평형)
     house_type: Mapped[str] = mapped_column(String(30), index=True)  # listings.house_type과 동일 분류

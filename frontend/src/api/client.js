@@ -4,8 +4,9 @@ const apiClient = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL || "http://localhost:8000",
 });
 
+// 배열 조건(status)은 FastAPI 형식인 status=접수중&status=예정 으로 보낸다.
 export function fetchListings(params) {
-  return apiClient.get("/listings/", { params });
+  return apiClient.get("/listings/", { params, paramsSerializer: { indexes: null } });
 }
 
 export function fetchListing(id) {
