@@ -23,3 +23,6 @@ postgres_data/
 .vscode/
 .idea/
 
+
+# RAG 벡터 DB (python -m scripts.build_vector_index 로 각자 만든다)
+backend/data/
