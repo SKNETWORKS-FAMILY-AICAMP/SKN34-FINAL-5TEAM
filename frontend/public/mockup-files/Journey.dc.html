@@ -921,6 +921,22 @@ button:focus-visible,a:focus-visible{outline:3px solid #8DB2FF;outline-offset:2p
 </sc-for>
 <sc-if value="{{allN.empty}}" hint-placeholder-val="{{ false }}"><div style="padding: 24px; text-align: center; font-size: 14px; color: #5B6576">조건에 맞는 공고가 없어요 · 필터를 바꿔 보세요</div></sc-if>
 </div>
+<div style="{{allN.mapBox}}">
+<div role="group" aria-label="시 · 도별 공고 수 지도" style="position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 620px; margin-top: 12px; border-radius: 16px; background: #DCEBF5; overflow: hidden">
+<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%">
+<path d="M28 8 L40 5 L52 3 L62 7 L67 15 L71 25 L76 35 L80 45 L82 55 L80 63 L76 70 L69 75 L60 77 L51 79 L44 82 L36 86 L27 88 L20 84 L18 76 L21 68 L18 60 L22 52 L19 45 L24 37 L21 29 L25 21 Z" fill="#F4F8EC" stroke="#B8CBA8" stroke-width="0.6"></path>
+<ellipse cx="26" cy="96" rx="7" ry="2.6" fill="#F4F8EC" stroke="#B8CBA8" stroke-width="0.6"></ellipse>
+</svg>
+<sc-for list="{{allN.map.pins}}" as="p" hint-placeholder-count="17"><button type="button" onClick="{{p.pick}}" aria-label="{{p.aria}}" style="{{p.style}}"><span style="{{p.headStyle}}">{{p.r}}</span><span style="{{p.numStyle}}">공고수<span style="{{p.cntStyle}}">{{p.n}}</span></span></button></sc-for>
+<span style="position: absolute; right: 8px; bottom: 6px; font-size: 11px; color: #5B6576; background: rgba(255, 255, 255, 0.85); padding: 2px 6px; border-radius: 6px">지도 모양은 예시 · [지도 API 연결]</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding-top: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center"><b style="font-size: 16px; color: #0A2B5E">{{allN.map.title}}</b><button type="button" onClick="{{allN.map.clear}}" style="all: unset; cursor: pointer; font-size: 12.5px; color: #1D4FB8; text-decoration: underline">전체 보기</button></div>
+<div style="font-size: 12.5px; color: #5B6576">{{allN.map.hint}}</div>
+<div style="{{allN.map.emptyStyle}}">이 지역에는 조건에 맞는 공고가 없어요 (예시 공고 5건 기준)</div>
+<sc-for list="{{allN.map.items}}" as="m" hint-placeholder-count="3"><div style="padding: 12px 14px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E8EF; display: flex; flex-direction: column; gap: 6px"><div style="display: flex; gap: 6px; align-items: center"><span style="{{m.srcStyle}}">{{m.src}}</span><b style="font-size: 14.5px; color: #0A2B5E">{{m.name}}</b></div><div style="font-size: 12.5px; color: #5B6576">{{m.meta}} · {{m.status}}</div><div style="display: flex; gap: 6px"><button type="button" onClick="{{m.quick}}" style="min-height: 32px; padding: 0 10px; border-radius: 8px; border: 1.5px solid #5B3FD6; background: #FFFFFF; color: #4A2FC0; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer">기본 리포트</button><button type="button" onClick="{{m.analyze}}" style="min-height: 32px; padding: 0 10px; border-radius: 8px; border: 0; background: #5B3FD6; color: #FFFFFF; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer">자세히 분석</button></div></div></sc-for>
+</div>
+</div>
 <div style="{{allN.calBox}}">
 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding-top: 12px"><span style="display: flex; gap: 10px; font-size: 12px; color: #3A4556"><span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: #1D5BD8"></span> 청약홈</span><span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: #0B8A6A"></span> LH</span><span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: #D9480F"></span> SH</span><span style="color: #5B6576">· 진한 칸 = 마감 · 발표 · 위 필터가 그대로 적용돼요</span></span><span style="display: flex; align-items: center; gap: 8px"><button type="button" onClick="{{allN.cal.prev}}" aria-label="이전 달" style="{{allN.cal.prevStyle}}">‹</button><b style="font-size: 15px; min-width: 110px; text-align: center">{{allN.cal.label}}</b><button type="button" onClick="{{allN.cal.next}}" aria-label="다음 달" style="{{allN.cal.nextStyle}}">›</button></span></div>
 <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px">
@@ -2207,9 +2223,34 @@ class Component extends DCLogic {
       }),
       goPick: () => this.setState({ page: null, sel: 3, report: false }),
       // 보기 전환: 목록 / 캘린더
-      views: [['list', '목록'], ['cal', '캘린더']].map(([k, label]) => ({ label, pressed: aView === k ? 'true' : 'false', pick: () => this.setState({ aView: k }),
+      views: [['list', '목록'], ['cal', '캘린더'], ['map', '지도']].map(([k, label]) => ({ label, pressed: aView === k ? 'true' : 'false', pick: () => this.setState({ aView: k }),
         style: 'min-height: 36px; padding: 0 16px; font: inherit; font-size: 13.5px; cursor: pointer; border: 0; ' + (aView === k ? 'background: #14213A; color: #FFFFFF; font-weight: 700;' : 'background: transparent; color: #2A3445;') })),
-      listBox: 'display: ' + (aView === 'list' ? 'block' : 'none'), calBox: 'display: ' + (aView === 'cal' ? 'flex' : 'none') + '; flex-direction: column; gap: 10px; padding: 0 18px 18px',
+      listBox: 'display: ' + (aView === 'list' ? 'block' : 'none'),
+      mapBox: 'display: ' + (aView === 'map' ? 'grid' : 'none') + '; grid-template-columns: minmax(0, 1.1fr) minmax(280px, 1fr); gap: 16px; padding: 0 18px 18px; align-items: start',
+      // 지도 보기 — 시 · 도별 공고 수 (지역 필터만 빼고 나머지 필터 적용)
+      map: (() => {
+        const POS = { '서울': [37, 20], '인천': [24, 22], '경기': [40, 29], '강원': [60, 15], '충북': [50, 40], '충남': [27, 42], '세종': [39, 44], '대전': [42, 51], '전북': [31, 60], '광주': [22, 72], '전남': [26, 82], '경북': [68, 42], '대구': [64, 57], '울산': [80, 63], '경남': [57, 70], '부산': [74, 73], '제주': [26, 96] };
+        const pool = LIST.map((l) => ({ l, st2: stateOf(l.dates) })).filter((x) => (aKind === '전체' || x.l.kind === aKind) && (aState === '전체' || ST_NAME[x.st2.g] === aState) && (aSrc === '전체' || SRC[x.l.id] === aSrc) && (!aQ || (x.l.name + x.l.meta).includes(aQ)));
+        const selR = st.aMapR || null;
+        const inR = pool.filter((x) => regionOf(x.l) === selR);
+        const shown = selR ? inR : pool;
+        return {
+          pins: Object.keys(POS).map((r) => {
+            const n = pool.filter((x) => regionOf(x.l) === r).length, on = r === selR;
+            return { r, n, aria: r + ' 공고 ' + n + '건', pick: () => this.setState({ aMapR: on ? null : r }),
+              style: 'all: unset; cursor: pointer; position: absolute; left: ' + POS[r][0] + '%; top: ' + POS[r][1] + '%; transform: translate(-50%, -50%); min-width: 54px; border-radius: 8px; overflow: hidden; text-align: center; background: #FFFFFF; box-shadow: 0 4px 12px rgba(6, 22, 48, ' + (on ? '0.35' : '0.18') + '); ' + (on ? 'outline: 3px solid #14213A;' : ''),
+              headStyle: 'display: block; padding: 2px 6px; font-size: 11.5px; font-weight: 700; color: #FFFFFF; background: ' + (n ? '#E5326B' : '#1F72C2'),
+              numStyle: 'display: block; padding: 2px 6px 4px; font-size: 10.5px; color: #3A4556',
+              cntStyle: 'display: block; font-size: 15px; font-weight: 800; color: ' + (n ? '#E5326B' : '#1F72C2') };
+          }),
+          title: selR ? selR + ' 공고 ' + inR.length + '건' : '지역을 눌러 보세요',
+          items: shown.map((x) => ({ name: x.l.name.replace('(예시) ', ''), src: SRC[x.l.id], srcStyle: 'font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; ' + SRC_STYLE[SRC[x.l.id]], meta: x.l.meta, status: x.st2.label,
+            analyze: () => this.setState({ page: 'analyze', anId: x.l.id, anQ: null }), quick: () => this.setState({ aQuick: x.l.id }) })),
+          emptyStyle: 'display: ' + (shown.length ? 'none' : 'block') + '; font-size: 13.5px; color: #5B6576; padding: 12px 0',
+          hint: selR ? '' : '전체 ' + pool.length + '건 · 지역을 누르면 그 지역 공고만 보여요',
+          clear: () => this.setState({ aMapR: null })
+        };
+      })(), calBox: 'display: ' + (aView === 'cal' ? 'flex' : 'none') + '; flex-direction: column; gap: 10px; padding: 0 18px 18px',
       cal: (() => {
         const month = st.aMonth || 10, selDay = st.aDay || 8;
         const first = new Date(2026, month - 1, 1).getDay(), days = new Date(2026, month, 0).getDate();
