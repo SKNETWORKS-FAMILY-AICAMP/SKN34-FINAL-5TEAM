@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
-import { HouseIcon } from "../components/MockupShell";
+import { BrandName, HouseIcon } from "../components/MockupShell";
 import slideDiagnosis from "../assets/landing/slide-diagnosis.png";
 import slideResult from "../assets/landing/slide-result.png";
 import slideDashboard from "../assets/landing/slide-dashboard.png";
@@ -61,11 +61,10 @@ export default function LandingPage() {
         <div className="mk-header-inner" style={{ maxWidth: 1240 }}>
           <Link to="/" className="mk-brand">
             <HouseIcon />
-            <span>청약전략</span>
+            <BrandName />
           </Link>
           <nav className="mk-nav" aria-label="주요 메뉴">
-            <Link to="/listings">공고 찾기</Link>
-            <Link to="/ai-chat">AI 청약 상담</Link>
+            {/* 첫 페이지는 진단 시작에 집중 — 메뉴 없이 로그인(또는 청약 홈)만 */}
             {userId ? (
               <Link to="/portal" className="mk-pill-white">
                 청약 홈
@@ -134,6 +133,9 @@ export default function LandingPage() {
             청약 진단 시작하기
           </Link>
           <span>회원가입 없이 시작 · 결과를 저장할 때만 로그인</span>
+          <Link to="/mockup" style={{ fontSize: 12.5, color: "#EAF2FF" }}>
+            로그인 후 화면 미리보기 (목업) →
+          </Link>
         </div>
       </main>
 

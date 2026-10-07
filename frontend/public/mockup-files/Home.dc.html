@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>청약돼?! 홈 · 청약 진단</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700&amp;family=Jua&amp;display=swap">
+<style>
+h1{font-family:'Jua','Gothic A1',sans-serif !important;font-weight:400 !important;letter-spacing:0 !important}
+button,input,textarea{font-family:inherit}
+body{margin:0;background:#5FB8DC}
+a{color:#1D4FB8}a:hover{color:#0A2B5E}
+.hero-bg{background-color:#5FB8DC;background-image:url(__MOCKUP__/img/sky.jpg);background-size:cover;background-position:center bottom}
+.hero-bg::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,30,60,0.26) 0%,rgba(6,30,60,0.04) 28%,rgba(6,30,60,0) 60%,rgba(6,30,60,0.42) 100%);pointer-events:none}
+.glass{background:rgba(255,255,255,0.9);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2)}
+.glass-dark{background:rgba(255,255,255,0.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+button:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid #8DB2FF;outline-offset:2px}
+</style>
+</helmet>
+<div class="hero-bg" style="position: relative; font-family: 'Gothic A1', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #121826; min-height: 100vh; font-size: 15px; line-height: 1.5; display: flex; flex-direction: column">
+
+<!-- 헤더 (사진 위 투명) -->
+<header style="position: relative; z-index: 1">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; min-height: 72px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #FFFFFF">
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M6 19 20 7l14 12v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" stroke="#FFFFFF" stroke-width="2.6" stroke-linejoin="round"></path><circle cx="14" cy="26" r="2.8" fill="#7FB0FF"></circle><circle cx="20" cy="26" r="2.8" fill="#5FD3A8"></circle><circle cx="26" cy="26" r="2.8" fill="#FF9B6A"></circle></svg>
+<span style="font-family: 'Jua', 'Gothic A1', sans-serif; font-size: 30px; font-weight: 400; letter-spacing: 0; white-space: nowrap">청약돼<span style="display: inline-block; margin-left: 4px; padding: 3px 7px 4px; border-radius: 10px 10px 10px 3px; background: #FF6B4A; color: #FFFFFF; font-size: 19px; line-height: 1; vertical-align: 4px">?!</span></span>
+</a>
+<nav aria-label="바로가기" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 22px; font-size: 14px">
+<!-- 로그인 전에는 로그인 버튼만, 로그인 후에 메뉴 표시 -->
+<sc-if value="{{signed}}" hint-placeholder-val="{{ false }}">
+<a href="NoticeAI.dc.html" style="color: #FFFFFF; text-decoration: none; font-weight: 500">공고 찾기</a>
+<a href="AIChat.dc.html" style="color: #FFFFFF; text-decoration: none; font-weight: 500">AI 청약 상담</a>
+<a href="AgentReport.dc.html" style="color: #FFFFFF; text-decoration: none; font-weight: 500">전략 리포트</a>
+</sc-if>
+<sc-if value="{{signed}}" hint-placeholder-val="{{ false }}"><span class="glass-dark" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; color: #FFFFFF; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.4)">내 정보 저장됨</span></sc-if>
+<sc-if value="{{notSigned}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{openModal}}" style="min-height: 40px; padding: 0 18px; border-radius: 999px; border: 0; background: #FFFFFF; color: #0A1A33; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">로그인</button></sc-if>
+</nav>
+</div>
+</header>
+
+<main style="position: relative; z-index: 1; flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px 16px 48px">
+
+<!-- ===== 진단 단계 ===== -->
+<sc-if value="{{isStep}}" hint-placeholder-val="{{ true }}">
+<div style="width: 100%; max-width: 940px; display: flex; flex-direction: column; gap: 18px">
+
+<div style="text-align: center; color: #FFFFFF; text-shadow: 0 2px 18px rgba(6, 22, 48, 0.35)">
+<span class="glass-dark" style="display: inline-block; font-size: 12.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.45); text-shadow: none">1분 청약 진단 · 회원가입 없이 시작</span>
+<h1 style="margin: 14px 0 6px; font-size: 46px; line-height: 1.15; font-weight: 700; letter-spacing: -0.035em">내 집 마련, 내 조건부터.</h1>
+<p style="margin: 0; font-size: 16px; color: #EAF2FF">6단계만 답하면 가점·1순위·특별공급 자격을 바로 알려드려요</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 14px">
+
+<!-- 진행 표시 -->
+<ol aria-label="진단 단계" style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="6">
+<li style="display: flex; flex-direction: column; gap: 6px; align-items: center">
+<button type="button" onClick="{{s.go}}" aria-label="{{s.aria}}" aria-current="{{s.current}}" style="{{s.barStyle}}"></button>
+<span style="{{s.labelStyle}}">{{s.label}}</span>
+</li>
+</sc-for>
+</ol>
+
+<!-- 카드 -->
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 22px; box-shadow: 0 24px 60px rgba(6, 22, 48, 0.28); display: flex; flex-wrap: wrap; overflow: hidden">
+<div style="flex: 999 1 440px; min-width: 0; padding: 28px 30px 22px; display: flex; flex-direction: column; gap: 20px; min-height: 420px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="width: 34px; height: 34px; border-radius: 9px; background: #0A2B5E; color: #FFFFFF; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">{{step}}</span>
+<div>
+<div style="font-size: 12.5px; color: #5B6576; font-weight: 600">STEP {{step}} / 6</div>
+<h2 style="margin: 0; font-size: 21px; font-weight: 700">{{stepTitle}}</h2>
+</div>
+</div>
+
+<!-- STEP 1 -->
+<sc-if value="{{is1}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; gap: 16px 32px">
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">나이</div>
+<div style="display: flex; align-items: center; border: 1px solid #CBD3DF; border-radius: 10px; overflow: hidden; width: fit-content">
+<button type="button" aria-label="나이 줄이기" onClick="{{s_age.dec}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">−</button>
+<div style="min-width: 100px; text-align: center; font-weight: 600; font-size: 16px">{{s_age.text}}</div>
+<button type="button" aria-label="나이 늘리기" onClick="{{s_age.inc}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">+</button>
+</div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">세대주 여부</div>
+<div style="display: flex; gap: 6px">
+<button type="button" onClick="{{t_householder.yes}}" style="{{t_householder.yesStyle}}">세대주</button>
+<button type="button" onClick="{{t_householder.no}}" style="{{t_householder.noStyle}}">세대원</button>
+</div>
+</div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">혼인 상태</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{seg_marital}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" style="{{o.style}}">{{o.label}}</button></sc-for></div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">현재 거주지</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{seg_region}}" as="o" hint-placeholder-count="5"><button type="button" onClick="{{o.pick}}" style="{{o.style}}">{{o.label}}</button></sc-for></div>
+</div>
+</div>
+</sc-if>
+
+<!-- STEP 2 -->
+<sc-if value="{{is2}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">세대 전원의 주택 소유</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{seg_homeOwn}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" style="{{o.style}}">{{o.label}}</button></sc-for></div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">무주택 기간</div>
+<div style="display: flex; align-items: center; border: 1px solid #CBD3DF; border-radius: 10px; overflow: hidden; width: fit-content">
+<button type="button" aria-label="무주택 기간 줄이기" onClick="{{s_noHouse.dec}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">−</button>
+<div style="min-width: 120px; text-align: center; font-weight: 600; font-size: 16px">{{s_noHouse.text}}</div>
+<button type="button" aria-label="무주택 기간 늘리기" onClick="{{s_noHouse.inc}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">+</button>
+</div>
+<div style="font-size: 13px; color: #5B6576; margin-top: 8px">만 30세부터 산정해요 (30세 전에 혼인했다면 혼인신고일부터)</div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">생애최초 주택 구입인가요?</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<button type="button" onClick="{{t_firstTime.yes}}" style="{{t_firstTime.yesStyle}}">소유 이력 없음</button>
+<button type="button" onClick="{{t_firstTime.no}}" style="{{t_firstTime.noStyle}}">과거 소유 이력 있음</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- STEP 3 -->
+<sc-if value="{{is3}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; gap: 16px 32px">
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">부양가족 수 <span style="font-weight: 400; color: #5B6576">(본인 제외)</span></div>
+<div style="display: flex; align-items: center; border: 1px solid #CBD3DF; border-radius: 10px; overflow: hidden; width: fit-content">
+<button type="button" aria-label="부양가족 줄이기" onClick="{{s_dep.dec}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">−</button>
+<div style="min-width: 96px; text-align: center; font-weight: 600; font-size: 16px">{{s_dep.text}}</div>
+<button type="button" aria-label="부양가족 늘리기" onClick="{{s_dep.inc}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">+</button>
+</div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">미성년 자녀 수</div>
+<div style="display: flex; align-items: center; border: 1px solid #CBD3DF; border-radius: 10px; overflow: hidden; width: fit-content">
+<button type="button" aria-label="미성년 자녀 줄이기" onClick="{{s_kids.dec}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">−</button>
+<div style="min-width: 96px; text-align: center; font-weight: 600; font-size: 16px">{{s_kids.text}}</div>
+<button type="button" aria-label="미성년 자녀 늘리기" onClick="{{s_kids.inc}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">+</button>
+</div>
+</div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">2년 이내에 출생한 자녀가 있나요?</div>
+<div style="display: flex; gap: 6px">
+<button type="button" onClick="{{t_newborn.yes}}" style="{{t_newborn.yesStyle}}">있음</button>
+<button type="button" onClick="{{t_newborn.no}}" style="{{t_newborn.noStyle}}">없음</button>
+</div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">만 65세 이상 부모님을 3년 이상 모시고 있나요?</div>
+<div style="display: flex; gap: 6px">
+<button type="button" onClick="{{t_parent.yes}}" style="{{t_parent.yesStyle}}">예</button>
+<button type="button" onClick="{{t_parent.no}}" style="{{t_parent.noStyle}}">아니오</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- STEP 4 -->
+<sc-if value="{{is4}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">통장 종류</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{seg_account}}" as="o" hint-placeholder-count="4"><button type="button" onClick="{{o.pick}}" style="{{o.style}}">{{o.label}}</button></sc-for></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 16px 32px">
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">가입 기간</div>
+<div style="display: flex; align-items: center; border: 1px solid #CBD3DF; border-radius: 10px; overflow: hidden; width: fit-content">
+<button type="button" aria-label="가입 기간 줄이기" onClick="{{s_accYears.dec}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">−</button>
+<div style="min-width: 100px; text-align: center; font-weight: 600; font-size: 16px">{{s_accYears.text}}</div>
+<button type="button" aria-label="가입 기간 늘리기" onClick="{{s_accYears.inc}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">+</button>
+</div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">납입 인정 회차</div>
+<div style="display: flex; align-items: center; border: 1px solid #CBD3DF; border-radius: 10px; overflow: hidden; width: fit-content">
+<button type="button" aria-label="납입 회차 줄이기" onClick="{{s_pay.dec}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">−</button>
+<div style="min-width: 96px; text-align: center; font-weight: 600; font-size: 16px">{{s_pay.text}}</div>
+<button type="button" aria-label="납입 회차 늘리기" onClick="{{s_pay.inc}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">+</button>
+</div>
+</div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">예치금 <span style="font-weight: 400; color: #5B6576">(민영주택 1순위 기준)</span></div>
+<div style="display: flex; align-items: center; border: 1px solid #CBD3DF; border-radius: 10px; overflow: hidden; width: fit-content">
+<button type="button" aria-label="예치금 줄이기" onClick="{{s_deposit.dec}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">−</button>
+<div style="min-width: 120px; text-align: center; font-weight: 600; font-size: 16px">{{s_deposit.text}}</div>
+<button type="button" aria-label="예치금 늘리기" onClick="{{s_deposit.inc}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">+</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- STEP 5 -->
+<sc-if value="{{is5}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 2px">월평균 소득</div>
+<div style="font-size: 13px; color: #5B6576; margin-bottom: 10px">전년도 도시근로자 가구원수별 월평균소득 대비</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{seg_income}}" as="o" hint-placeholder-count="5"><button type="button" onClick="{{o.pick}}" style="{{o.style}}">{{o.label}}</button></sc-for></div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">가용 자산 <span style="font-weight: 400; color: #5B6576">(부동산·금융자산 등 순자산)</span></div>
+<div style="display: flex; align-items: center; border: 1px solid #CBD3DF; border-radius: 10px; overflow: hidden; width: fit-content">
+<button type="button" aria-label="자산 줄이기" onClick="{{s_assets.dec}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">−</button>
+<div style="min-width: 120px; text-align: center; font-weight: 600; font-size: 16px">{{s_assets.text}}</div>
+<button type="button" aria-label="자산 늘리기" onClick="{{s_assets.inc}}" style="width: 48px; height: 48px; border: 0; background: #F3F5F9; font-size: 20px; cursor: pointer">+</button>
+</div>
+<div style="font-size: 13px; color: #5B6576; margin-top: 8px">공공분양 자산 기준 비교와 대출 매칭에 사용해요</div>
+</div>
+</div>
+</sc-if>
+
+<!-- STEP 6 -->
+<sc-if value="{{is6}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">희망 지역 <span style="font-weight: 400; color: #5B6576">(여러 개 선택)</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{multi_regions}}" as="o" hint-placeholder-count="7"><button type="button" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="{{o.style}}">{{o.label}}</button></sc-for></div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">공급 유형 <span style="font-weight: 400; color: #5B6576">(여러 개 선택)</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{multi_supply}}" as="o" hint-placeholder-count="4"><button type="button" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="{{o.style}}">{{o.label}}</button></sc-for></div>
+</div>
+<div>
+<div style="font-size: 14px; font-weight: 600; color: #3A4556; margin-bottom: 8px">희망 전용면적</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{seg_size}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" style="{{o.style}}">{{o.label}}</button></sc-for></div>
+</div>
+</div>
+</sc-if>
+
+<!-- 이전 / 다음 -->
+<div style="margin-top: auto; padding-top: 18px; border-top: 1px solid #EEF1F5; display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<button type="button" onClick="{{prev}}" style="{{prevStyle}}">이전</button>
+<span style="font-size: 13px; color: #5B6576; font-variant-numeric: tabular-nums">{{step}} / 6</span>
+<button type="button" onClick="{{next}}" style="min-height: 52px; padding: 0 28px; border-radius: 10px; border: 0; background: #1D5BD8; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">{{nextLabel}}</button>
+</div>
+</div>
+
+<!-- 가점 스택 바 (같은 카드 안 오른쪽 패널) -->
+<aside aria-label="현재 예상 가점" style="flex: 1 1 240px; min-width: 0; background: rgba(243, 247, 253, 0.75); border-left: 1px solid rgba(203, 214, 230, 0.7); box-shadow: 0 -1px 0 rgba(203, 214, 230, 0.7); padding: 24px 20px 18px; display: flex; flex-direction: column; gap: 12px">
+<div>
+<div style="font-size: 13px; font-weight: 700; color: #3A4556">현재 예상 가점</div>
+<div style="display: flex; align-items: baseline; gap: 4px; margin-top: 2px"><span style="font-size: 40px; line-height: 1.1; font-weight: 700; color: #1D5BD8; font-variant-numeric: tabular-nums">{{stack.total}}</span><span style="font-size: 15px; color: #5B6576">/ 84점</span></div>
+<div style="font-size: 12.5px; color: #5B6576">{{stack.hint}}</div>
+</div>
+
+<div style="position: relative; height: 210px; margin: 8px 0" role="img" aria-label="{{stack.aria}}">
+<span style="position: absolute; left: 0; bottom: 0; transform: translateY(50%); font-size: 11px; color: #6B7585">0</span>
+<span style="position: absolute; left: 0; bottom: 23.8%; transform: translateY(50%); font-size: 11px; color: #6B7585">20</span>
+<span style="position: absolute; left: 0; bottom: 47.6%; transform: translateY(50%); font-size: 11px; color: #6B7585">40</span>
+<span style="position: absolute; left: 0; bottom: 71.4%; transform: translateY(50%); font-size: 11px; color: #6B7585">60</span>
+<span style="position: absolute; left: 0; bottom: 100%; transform: translateY(50%); font-size: 11px; color: #6B7585">84</span>
+<div style="position: absolute; left: 30px; top: 0; bottom: 0; width: 44px; border-radius: 10px; background: #E1E7F0; overflow: hidden">
+<div style="{{stack.s1}}"></div>
+<div style="{{stack.s2}}"></div>
+<div style="{{stack.s3}}"></div>
+</div>
+<div style="{{stack.peerLine}}"></div>
+<div style="{{stack.peerLabel}}"><b style="color: #8F4300; font-size: 14px">{{peerAvg}}점</b><br>비슷한 조건 평균</div>
+<div style="{{stack.cutLine}}"></div>
+<div style="{{stack.cutLabel}}"><b style="color: #0A2B5E; font-size: 14px">{{cutline}}점</b><br>희망 지역 당첨선</div>
+</div>
+
+<ul style="list-style: none; margin: 0; padding: 12px 0 0; border-top: 1px solid #EEF1F5; display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+<sc-for list="{{stack.legend}}" as="l" hint-placeholder-count="3">
+<li style="{{l.rowStyle}}"><span style="{{l.dot}}"></span><span style="flex: 1">{{l.label}}</span><b style="font-variant-numeric: tabular-nums">{{l.value}}</b></li>
+</sc-for>
+</ul>
+<div style="padding: 10px 12px; border-radius: 10px; background: #FFF8EC; font-size: 13px; color: #4A3B00">{{stack.compare}}<br><span style="font-size: 12px; color: #6B5A20">비교 그룹: {{stack.peerGroup}}</span></div>
+<div style="font-size: 11.5px; color: #6B7585">평균·당첨선은 예시값이에요 (사용자 통계 · 청약홈 당첨가점 API 연결 전)</div>
+</aside>
+</section>
+</div>
+<p style="margin: 0; text-align: center; font-size: 13px; color: #EAF2FF">입력한 정보는 결과를 보기 전까지 저장되지 않아요</p>
+</div>
+</sc-if>
+
+<!-- ===== 결과 미리보기 ===== -->
+<sc-if value="{{isResult}}" hint-placeholder-val="{{ false }}">
+<div style="width: 100%; max-width: 920px; display: flex; flex-direction: column; gap: 16px">
+<div style="text-align: center">
+<div style="color: #FFFFFF; text-shadow: 0 2px 18px rgba(6, 22, 48, 0.35)"><span class="glass-dark" style="display: inline-block; font-size: 12.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.45); text-shadow: none">진단 완료</span>
+<h1 style="margin: 12px 0 0; font-size: 38px; font-weight: 700; letter-spacing: -0.03em">내 청약 진단 결과</h1></div>
+</div>
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 22px; box-shadow: 0 24px 60px rgba(6, 22, 48, 0.28); padding: 28px; display: flex; flex-wrap: wrap; gap: 28px">
+<div style="flex: 1 1 240px">
+<div style="font-size: 14px; font-weight: 700; color: #3A4556">예상 청약 가점</div>
+<div style="display: flex; align-items: baseline; gap: 6px; margin: 8px 0 16px"><span style="font-size: 56px; line-height: 1; font-weight: 700; color: #1D5BD8">{{score.total}}</span><span style="font-size: 18px; color: #5B6576">/ 84점</span></div>
+<div style="margin: -8px 0 14px; font-size: 13px; color: #8F4300; font-weight: 600">{{peerDiffText}} <span style="color: #6B7585; font-weight: 400">(예시값)</span></div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{score.rows}}" as="r" hint-placeholder-count="3">
+<div>
+<div style="display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 4px"><span>{{r.label}}</span><span><b>{{r.score}}</b> / {{r.max}}</span></div>
+<div style="height: 7px; background: #E8ECF2; border-radius: 99px; overflow: hidden"><div style="{{r.barStyle}}"></div></div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 14px; font-weight: 700; color: #3A4556">1순위 요건</span><span style="{{rank1Badge.style}}">{{rank1Badge.text}}</span></div>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px">
+<sc-for list="{{rank1}}" as="c" hint-placeholder-count="5"><li style="display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid #EEF1F5"><span>{{c.label}}</span><span style="{{c.style}}">{{c.mark}}</span></li></sc-for>
+</ul>
+</div>
+<div style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; font-weight: 700; color: #3A4556">특별공급 자격</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{special}}" as="c" hint-placeholder-count="6"><span style="{{c.style}}">{{c.label}} · {{c.badge}}</span></sc-for>
+</div>
+</div>
+</section>
+
+<!-- 잠긴 영역 -->
+<section class="glass" style="position: relative; border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 22px; box-shadow: 0 24px 60px rgba(6, 22, 48, 0.28); padding: 24px; overflow: hidden">
+<div aria-hidden="true" style="filter: blur(5px); opacity: 0.7; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px">
+<div style="border: 1px solid #DDE3EC; border-radius: 10px; padding: 14px; height: 96px"><div style="font-weight: 700">시흥하중 A-4 신혼희망타운</div><div style="font-size: 13px">자격 충족 · 경기</div></div>
+<div style="border: 1px solid #DDE3EC; border-radius: 10px; padding: 14px; height: 96px"><div style="font-weight: 700">신혼·신생아 매입임대</div><div style="font-size: 13px">자격 충족 · LH</div></div>
+<div style="border: 1px solid #DDE3EC; border-radius: 10px; padding: 14px; height: 96px"><div style="font-weight: 700">AI 전략 리포트</div><div style="font-size: 13px">추천 전략 3개</div></div>
+</div>
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: rgba(255, 255, 255, 0.55); text-align: center; padding: 16px">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" stroke="#0A2B5E" stroke-width="1.8"></rect><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke="#0A2B5E" stroke-width="1.8"></path></svg>
+<div style="font-weight: 700; font-size: 17px">맞춤 공고와 AI 전략 리포트는 저장 후 볼 수 있어요</div>
+<button type="button" onClick="{{openModal}}" style="min-height: 52px; padding: 0 28px; border-radius: 10px; border: 0; background: #1D5BD8; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">저장하고 AI 맞춤 추천 받기</button>
+</div>
+</section>
+<div style="text-align: center"><button type="button" onClick="{{editAgain}}" style="min-height: 44px; padding: 0 16px; border: 0; background: transparent; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline">입력 다시 수정하기</button></div>
+</div>
+</sc-if>
+
+<!-- ===== AI 추가 요구사항 ===== -->
+<sc-if value="{{isAI}}" hint-placeholder-val="{{ false }}">
+<div style="width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 16px">
+<div style="text-align: center; color: #FFFFFF; text-shadow: 0 2px 18px rgba(6, 22, 48, 0.35)">
+<span class="glass-dark" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.45); text-shadow: none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.4 2.4M15.3 15.3l2.4 2.4M6.3 17.7l2.4-2.4M15.3 8.7l2.4-2.4" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"></path></svg>마지막 단계 · AI 맞춤 조건</span>
+<h1 style="margin: 12px 0 6px; font-size: 38px; font-weight: 700; letter-spacing: -0.03em">원하는 조건을 편하게 적어주세요</h1>
+<p style="margin: 0; color: #EAF2FF">진단 정보는 저장됐어요. 폼으로 담기 어려운 조건은 AI가 정리해 추천에 반영해요.</p>
+</div>
+
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 22px; box-shadow: 0 24px 60px rgba(6, 22, 48, 0.28); padding: 28px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12.5px">
+<span style="font-weight: 700; color: #3A4556; margin-right: 4px">저장된 진단</span>
+<sc-for list="{{profileChips}}" as="p" hint-placeholder-count="5"><span style="padding: 3px 9px; border-radius: 6px; background: #EEF1F5">{{p.label}}</span></sc-for>
+</div>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: #3A4556">추가 요구사항
+<textarea rows="4" value="{{text}}" onChange="{{onText}}" style="font: inherit; font-size: 15px; font-weight: 400; color: #121826; border: 1px solid #CBD3DF; border-radius: 12px; padding: 14px; resize: vertical; line-height: 1.6"></textarea>
+</label>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
+<span style="font-size: 12.5px; color: #5B6576">예시</span>
+<sc-for list="{{examples}}" as="e" hint-placeholder-count="3"><button type="button" onClick="{{e.pick}}" style="min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #CBD3DF; background: #FFFFFF; font: inherit; font-size: 13px; color: #2A3445; cursor: pointer">+ {{e.label}}</button></sc-for>
+</div>
+<button type="button" onClick="{{analyze}}" style="align-self: flex-end; min-height: 50px; padding: 0 24px; border-radius: 10px; border: 0; background: #5B3FD6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">AI로 조건 정리하기</button>
+
+<sc-if value="{{parsed}}" hint-placeholder-val="{{ true }}">
+<div style="border-top: 1px solid #EEF1F5; padding-top: 18px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 700">AI가 정리한 조건</h2>
+<span style="font-size: 12.5px; color: #5B6576">틀린 조건은 지워주세요</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px">
+<sc-for list="{{conds}}" as="c" hint-placeholder-count="4">
+<div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px 12px 12px 14px; border-radius: 10px; border: 1px solid #E3DEFA; background: #FAFAFF">
+<span style="flex: none; font-size: 11.5px; font-weight: 700; color: #FFFFFF; background: #5B3FD6; border-radius: 5px; padding: 2px 7px; margin-top: 2px">{{c.cat}}</span>
+<div style="flex: 1; min-width: 0">
+<div style="font-weight: 700; font-size: 14px">{{c.text}}</div>
+<div style="font-size: 12.5px; color: #4A5568">{{c.how}}</div>
+</div>
+<button type="button" aria-label="{{c.aria}}" onClick="{{c.remove}}" style="flex: none; width: 36px; height: 36px; border-radius: 8px; border: 1px solid #DDD6F7; background: #FFFFFF; cursor: pointer; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="m3 3 8 8M11 3l-8 8" stroke="#5B6576" stroke-width="1.7" stroke-linecap="round"></path></svg></button>
+</div>
+</sc-for>
+</div>
+<div style="padding: 14px; border-radius: 10px; background: #FFF8EC; border: 1px solid #F3D9AE; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between">
+<div style="font-size: 14px"><b>AI가 하나 더 물어볼게요.</b> 맞벌이 가구인가요? 소득 기준이 달라져요.</div>
+<div style="display: flex; gap: 6px">
+<button type="button" onClick="{{dualYes}}" style="{{dualYesStyle}}">맞벌이</button>
+<button type="button" onClick="{{dualNo}}" style="{{dualNoStyle}}">외벌이</button>
+</div>
+</div>
+<a href="AgentReport.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 54px; border-radius: 10px; background: #1D5BD8; color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: 700">이 조건으로 AI 전략 리포트 만들기</a>
+</div>
+</sc-if>
+</section>
+</div>
+</sc-if>
+
+</main>
+
+<footer style="position: relative; z-index: 1; padding: 16px 24px 24px; text-align: center; font-size: 12.5px; color: rgba(255, 255, 255, 0.85)">진단 결과는 참고용이며, 실제 자격은 각 입주자모집공고문 기준으로 확인하세요 · 데이터: 청약홈 · LH · SH</footer>
+
+<!-- ===== 가입 모달 ===== -->
+<sc-if value="{{modal}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 5; background: rgba(10, 20, 40, 0.5); display: flex; align-items: center; justify-content: center; padding: 16px">
+<div role="dialog" aria-modal="true" aria-label="진단 정보 저장하기" style="width: 100%; max-width: 440px; background: #FFFFFF; border-radius: 16px; padding: 28px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px">
+<div>
+<h2 style="margin: 0; font-size: 21px; font-weight: 700">진단 정보 저장하기</h2>
+<p style="margin: 4px 0 0; font-size: 14px; color: #4A5568">가입하면 방금 입력한 정보가 그대로 저장돼요.</p>
+</div>
+<button type="button" aria-label="닫기" onClick="{{closeModal}}" style="flex: none; width: 40px; height: 40px; border-radius: 8px; border: 0; background: #F3F5F9; cursor: pointer; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="m3 3 8 8M11 3l-8 8" stroke="#3A4556" stroke-width="1.8" stroke-linecap="round"></path></svg></button>
+</div>
+<div style="padding: 12px 14px; border-radius: 10px; background: #F3F6FB; font-size: 13.5px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; justify-content: space-between"><span style="color: #4A5568">예상 가점</span><b>{{score.total}}점</b></div>
+<div style="display: flex; justify-content: space-between"><span style="color: #4A5568">1순위</span><b>{{rank1Badge.text}}</b></div>
+<div style="display: flex; justify-content: space-between"><span style="color: #4A5568">저장 항목</span><b>6개 영역 · 22개 값</b></div>
+</div>
+<a href="Journey.dc.html" style="min-height: 50px; border-radius: 10px; border: 1px solid #CBD3DF; background: #FFFFFF; font-size: 15px; font-weight: 600; color: #1A2433; display: flex; align-items: center; justify-content: center; text-decoration: none">카카오로 계속하기</a>
+<a href="Journey.dc.html" style="min-height: 50px; border-radius: 10px; border: 1px solid #CBD3DF; background: #FFFFFF; font-size: 15px; font-weight: 600; color: #1A2433; display: flex; align-items: center; justify-content: center; text-decoration: none">네이버로 계속하기</a>
+<div style="display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #5B6576"><span style="flex: 1; height: 1px; background: #E4E8EF"></span>또는<span style="flex: 1; height: 1px; background: #E4E8EF"></span></div>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; font-weight: 600; color: #3A4556">이메일
+<input type="email" placeholder="name@example.com" style="font: inherit; font-size: 15px; font-weight: 400; min-height: 48px; padding: 0 12px; border: 1px solid #CBD3DF; border-radius: 10px">
+</label>
+<a href="Journey.dc.html" style="min-height: 50px; border-radius: 10px; border: 0; background: #1D5BD8; color: #FFFFFF; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none">이메일로 가입하고 저장</a>
+<p style="margin: 0; font-size: 12px; color: #5B6576; text-align: center">가입 시 이용약관 및 개인정보 처리방침에 동의하게 됩니다</p>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peerAvg":{"editor":"int","default":31,"min":0,"max":84,"unit":"점","section":"비교 기준 (예시값)"},"cutline":{"editor":"int","default":52,"min":0,"max":84,"unit":"점","section":"비교 기준 (예시값)"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      screen: 'step', step: 1, modal: false, signed: false,
+      age: 32, marital: 'newlywed', householder: true, region: '서울',
+      homeOwn: 'none', noHouseYears: 3, firstTime: true,
+      dependents: 1, minorKids: 0, newborn: false, parentSupport: false,
+      accountType: 'total', accountYears: 4, payments: 48, deposit: 300,
+      income: 130, assets: 25,
+      wantRegions: ['서울', '경기'], supply: ['공공분양', '민간분양'], size: 'mid',
+      text: '강남역까지 대중교통으로 1시간 안이면 좋겠어요. 아이 계획이 있어서 초등학교 가까운 단지면 좋겠고, 대출은 한 달에 150만원 이하로 갚고 싶어요. 2년 안에는 입주하고 싶어요.',
+      parsed: false, removed: [], dual: null
+    };
+  }
+  set(k, v) { this.setState({ [k]: v }); }
+  renderVals() {
+    const st = this.state;
+    const A = '#1D5BD8';
+    const base = 'min-height: 46px; padding: 0 16px; border-radius: 10px; font: inherit; font-size: 14.5px; cursor: pointer; ';
+    const SEL = base + 'border: 1px solid ' + A + '; background: ' + A + '; color: #FFFFFF; font-weight: 600;';
+    const UNSEL = base + 'border: 1px solid #CBD3DF; background: #FFFFFF; color: #2A3445; font-weight: 500;';
+    const ON = base + 'border: 1.5px solid ' + A + '; background: #EEF3FF; color: #1D4FB8; font-weight: 700;';
+    const OFF = base + 'border: 1px dashed #B7C1D0; background: #FFFFFF; color: #3A4556; font-weight: 500;';
+    const seg = (key, opts) => opts.map((o) => ({ label: o[1], pick: () => this.set(key, o[0]), style: st[key] === o[0] ? SEL : UNSEL }));
+    const multi = (key, opts) => opts.map((l) => { const on = st[key].includes(l); return { label: l, pressed: on ? 'true' : 'false', style: on ? ON : OFF, pick: () => this.set(key, on ? st[key].filter((x) => x !== l) : st[key].concat([l])) }; });
+    const step = (key, min, max, d, fmt) => ({ text: fmt(st[key]), dec: () => this.set(key, Math.max(min, st[key] - d)), inc: () => this.set(key, Math.min(max, st[key] + d)) });
+    const tog = (key) => ({ yes: () => this.set(key, true), no: () => this.set(key, false), yesStyle: st[key] ? SEL : UNSEL, noStyle: st[key] ? UNSEL : SEL });
+
+    const single = st.marital === 'single';
+    const none = st.homeOwn === 'none';
+    const capital = ['서울', '인천', '경기'].includes(st.region);
+
+    // 가점
+    const eff = single ? Math.min(st.noHouseYears, Math.max(0, st.age - 30)) : st.noHouseYears;
+    const nh = !none || (single && st.age < 30) ? 0 : Math.min(32, 2 * (Math.min(eff, 15) + 1));
+    const dp = 5 + 5 * Math.min(st.dependents, 6);
+    const ac = st.accountYears === 0 ? 2 : Math.min(17, 2 + st.accountYears);
+    const bar = (s, m) => 'height: 100%; border-radius: 99px; background: ' + A + '; width: ' + Math.round(s / m * 100) + '%';
+    const score = { total: nh + dp + ac, rows: [
+      { label: '무주택 기간', score: nh, max: 32, barStyle: bar(nh, 32) },
+      { label: '부양가족 수', score: dp, max: 35, barStyle: bar(dp, 35) },
+      { label: '통장 가입 기간', score: ac, max: 17, barStyle: bar(ac, 17) } ] };
+
+    // 1순위
+    const big = st.size === 'large';
+    const depNeed = ({ '서울': big ? 600 : 300, '인천': big ? 400 : 250, '경기': big ? 300 : 200, '기타 광역시': big ? 400 : 250, '기타 시·군': big ? 300 : 200 })[st.region];
+    const mk = { ok: ['충족', 'color: #0B6B43; font-weight: 700'], warn: ['확인', 'color: #8F4300; font-weight: 700'], no: ['미충족', 'color: #A8231F; font-weight: 700'] };
+    const R = (label, s) => ({ label, s, mark: mk[s][0], style: mk[s][1] });
+    const rank1 = [
+      R('통장 종류', st.accountType === 'total' ? 'ok' : 'warn'),
+      R('가입 기간', st.accountYears >= 1 ? 'ok' : capital ? 'no' : 'warn'),
+      R('납입 회차', st.payments >= (capital ? 12 : 6) ? 'ok' : 'no'),
+      R('예치금', st.accountType === 'saving' ? 'warn' : st.deposit >= depNeed ? 'ok' : 'no'),
+      R('세대주', st.householder ? 'ok' : 'warn'),
+      R('무주택', none ? 'ok' : st.homeOwn === 'one' ? 'warn' : 'no')
+    ];
+    const pill = 'font-size: 12.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; ';
+    const rank1Badge = rank1.some((c) => c.s === 'no') ? { text: '미충족 항목 있음', style: pill + 'background: #FDECEC; color: #A8231F;' }
+      : rank1.some((c) => c.s === 'warn') ? { text: '조건부 충족', style: pill + 'background: #FFF1E0; color: #8F4300;' }
+      : { text: '1순위 충족 예상', style: pill + 'background: #E6F4EC; color: #0B6B43;' };
+
+    // 특별공급
+    const chip = 'font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; ';
+    const SP = (label, s) => ({ label, badge: s === 'ok' ? '충족' : s === 'warn' ? '확인' : '대상 아님',
+      style: chip + (s === 'ok' ? 'background: #E6F4EC; color: #0B6B43;' : s === 'warn' ? 'background: #FFF1E0; color: #8F4300;' : 'background: #F1F3F6; color: #5B6576;') });
+    const special = [
+      SP('신혼부부', st.marital === 'newlywed' && none ? (st.income > 160 ? 'warn' : 'ok') : 'no'),
+      SP('신생아', st.newborn && none ? 'ok' : 'no'),
+      SP('생애최초', st.firstTime && none ? (single || st.income > 160 ? 'warn' : 'ok') : 'no'),
+      SP('다자녀', st.minorKids >= 2 && none ? 'ok' : 'no'),
+      SP('노부모 부양', st.parentSupport && none ? (st.householder ? 'ok' : 'warn') : 'no'),
+      SP('청년', single && st.age >= 19 && st.age <= 39 && none ? (st.income <= 130 ? 'ok' : 'warn') : 'no')
+    ];
+
+    // 단계
+    const titles = ['기본 정보', '주택 소유 · 무주택 기간', '가족 구성', '청약통장', '소득 · 자산', '희망 조건'];
+    const short = ['기본', '주택', '가족', '통장', '소득', '희망'];
+    const steps = short.map((l, i) => {
+      const n = i + 1, done = n < st.step, cur = n === st.step;
+      return { label: l, aria: 'STEP ' + n + ' ' + titles[i], current: cur ? 'step' : 'false',
+        go: () => this.set('step', n),
+        barStyle: 'width: 100%; height: 8px; border: 0; padding: 0; border-radius: 99px; cursor: pointer; background: ' + (cur ? '#FFFFFF' : done ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)'),
+        labelStyle: 'font-size: 12.5px; font-weight: ' + (cur ? '700' : '500') + '; color: ' + (cur ? '#FFFFFF' : done ? '#EAF2FF' : 'rgba(255, 255, 255, 0.85)') + '; text-shadow: 0 1px 8px rgba(6, 22, 48, 0.4)' };
+    });
+
+    // AI 조건
+    const allConds = [
+      { id: 'loc', cat: '위치', text: '강남역까지 대중교통 60분 이내', how: '공고 탐색 필터 · 단지 좌표로 이동 시간 계산' },
+      { id: 'school', cat: '생활', text: '초등학교 도보권 단지 선호', how: '추천 순위 가중치 · 학교 위치 데이터 연결' },
+      { id: 'loan', cat: '자금', text: '월 상환 150만원 이하', how: '대출 에이전트 조건 · 한도 역산 [계산값]' },
+      { id: 'move', cat: '일정', text: '2028년 10월 이전 입주', how: '공고의 입주 예정 연월로 필터' }
+    ];
+    const conds = allConds.filter((c) => !st.removed.includes(c.id)).map((c) => Object.assign({}, c, {
+      aria: c.text + ' 조건 지우기', remove: () => this.set('removed', st.removed.concat([c.id])) }));
+    const exAdd = (t) => () => this.setState({ text: st.text + (st.text.endsWith(' ') || st.text === '' ? '' : ' ') + t, parsed: false });
+    const examples = [
+      { label: '반려동물', pick: exAdd('반려견이랑 같이 살 수 있으면 좋겠어요.') },
+      { label: '부모님 집 근처', pick: exAdd('부모님 댁이 분당이라 가까우면 좋겠어요.') },
+      { label: '역세권', pick: exAdd('지하철역 도보 10분 이내면 좋겠어요.') }
+    ];
+    const typeName = { total: '종합저축', saving: '청약저축', deposit: '청약예금', install: '청약부금' }[st.accountType];
+    const profileChips = [
+      { label: '가점 ' + score.total + '점' }, { label: '만 ' + st.age + '세' },
+      { label: { single: '미혼', newlywed: '신혼', married: '기혼' }[st.marital] }, { label: st.region + ' 거주' },
+      { label: none ? '무주택' : '주택 소유' }, { label: typeName + ' ' + st.accountYears + '년' }
+    ];
+
+    // 가점 스택 바
+    const peer = this.props.peerAvg ?? 31;
+    const cut = this.props.cutline ?? 52;
+    const r1 = st.step >= 2 ? nh : 0, r2 = st.step >= 3 ? dp : 0, r3 = st.step >= 4 ? ac : 0;
+    const stTotal = r1 + r2 + r3;
+    const pct = (v) => (Math.max(0, Math.min(84, v)) / 84 * 100).toFixed(2) + '%';
+    const segS = (b, h, c) => 'position: absolute; left: 0; right: 0; bottom: ' + pct(b) + '; height: ' + pct(h) + '; background: ' + c + '; transition: height 0.45s ease, bottom 0.45s ease;' + (h > 0 ? ' box-shadow: inset 0 2px 0 #FFFFFF;' : '');
+    const lineS = (v, border) => 'position: absolute; left: 24px; width: 56px; bottom: ' + pct(v) + '; border-top: ' + border + '; transition: bottom 0.3s ease';
+    const cutPos = Math.abs(cut - peer) < 14 ? (cut >= peer ? peer + 14 : peer - 14) : cut;
+    const labelS = (v) => 'position: absolute; left: 88px; right: 0; bottom: ' + pct(v) + '; transform: translateY(50%); font-size: 12px; line-height: 1.35; color: #3A4556';
+    const C1 = '#0A2B5E', C2 = '#1D5BD8', C3 = '#8DB0F2';
+    const lg = (label, v, max, need, c) => ({
+      label, value: st.step >= need ? v + ' / ' + max : '입력 전',
+      dot: 'flex: none; width: 10px; height: 10px; border-radius: 3px; background: ' + c,
+      rowStyle: 'display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px;' + (st.step === need ? ' background: #EEF3FF; font-weight: 600;' : '') + (st.step < need ? ' color: #6B7585;' : '')
+    });
+    const band = st.age < 30 ? '20대' : st.age < 35 ? '30대 초반' : st.age < 40 ? '30대 후반' : st.age < 50 ? '40대' : '50대 이상';
+    const diff = stTotal - peer;
+    const stack = {
+      total: stTotal,
+      hint: st.step === 1 ? 'STEP 2부터 가점이 쌓여요' : st.step < 4 ? '입력할수록 막대가 쌓여요' : '가점 항목 입력 완료',
+      s1: segS(0, r1, C1), s2: segS(r1, r2, C2), s3: segS(r1 + r2, r3, C3),
+      peerLine: lineS(peer, '2px dashed #B35300'), peerLabel: labelS(peer),
+      cutLine: lineS(cut, '2px solid #0A2B5E'), cutLabel: labelS(cutPos),
+      peerGroup: band + ' · ' + ({ single: '미혼', newlywed: '신혼', married: '기혼' })[st.marital] + ' · ' + (none ? '무주택' : '유주택'),
+      legend: [lg('무주택 기간', nh, 32, 2, C1), lg('부양가족 수', dp, 35, 3, C2), lg('통장 가입 기간', ac, 17, 4, C3)],
+      compare: st.step < 4 ? 'STEP 4까지 입력하면 비슷한 조건 평균과 비교해 드려요'
+        : diff >= 0 ? '비슷한 조건 평균보다 ' + diff + '점 높아요' : '비슷한 조건 평균보다 ' + (-diff) + '점 낮아요 · 특별공급을 함께 노려보세요',
+      aria: '현재 예상 가점 ' + stTotal + '점, 비슷한 조건 평균 ' + peer + '점, 희망 지역 최근 당첨선 ' + cut + '점'
+    };
+
+    const prevOff = st.step === 1;
+    return {
+      isStep: st.screen === 'step', isResult: st.screen === 'result', isAI: st.screen === 'ai',
+      modal: st.modal, signed: st.signed, notSigned: !st.signed,
+      step: st.step, stepTitle: titles[st.step - 1], steps,
+      is1: st.step === 1, is2: st.step === 2, is3: st.step === 3, is4: st.step === 4, is5: st.step === 5, is6: st.step === 6,
+      prev: () => { if (!prevOff) this.set('step', st.step - 1); },
+      prevStyle: 'min-height: 52px; padding: 0 22px; border-radius: 10px; border: 1px solid #CBD3DF; background: #FFFFFF; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; color: ' + (prevOff ? '#A0A9B8' : '#2A3445') + '; visibility: ' + (prevOff ? 'hidden' : 'visible'),
+      next: () => st.step < 6 ? this.set('step', st.step + 1) : this.setState({ screen: 'result' }),
+      nextLabel: st.step < 6 ? '다음' : '결과 보기',
+      editAgain: () => this.setState({ screen: 'step', step: 6 }),
+      openModal: () => this.set('modal', true),
+      closeModal: () => this.set('modal', false),
+      signup: () => this.setState({ modal: false, signed: true, screen: 'ai' }),
+      score, rank1, rank1Badge, special, stack, peerAvg: peer, cutline: cut,
+      peerDiffText: diff >= 0 ? '비슷한 조건 평균(' + peer + '점)보다 ' + diff + '점 높아요' : '비슷한 조건 평균(' + peer + '점)보다 ' + (-diff) + '점 낮아요',
+      s_age: step('age', 19, 70, 1, (v) => '만 ' + v + '세'),
+      s_noHouse: step('noHouseYears', 0, 15, 1, (v) => v === 0 ? '1년 미만' : v >= 15 ? '15년 이상' : v + '년 이상'),
+      s_dep: step('dependents', 0, 6, 1, (v) => v >= 6 ? '6명 이상' : v + '명'),
+      s_kids: step('minorKids', 0, 5, 1, (v) => v + '명'),
+      s_accYears: step('accountYears', 0, 15, 1, (v) => v === 0 ? '1년 미만' : v >= 15 ? '15년 이상' : v + '년'),
+      s_pay: step('payments', 0, 240, 6, (v) => v + '회'),
+      s_deposit: step('deposit', 0, 2000, 50, (v) => v.toLocaleString() + '만원'),
+      s_assets: step('assets', 0, 100, 5, (v) => (v / 10).toFixed(1) + '억원'),
+      t_householder: tog('householder'), t_firstTime: tog('firstTime'), t_newborn: tog('newborn'), t_parent: tog('parentSupport'),
+      seg_marital: seg('marital', [['single', '미혼'], ['newlywed', '신혼 (혼인 7년 이내)'], ['married', '기혼 (7년 초과)']]),
+      seg_region: seg('region', [['서울', '서울'], ['인천', '인천'], ['경기', '경기'], ['기타 광역시', '기타 광역시'], ['기타 시·군', '기타 시·군']]),
+      seg_homeOwn: seg('homeOwn', [['none', '무주택'], ['one', '1주택'], ['multi', '2주택 이상']]),
+      seg_account: seg('accountType', [['total', '주택청약종합저축'], ['saving', '청약저축'], ['deposit', '청약예금'], ['install', '청약부금']]),
+      seg_income: seg('income', [[100, '100% 이하'], [130, '130% 이하'], [160, '160% 이하'], [200, '200% 이하'], [999, '200% 초과']]),
+      seg_size: seg('size', [['small', '60㎡ 이하'], ['mid', '60~85㎡'], ['large', '85㎡ 초과']]),
+      multi_regions: multi('wantRegions', ['서울', '경기', '인천', '대전', '대구', '부산', '기타']),
+      multi_supply: multi('supply', ['공공분양', '민간분양', '공공임대', '매입·전세임대']),
+      text: st.text, onText: (e) => this.setState({ text: e.target.value }),
+      examples, profileChips, parsed: st.parsed, conds,
+      analyze: () => this.setState({ parsed: true, removed: [] }),
+      dualYes: () => this.set('dual', true), dualNo: () => this.set('dual', false),
+      dualYesStyle: st.dual === true ? SEL : UNSEL, dualNoStyle: st.dual === false ? SEL : UNSEL
+    };
+  }
+}
+</script>
+</body>
+</html>

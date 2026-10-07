@@ -35,7 +35,7 @@ export default function LandingAltPage() {
           <header className="mk-landing-nav">
             <Link to="/intro" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "#0A2B5E" }}>
               <HouseIcon color="#E8613C" size={26} />
-              <span style={{ fontFamily: "'Jua', 'Gothic A1', sans-serif", fontSize: 22 }}>청약전략</span>
+              <span style={{ fontFamily: "'Jua', 'Gothic A1', sans-serif", fontSize: 26 }}>청약돼<em className="mk-qm">?!</em></span>
             </Link>
             <nav aria-label="주요 메뉴">
               <Link to="/diagnosis">청약 진단</Link>

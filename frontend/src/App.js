@@ -16,6 +16,8 @@ import MyHomePage from "./pages/MyHomePage";
 import AIChatPage from "./pages/AIChatPage";
 import NoticeAIPage from "./pages/NoticeAIPage";
 import ReportPage from "./pages/ReportPage";
+import MockupIndexPage from "./pages/MockupIndexPage";
+import MockupBoardPage from "./pages/MockupBoardPage";
 
 // 누구나: 메인, 공고 목록·상세 / 내 정보가 필요한 화면: 입력, 추천, 자금 계획, 질문
 // 흐름: 첫 페이지(/) → 청약 진단(/diagnosis) → 로그인(가입) → 청약 홈(/portal, jinyoung 메인)
@@ -26,6 +28,9 @@ function App() {
     <Layout>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        {/* 2026.10.08 jiyoon 아이디어 목업 — 디자인 캔버스 화면 그대로 (public/mockup-files/*.dc.html) */}
+        <Route path="/mockup" element={<MockupIndexPage />} />
+        <Route path="/mockup/:board" element={<MockupBoardPage />} />
         <Route path="/diagnosis" element={<DiagnosisPage />} />
         <Route path="/my" element={<MyHomePage />} />
         <Route path="/intro" element={<LandingAltPage />} />

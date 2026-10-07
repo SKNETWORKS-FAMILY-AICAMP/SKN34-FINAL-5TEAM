@@ -30,7 +30,7 @@ export default function Layout({ children }) {
 
   // 목업 디자인 화면은 하늘 사진 배경 + 자체 헤더(components/MockupShell.jsx)를 쓴다.
   const isMockup = ["/", "/diagnosis", "/my", "/intro", "/ai-chat", "/report"].includes(pathname) || /^\/listings\/\d+\/ai$/.test(pathname);
-  if (isMockup) {
+  if (isMockup || pathname.startsWith("/mockup")) {
     return children;
   }
 

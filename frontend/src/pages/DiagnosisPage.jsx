@@ -22,6 +22,8 @@ import {
 // 비슷한 조건 평균·희망 지역 당첨선은 예시값 (사용자 통계 · 청약홈 당첨가점 API 연결 전)
 const PEER_AVG = 31;
 const CUTLINE = 52;
+// 목업 확인용 테스트 계정 (.test 도메인 — 실제 메일 아님)
+const TEST_EMAIL = "tester@cheongyak.test";
 
 const TITLES = ["기본 정보", "주택 소유 · 무주택 기간", "가족 구성", "청약통장", "소득 · 자산", "희망 조건"];
 const SHORT = ["기본", "주택", "가족", "통장", "소득", "희망"];
@@ -135,14 +137,15 @@ export default function DiagnosisPage() {
     }
   };
 
-  const signup = async (e) => {
+  const signup = async (e, asTester = false) => {
     e?.preventDefault();
-    const merged = { ...user, ...diagnosisToUser(d, email.trim()) };
+    const merged = { ...user, ...diagnosisToUser(d, asTester ? TEST_EMAIL : email.trim()) };
     Object.entries(merged).forEach(([field, value]) => {
       if (field in user || field === "subscriptionPaymentCount") dispatch(setUserField({ field, value }));
     });
     const saved = await dispatch(saveUserProfile(merged));
-    if (saveUserProfile.fulfilled.match(saved)) {
+    // 테스트 계정은 서버 저장이 실패해도 화면 확인을 위해 그대로 넘어감
+    if (saveUserProfile.fulfilled.match(saved) || asTester) {
       setModal(false);
       navigate("/portal");
     }
@@ -614,6 +617,15 @@ export default function DiagnosisPage() {
             {user.saveStatus === "failed" && <p className="mk-error">{user.saveError}</p>}
             <button type="submit" className="mk-btn" disabled={user.saveStatus === "loading"} style={{ minHeight: 50, fontSize: 15 }}>
               {user.saveStatus === "loading" ? "저장 중…" : "이메일로 가입하고 저장"}
+            </button>
+            <button
+              type="button"
+              className="mk-btn-line"
+              disabled={user.saveStatus === "loading"}
+              onClick={() => signup(null, true)}
+              style={{ borderStyle: "dashed", color: "#1D4FB8", fontWeight: 700 }}
+            >
+              테스트 계정으로 바로 넘어가기 ({TEST_EMAIL})
             </button>
             <p style={{ fontSize: 12, color: "#5B6576", textAlign: "center" }}>가입 시 이용약관 및 개인정보 처리방침에 동의하게 됩니다</p>
           </form>
