@@ -6,9 +6,12 @@
 DB 저장은 save_listings.py에서 한다.
 """
 
+import logging
 import httpx
 
 from app.data_pipeline.applyhome_client import fetch_all_pages, parse_date, parse_exclusive_area, to_float, to_int
+
+logger = logging.getLogger(__name__)
 
 CMPET_SVC = "ApplyhomeInfoCmpetRtSvc/v1"
 CMPET_ENDPOINTS = {
@@ -174,19 +177,19 @@ def fetch_historical_results(notice_index: dict[str, dict]) -> list[dict]:
         for house_type, endpoint in CMPET_ENDPOINTS.items():
             raw = fetch_all_pages(f"{CMPET_SVC}/{endpoint}", client=client)
             rows.extend(map_cmpet_row(r, house_type) for r in raw)
-            print(f"[경쟁률 {house_type}] {len(raw)}행", flush=True)
+            logger.info(f"[경쟁률 {house_type}] {len(raw)}행")
 
         # 점수가 모두 "-"인 행(발표 전·추첨제)도 원본 그대로 남긴다 — 통계(cutoff_stats)는 점수 있는 행만 쓴다
         raw = fetch_all_pages(f"{CMPET_SVC}/{SCORE_ENDPOINT}", client=client)
         scores = [map_score_row(r) for r in raw]
         rows.extend(scores)
         with_score = sum(1 for s in scores if s["cutoff_score"] is not None)
-        print(f"[당첨가점 APT] {len(raw)}행 (점수 있는 행 {with_score})", flush=True)
+        logger.info(f"[당첨가점 APT] {len(raw)}행 (점수 있는 행 {with_score})")
 
         raw = fetch_all_pages(f"{CMPET_SVC}/{SPSPLY_ENDPOINT}", client=client)
         before = len(rows)
         for r in raw:
             rows.extend(map_spsply_row(r))
-        print(f"[특별공급 APT] {len(raw)}행 → {len(rows) - before}행", flush=True)
+        logger.info(f"[특별공급 APT] {len(raw)}행 → {len(rows) - before}행")
 
     return _attach_notice_info(rows, notice_index)

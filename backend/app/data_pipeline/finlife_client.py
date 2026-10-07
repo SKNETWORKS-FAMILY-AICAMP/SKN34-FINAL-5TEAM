@@ -7,9 +7,12 @@ DB 저장은 save_listings.py에서 한다.
 
 from __future__ import annotations
 
+import logging
 import httpx
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 FINLIFE_BASE_URL = "https://finlife.fss.or.kr/finlifeapi"
 PRODUCT_TYPES = {
@@ -93,7 +96,7 @@ def map_product(base: dict, product_type: str, fin_group: str, options: list[dic
 def fetch_loan_products() -> list[dict]:
     """전체 대출 상품. 각 상품 dict의 "options"에 금리 옵션 목록이 들어 있다."""
     if not settings.fine_api_key:
-        print("[파인] FINE_API_KEY가 비어 있어 건너뜁니다.", flush=True)
+        logger.warning("[파인] FINE_API_KEY가 비어 있어 건너뜁니다.")
         return []
     products: list[dict] = []
     with httpx.Client(timeout=30.0) as client:
@@ -107,7 +110,7 @@ def fetch_loan_products() -> list[dict]:
                     )
                     result = (response.json() if response.status_code == 200 else {}).get("result") or {}
                     if result.get("err_cd") not in (None, "000"):
-                        print(f"[파인] {product_type} {group_name} 오류 {result.get('err_cd')} {result.get('err_msg')}", flush=True)
+                        logger.warning(f"[파인] {product_type} {group_name} 오류 {result.get('err_cd')} {result.get('err_msg')}")
                         break
                     options_by_product: dict[str, list[dict]] = {}
                     for option in result.get("optionList") or []:
@@ -118,5 +121,5 @@ def fetch_loan_products() -> list[dict]:
                         products.append(map_product(base, product_type, group_name, options))
                     max_page = int(result.get("max_page_no") or 1)
                     page += 1
-    print(f"[파인] 대출 상품 {len(products)}개", flush=True)
+    logger.info(f"[파인] 대출 상품 {len(products)}개")
     return products

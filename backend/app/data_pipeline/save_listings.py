@@ -14,6 +14,7 @@
 수집이 끝나면 가공 레이어(app/db/views.py)의 구체화 뷰를 다시 계산한다.
 """
 
+import logging
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
@@ -62,6 +63,8 @@ from app.models.listing import Listing
 from app.models.loan_product import LoanProduct, LoanRateOption
 from app.models.notice_sources import CollectRun, LhNoticeDetail, LhRentalHouse, NoticeCost, NoticeDocument, NoticeOptionCost, ShNotice
 
+logger = logging.getLogger(__name__)
+
 BATCH_SIZE = 1000
 LISTING_KEY = ("source", "external_id", "model_no")
 RESULT_KEY = ("external_id", "unit_type", "result_type", "category_label")
@@ -77,7 +80,7 @@ def upsert(model, rows: list[dict], key: tuple[str, ...], constraint: str) -> in
     """같은 key가 있으면 갱신, 없으면 추가. 반환값: 저장한 행 수(중복 제거 후)."""
     unique = {tuple(row.get(k) for k in key): row for row in rows}
     if len(unique) < len(rows):
-        print(f"  같은 키 중복 {len(rows) - len(unique)}행은 마지막 값으로 합침", flush=True)
+        logger.info(f"  같은 키 중복 {len(rows) - len(unique)}행은 마지막 값으로 합침")
     rows = list(unique.values())
     if not rows:
         return 0
@@ -97,14 +100,14 @@ def upsert(model, rows: list[dict], key: tuple[str, ...], constraint: str) -> in
 def save_applyhome_listings(from_date: date | None = None) -> dict[str, dict]:
     rows, notice_index = fetch_all_listings(from_date)
     saved = upsert(Listing, rows, LISTING_KEY, "uq_listing_source_external_model")
-    print(f"[저장] 청약홈 listings {saved}행", flush=True)
+    logger.info(f"[저장] 청약홈 listings {saved}행")
     return notice_index
 
 
 def save_historical_results(notice_index: dict[str, dict] | None = None) -> None:
     rows = fetch_historical_results(notice_index if notice_index is not None else fetch_notice_index())
     saved = upsert(HistoricalResult, rows, RESULT_KEY, "uq_result_external_unit_type_category")
-    print(f"[저장] historical_results {saved}행", flush=True)
+    logger.info(f"[저장] historical_results {saved}행")
 
 
 def save_lh_listings() -> None:
@@ -138,12 +141,12 @@ def save_lh_listings() -> None:
                 else:
                     upsert(LhNoticeDetail, [d], ("pan_id",), "uq_lh_notice_detail_pan_id")
             failed += len(details) - len(ok)
-            print(f"  LH 상세·공급정보 {start + len(details)}/{len(pending)} (실패 {failed})", flush=True)
+            logger.warning(f"  LH 상세·공급정보 {start + len(details)}/{len(pending)} (실패 {failed})")
             if not ok:
                 # 100건이 모두 실패 = 일일 호출 한도 초과나 서버 장애. 남은 공고는 다음 수집 때 이어서 받는다
-                print(f"[LH] 100건 연속 실패로 중단 — 남은 {len(pending) - start - len(details)}건은 다음 수집 때 이어서", flush=True)
+                logger.warning(f"[LH] 100건 연속 실패로 중단 — 남은 {len(pending) - start - len(details)}건은 다음 수집 때 이어서")
                 break
-    print(f"[저장] LH 상세·공급정보 {saved}건 (실패 {failed}건은 다음 수집 때 다시 시도)", flush=True)
+    logger.warning(f"[저장] LH 상세·공급정보 {saved}건 (실패 {failed}건은 다음 수집 때 다시 시도)")
 
     # 2) listings: 공고 x 주택형
     ids = [str(n.get("PAN_ID")) for n in notices]
@@ -167,7 +170,7 @@ def save_lh_listings() -> None:
     with engine.begin() as conn:
         conn.execute(delete(Listing).where(Listing.source == "lh", Listing.external_id.in_(ids)))
     saved = upsert(Listing, rows, LISTING_KEY, "uq_listing_source_external_model")
-    print(f"[저장] LH listings {saved}행 (공고 {len(notices)}건)", flush=True)
+    logger.info(f"[저장] LH listings {saved}행 (공고 {len(notices)}건)")
 
 
 def save_sh_notices() -> None:
@@ -179,7 +182,7 @@ def save_sh_notices() -> None:
     list_only = [n for n in notices if "body_text" not in n]
     saved = upsert(ShNotice, with_detail, ("board", "seq"), "uq_sh_notice_board_seq")
     saved += upsert(ShNotice, list_only, ("board", "seq"), "uq_sh_notice_board_seq")
-    print(f"[저장] SH 게시판 {saved}건 (상세 새로 저장 {len(with_detail)}건)", flush=True)
+    logger.info(f"[저장] SH 게시판 {saved}건 (상세 새로 저장 {len(with_detail)}건)")
 
 
 def save_loan_products() -> None:
@@ -199,7 +202,7 @@ def save_loan_products() -> None:
                 db.execute(delete(LoanRateOption).where(LoanRateOption.loan_product_id == product.id))
             db.add_all(LoanRateOption(loan_product_id=product.id, **option) for option in options)
         db.commit()
-    print(f"[저장] 대출 상품 {len(products)}개", flush=True)
+    logger.info(f"[저장] 대출 상품 {len(products)}개")
 
 
 def _document_for(source: str, external_id: str, notice_url: str | None, client: httpx.Client) -> dict:
@@ -248,8 +251,8 @@ def save_notice_costs(reparse_only: bool = False) -> None:
         with httpx.Client(timeout=60.0, follow_redirects=True) as client, ThreadPoolExecutor(max_workers=4) as pool:
             documents = list(pool.map(lambda t: _document_for(t.source, t.external_id, t.notice_url, client), pending))
         upsert(NoticeDocument, documents, ("source", "external_id"), "uq_notice_document_source_external")
-        print(f"[공고문] 새로 {len(documents)}건 — " + ", ".join(
-            f"{status} {count}" for status, count in Counter(d["status"] for d in documents).items()), flush=True)
+        logger.info(f"[공고문] 새로 {len(documents)}건 — " + ", ".join(
+            f"{status} {count}" for status, count in Counter(d["status"] for d in documents).items()))
 
     lh_ids = sorted(t.external_id for t in targets if t.source == "lh")
     if not reparse_only:
@@ -297,10 +300,10 @@ def save_notice_costs(reparse_only: bool = False) -> None:
         db.commit()
     saved = upsert(NoticeCost, costs, ("source", "external_id", "model_no"), "uq_notice_cost_listing")
     upsert(NoticeOptionCost, options, ("source", "external_id", "seq"), "uq_notice_option_cost")
-    print(f"[계약금] 공고문·주택목록 {len(notices)}건에서 주택형 {saved}행 — " + ", ".join(
-        f"{method} {count}" for method, count in Counter(c["method"] for c in costs).items()), flush=True)
-    print(f"[옵션 계약금] 분양 공고 {len({(o['source'], o['external_id']) for o in options})}건에서 "
-          f"{len(options)}줄 (발코니 확장·선택품목 원문)", flush=True)
+    logger.info(f"[계약금] 공고문·주택목록 {len(notices)}건에서 주택형 {saved}행 — " + ", ".join(
+        f"{method} {count}" for method, count in Counter(c["method"] for c in costs).items()))
+    logger.info(f"[옵션 계약금] 분양 공고 {len({(o['source'], o['external_id']) for o in options})}건에서 "
+          f"{len(options)}줄 (발코니 확장·선택품목 원문)")
 
 
 def save_lh_house_lists(pan_ids: list[str]) -> None:
@@ -339,7 +342,7 @@ def save_lh_house_lists(pan_ids: list[str]) -> None:
         conn.execute(delete(LhRentalHouse).where(LhRentalHouse.pan_id.in_(read)))
     upsert(LhRentalHouse, houses, ("pan_id", "file_name", "sheet", "seq"), "uq_lh_rental_house")
     upsert(NoticeDocument, documents, ("source", "external_id"), "uq_notice_document_source_external")
-    print(f"[주택목록] LH 공고 {len(documents)}건 확인 — 주택목록 있음 {len(read)}건, 주택 {len(houses)}호", flush=True)
+    logger.info(f"[주택목록] LH 공고 {len(documents)}건 확인 — 주택목록 있음 {len(read)}건, 주택 {len(houses)}호")
 
 
 # 계약금 칸에 넣는 notice_costs.method — 공고문 표·문장에 이 주택형의 계약금으로 적힌 숫자
@@ -395,8 +398,8 @@ def save_listing_deposits() -> None:
                 rents += 1
             counts[how] += 1
         db.commit()
-    print(f"[계약금(공고문 숫자)] 접수 예정·접수 중 {len(rows)}행 — " + ", ".join(
-        f"{how} {count}" for how, count in counts.most_common()) + f" / 임대보증금 칸 채움 {rents}행", flush=True)
+    logger.info(f"[계약금(공고문 숫자)] 접수 예정·접수 중 {len(rows)}행 — " + ", ".join(
+        f"{how} {count}" for how, count in counts.most_common()) + f" / 임대보증금 칸 채움 {rents}행")
 
 
 def save_sh_recruitments(days: int = 90) -> None:
@@ -440,7 +443,7 @@ def save_sh_recruitments(days: int = 90) -> None:
             "receipt_start": start, "receipt_end": end, "unit_count": 0,
         })
     saved = upsert(Listing, rows, LISTING_KEY, "uq_listing_source_external_model")
-    print(f"[SH 모집] 최근 {days}일 모집 공고 {len(notices)}건 중 접수기간을 찾은 {saved}건을 listings에 저장", flush=True)
+    logger.info(f"[SH 모집] 최근 {days}일 모집 공고 {len(notices)}건 중 접수기간을 찾은 {saved}건을 listings에 저장")
 
 
 def save_applyhome_stats() -> None:
@@ -465,9 +468,9 @@ def save_applyhome_stats() -> None:
                         for page in fetch_pages(path, month_field, since, client):
                             conn.execute(insert(model), [mapper(row, kind) for row in page])
                             saved += len(page)
-                    print(f"[통계] {model.__tablename__} {kind}: {since or '전체 기간'}부터 {saved}행", flush=True)
+                    logger.info(f"[통계] {model.__tablename__} {kind}: {since or '전체 기간'}부터 {saved}행")
                 except NotApproved as exc:
-                    print(f"[통계] {exc} 서비스는 활용신청(또는 승인 반영) 전이라 건너뜁니다.", flush=True)
+                    logger.warning(f"[통계] {exc} 서비스는 활용신청(또는 승인 반영) 전이라 건너뜁니다.")
                     break
 
 
@@ -479,7 +482,7 @@ def _run(step, *args):
     try:
         return step(*args)
     except Exception as exc:  # noqa: BLE001
-        print(f"[실패] {step.__name__}: {exc.__class__.__name__} {exc}", flush=True)
+        logger.error(f"[실패] {step.__name__}: {exc.__class__.__name__} {exc}")
         _failed_steps.append(f"{step.__name__}: {exc.__class__.__name__}"[:200])
         return None
 
@@ -487,20 +490,20 @@ def _run(step, *args):
 def print_stats() -> None:
     with SessionLocal() as db:
         for source, count in db.execute(select(Listing.source, func.count()).group_by(Listing.source)):
-            print(f"  listings[{source}] {count}행", flush=True)
+            logger.info(f"  listings[{source}] {count}행")
         for result_type, count in db.execute(
             select(HistoricalResult.result_type, func.count()).group_by(HistoricalResult.result_type)
         ):
-            print(f"  historical_results[{result_type}] {count}행", flush=True)
+            logger.info(f"  historical_results[{result_type}] {count}행")
         for product_type, count in db.execute(
             select(LoanProduct.product_type, func.count()).group_by(LoanProduct.product_type)
         ):
-            print(f"  loan_products[{product_type}] {count}개", flush=True)
+            logger.info(f"  loan_products[{product_type}] {count}개")
         for model in (BankbookStat, SubscriptionStat):
             for kind, count in db.execute(select(model.kind, func.count()).group_by(model.kind)):
-                print(f"  {model.__tablename__}[{kind}] {count}행", flush=True)
-        print(f"  sh_notices {db.scalar(select(func.count()).select_from(ShNotice))}건", flush=True)
-        print(f"  lh_notice_details {db.scalar(select(func.count()).select_from(LhNoticeDetail))}건", flush=True)
+                logger.info(f"  {model.__tablename__}[{kind}] {count}행")
+        logger.info(f"  sh_notices {db.scalar(select(func.count()).select_from(ShNotice))}건")
+        logger.info(f"  lh_notice_details {db.scalar(select(func.count()).select_from(LhNoticeDetail))}건")
 
 
 def collect_all(trigger: str = "수동") -> None:
@@ -538,4 +541,8 @@ def _collect_steps() -> None:
 
 
 if __name__ == "__main__":
+    from app.core.config import settings
+    from app.core.logging_setup import setup_logging
+
+    setup_logging(settings.log_level)  # 직접 실행할 때도 진행 로그가 터미널에 보이게 한다
     collect_all()

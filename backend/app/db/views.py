@@ -12,8 +12,11 @@
 뷰 정의를 바꾼 뒤에는 다시 만들어야 한다:  cd backend && python -m app.db.views
 """
 
+import logging
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
+
+logger = logging.getLogger(__name__)
 
 AREA_BAND = """CASE WHEN {col} IS NULL THEN NULL
        WHEN {col} <= 60 THEN '60㎡ 이하'
@@ -189,7 +192,11 @@ def rebuild_views(engine: Engine) -> None:
 
 
 if __name__ == "__main__":
+    from app.core.config import settings
+    from app.core.logging_setup import setup_logging
     from app.db.session import engine as _engine
 
+    setup_logging(settings.log_level)
+
     rebuild_views(_engine)
-    print("가공 레이어를 다시 만들었습니다.")
+    logger.info("가공 레이어를 다시 만들었습니다.")

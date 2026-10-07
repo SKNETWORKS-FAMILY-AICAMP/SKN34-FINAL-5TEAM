@@ -12,6 +12,7 @@
 DB 저장은 save_listings.py에서 한다.
 """
 
+import logging
 import re
 from collections import defaultdict
 from datetime import date
@@ -19,6 +20,8 @@ from datetime import date
 import httpx
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 ODCLOUD_BASE_URL = "https://api.odcloud.kr/api"
 DETAIL_SVC = "ApplyhomeInfoDetailSvc/v1"
@@ -283,7 +286,7 @@ def fetch_listings(house_type: str, from_date: date | None = None) -> tuple[list
                          "raw": {"notice": notice, "unit": None}})
             continue
         rows.extend({**base, **map_unit(unit, house_type), "raw": {"notice": notice, "unit": unit}} for unit in units)
-    print(f"[청약홈 {house_type}] 공고 {len(notices)}건 → listings {len(rows)}행", flush=True)
+    logger.info(f"[청약홈 {house_type}] 공고 {len(notices)}건 → listings {len(rows)}행")
     return rows, notices
 
 
