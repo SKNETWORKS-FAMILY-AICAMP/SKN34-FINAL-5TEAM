@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>AI 청약 상담</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700&amp;family=Jua&amp;display=swap">
+<style>
+h1{font-family:'Jua','Gothic A1',sans-serif !important;font-weight:400 !important;letter-spacing:0 !important}
+button,input,textarea{font-family:inherit}
+body{margin:0;background:#5FB8DC}
+.hero-bg{position:relative;background-color:#5FB8DC;background-image:url(/_blob/8f777b2b3a5180f98e064baf116a6003);background-size:cover;background-position:center bottom}
+.hero-bg::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,30,60,0.26) 0%,rgba(6,30,60,0.04) 28%,rgba(6,30,60,0) 60%,rgba(6,30,60,0.42) 100%);pointer-events:none}
+.glass{background:rgba(255,255,255,0.9);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2)}
+.glass-dark{background:rgba(255,255,255,0.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+a{color:#1D4FB8}a:hover{color:#0A2B5E}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid #8DB2FF;outline-offset:2px}
+</style>
+</helmet>
+<div class="hero-bg" style="font-family: 'Gothic A1', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #121826; min-height: 100vh; font-size: 15px; line-height: 1.55">
+
+<header style="position: relative; z-index: 1">
+<div style="max-width: 1280px; margin: 0 auto; padding: 0 24px; min-height: 72px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #FFFFFF">
+<svg width="28" height="27" viewBox="7 9.5 20 18" fill="none" aria-hidden="true"><path d="M9 17.5 17 11l8 6.5V25a1 1 0 0 1-1 1h-4.5v-5h-5v5H10a1 1 0 0 1-1-1v-7.5Z" stroke="#FFFFFF" stroke-width="1.7" stroke-linejoin="round"></path></svg>
+<span style="font-family: 'Jua', 'Gothic A1', sans-serif; font-size: 22px; font-weight: 400; letter-spacing: 0">청약전략</span>
+</a>
+<nav aria-label="주요 메뉴" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 22px; font-size: 14px">
+<a href="Home.dc.html" style="color: #FFFFFF; text-decoration: none; font-weight: 500">청약 진단</a>
+<a href="AIChat.dc.html" aria-current="page" style="color: #FFFFFF; text-decoration: none; font-weight: 700; border-bottom: 2px solid #FFFFFF; padding-bottom: 2px">AI 청약 상담</a>
+<a href="NoticeAI.dc.html" style="color: #FFFFFF; text-decoration: none; font-weight: 500">공고 찾기</a>
+<a href="AgentReport.dc.html" style="color: #FFFFFF; text-decoration: none; font-weight: 500">전략 리포트</a>
+<a href="#" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border-radius: 999px; background: #FFFFFF; color: #0A1A33; text-decoration: none; font-weight: 700">마이페이지</a>
+</nav>
+</div>
+</header>
+
+<main style="position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 24px 24px 48px; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<div style="flex: 1 1 100%; text-align: center; color: #FFFFFF; text-shadow: 0 2px 18px rgba(6, 22, 48, 0.35); padding: 8px 0 6px">
+<span class="glass-dark" style="display: inline-block; font-size: 12.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.45); text-shadow: none">공고문 · 법령 근거로 답하는 AI</span>
+<h1 style="margin: 12px 0 6px; font-size: 38px; line-height: 1.2">무엇이든 물어보세요</h1>
+<p style="margin: 0; font-size: 15px; color: #EAF2FF">내 진단 결과를 바탕으로, 근거 문서와 함께 답해 드려요</p>
+</div>
+
+<!-- 왼쪽: 프로필 + 참조 문서 -->
+<aside aria-label="상담 컨텍스트" style="flex: 1 1 260px; max-width: 100%; display: flex; flex-direction: column; gap: 16px">
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 20px; box-shadow: 0 20px 50px rgba(6, 22, 48, 0.22); padding: 20px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">내 진단 프로필</h2>
+<a href="Home.dc.html" style="font-size: 13px; font-weight: 600; text-decoration: none">수정</a>
+</div>
+<div style="display: flex; align-items: baseline; gap: 4px; margin: 10px 0 12px">
+<span style="font-size: 34px; font-weight: 700; color: #1D5BD8; line-height: 1">24</span><span style="color: #5B6576">/ 84점</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<span style="font-size: 12.5px; padding: 4px 9px; border-radius: 6px; background: #EEF1F5">만 32세</span>
+<span style="font-size: 12.5px; padding: 4px 9px; border-radius: 6px; background: #EEF1F5">신혼 (7년 이내)</span>
+<span style="font-size: 12.5px; padding: 4px 9px; border-radius: 6px; background: #EEF1F5">무주택 3년</span>
+<span style="font-size: 12.5px; padding: 4px 9px; border-radius: 6px; background: #EEF1F5">서울 거주 · 세대주</span>
+<span style="font-size: 12.5px; padding: 4px 9px; border-radius: 6px; background: #EEF1F5">종합저축 4년 · 48회</span>
+<span style="font-size: 12.5px; padding: 4px 9px; border-radius: 6px; background: #EEF1F5">소득 130% 이하</span>
+<span style="font-size: 12.5px; padding: 4px 9px; border-radius: 6px; background: #EEF1F5">자산 2.5억</span>
+</div>
+<p style="margin: 12px 0 0; font-size: 12.5px; color: #5B6576">AI는 이 프로필을 질문과 함께 받아 답변을 맞춤화해요.</p>
+</section>
+
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 20px; box-shadow: 0 20px 50px rgba(6, 22, 48, 0.22); padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 15px; font-weight: 700">참조 문서</h2>
+<p style="margin: 0 0 10px; font-size: 12.5px; color: #5B6576">답변 근거로 검색할 문서 (벡터 DB)</p>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; cursor: pointer"><input type="checkbox" checked="checked" style="width: 18px; height: 18px; margin-top: 2px; accent-color: #1D5BD8"><span><b style="font-weight: 600">시흥하중 A-4 신혼희망타운</b><br><span style="color: #5B6576; font-size: 12.5px">입주자모집공고문 PDF · 청약홈</span></span></label>
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; cursor: pointer"><input type="checkbox" checked="checked" style="width: 18px; height: 18px; margin-top: 2px; accent-color: #1D5BD8"><span><b style="font-weight: 600">주택공급에 관한 규칙</b><br><span style="color: #5B6576; font-size: 12.5px">법령 · 국가법령정보센터</span></span></label>
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; cursor: pointer"><input type="checkbox" checked="checked" style="width: 18px; height: 18px; margin-top: 2px; accent-color: #1D5BD8"><span><b style="font-weight: 600">LH 신혼·신생아 매입임대 공고</b><br><span style="color: #5B6576; font-size: 12.5px">공고문 PDF · LH 청약플러스</span></span></label>
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; cursor: pointer"><input type="checkbox" style="width: 18px; height: 18px; margin-top: 2px; accent-color: #1D5BD8"><span><b style="font-weight: 600">청약홈 자주 묻는 질문</b><br><span style="color: #5B6576; font-size: 12.5px">FAQ · 청약홈</span></span></label>
+</div>
+<button type="button" style="margin-top: 12px; width: 100%; min-height: 44px; border-radius: 8px; border: 1px dashed #A9B4C4; background: #FAFBFD; font: inherit; font-size: 13.5px; font-weight: 600; color: #2A3445; cursor: pointer">+ 공고문 PDF 올리기</button>
+</section>
+</aside>
+
+<!-- 가운데: 대화 -->
+<section aria-label="AI 상담 대화" class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 20px; box-shadow: 0 20px 50px rgba(6, 22, 48, 0.22); flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; overflow: hidden">
+<div style="padding: 16px 20px; border-bottom: 1px solid #E4E8EF; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 36px; height: 36px; border-radius: 10px; background: #F1EEFD; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.4 2.4M15.3 15.3l2.4 2.4M6.3 17.7l2.4-2.4M15.3 8.7l2.4-2.4" stroke="#5B3FD6" stroke-width="1.8" stroke-linecap="round"></path></svg></span>
+<div>
+<h2 style="margin: 0; font-size: 17px; font-weight: 700">AI 청약 상담</h2>
+<div style="font-size: 12.5px; color: #5B6576">공고문·법령 문서에서 근거를 찾아 답하는 LLM 상담</div>
+</div>
+</div>
+<span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: #F1EEFD; color: #4A2FC0">RAG · 문서 근거 답변</span>
+</div>
+
+<div style="padding: 20px; display: flex; flex-direction: column; gap: 18px; flex: 1">
+<div style="display: flex; gap: 10px; align-items: flex-start; max-width: 88%">
+<span style="flex: none; width: 30px; height: 30px; border-radius: 8px; background: #5B3FD6; color: #FFFFFF; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">AI</span>
+<div style="background: #F6F7FA; border-radius: 4px 12px 12px 12px; padding: 12px 14px; font-size: 14.5px">진단 프로필(가점 24점, 신혼·무주택)을 바탕으로 답변할게요. 공고 자격, 대출, 당첨 전략 무엇이든 물어보세요.</div>
+</div>
+
+<div style="display: flex; justify-content: flex-end">
+<div style="max-width: 80%; background: #1D5BD8; color: #FFFFFF; border-radius: 12px 4px 12px 12px; padding: 12px 14px; font-size: 14.5px">{{cur.q}}</div>
+</div>
+
+<div style="display: flex; gap: 10px; align-items: flex-start">
+<span style="flex: none; width: 30px; height: 30px; border-radius: 8px; background: #5B3FD6; color: #FFFFFF; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">AI</span>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+<details style="font-size: 12.5px; color: #4A5568; background: #FAFAFF; border: 1px solid #E3DEFA; border-radius: 8px; padding: 8px 12px">
+<summary style="cursor: pointer; font-weight: 600; color: #4A2FC0">답변 과정 보기 · {{cur.stepCount}}단계</summary>
+<ol style="margin: 8px 0 2px; padding-left: 18px; display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{cur.steps}}" as="s" hint-placeholder-count="3"><li><b style="font-weight: 600">{{s.label}}</b> — {{s.detail}}</li></sc-for>
+</ol>
+</details>
+<div style="background: #F6F7FA; border-radius: 4px 12px 12px 12px; padding: 14px 16px; font-size: 14.5px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-weight: 700; font-size: 15.5px">{{cur.headline}}</div>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{cur.points}}" as="p" hint-placeholder-count="3">
+<li style="display: flex; gap: 8px; align-items: flex-start">
+<sc-if value="{{p.ok}}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true" style="flex: none; margin-top: 3px"><circle cx="10" cy="10" r="9" stroke="#0F7B4F" stroke-width="1.6"></circle><path d="m6 10.2 2.6 2.6L14 7.4" stroke="#0F7B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+<sc-if value="{{p.warn}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true" style="flex: none; margin-top: 3px"><circle cx="10" cy="10" r="9" stroke="#B35300" stroke-width="1.6"></circle><path d="M10 5.5v5.5M10 14.2v.3" stroke="#B35300" stroke-width="1.9" stroke-linecap="round"></path></svg></sc-if>
+<sc-if value="{{p.info}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true" style="flex: none; margin-top: 3px"><circle cx="10" cy="10" r="9" stroke="#1D5BD8" stroke-width="1.6"></circle><path d="M10 9v5M10 6v.3" stroke="#1D5BD8" stroke-width="1.9" stroke-linecap="round"></path></svg></sc-if>
+<span>{{p.text}} <sup style="color: #4A2FC0; font-weight: 700">{{p.cite}}</sup></span>
+</li>
+</sc-for>
+</ul>
+<div style="padding-top: 10px; border-top: 1px solid #E4E8EF">{{cur.next}}</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<a href="{{cur.actionHref}}" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 8px; background: #1D5BD8; color: #FFFFFF; text-decoration: none; font-size: 13.5px; font-weight: 600">{{cur.action}}</a>
+<button type="button" aria-label="도움이 됐어요" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid #CBD3DF; background: #FFFFFF; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 11v9H4v-9h3Zm0 0 4-7a2 2 0 0 1 2 2v4h5a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 16.8 20H7" stroke="#3A4556" stroke-width="1.7" stroke-linejoin="round"></path></svg></button>
+<button type="button" aria-label="아쉬워요" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid #CBD3DF; background: #FFFFFF; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17 13V4h3v9h-3Zm0 0-4 7a2 2 0 0 1-2-2v-4H6a2 2 0 0 1-2-2.3l1.2-6A2 2 0 0 1 7.2 4H17" stroke="#3A4556" stroke-width="1.7" stroke-linejoin="round"></path></svg></button>
+<span style="font-size: 12px; color: #5B6576">근거 문서를 확인한 뒤 신청하세요</span>
+</div>
+</div>
+</div>
+</div>
+
+<div style="padding: 14px 20px 18px; border-top: 1px solid #E4E8EF; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{qs}}" as="q" hint-placeholder-count="3"><button type="button" onClick="{{q.pick}}" style="{{q.style}}">{{q.label}}</button></sc-for>
+</div>
+<div style="display: flex; gap: 8px; align-items: flex-end">
+<label style="flex: 1; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: #5B6576">질문 입력
+<textarea rows="2" placeholder="예) 맞벌이인데 소득 기준은 어떻게 계산돼요?" style="font: inherit; font-size: 14.5px; color: #121826; border: 1px solid #CBD3DF; border-radius: 10px; padding: 10px 12px; resize: none"></textarea>
+</label>
+<button type="button" style="min-height: 48px; padding: 0 20px; border-radius: 10px; border: 0; background: #1D5BD8; color: #FFFFFF; font: inherit; font-weight: 700; cursor: pointer">보내기</button>
+</div>
+</div>
+</section>
+
+<!-- 오른쪽: 근거 -->
+<aside aria-label="답변 근거" style="flex: 1 1 300px; max-width: 100%; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700; color: #FFFFFF; text-shadow: 0 1px 10px rgba(6, 22, 48, 0.4)">답변 근거</h2>
+<span style="font-size: 12px; color: #EAF2FF; text-shadow: 0 1px 8px rgba(6, 22, 48, 0.4)">검색된 문서 조각 {{cur.citeCount}}개</span>
+</div>
+<sc-for list="{{cur.cites}}" as="c" hint-placeholder-count="3">
+<article class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 16px; box-shadow: 0 12px 32px rgba(6, 22, 48, 0.18); padding: 14px">
+<div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px">
+<span style="font-size: 12px; font-weight: 700; color: #FFFFFF; background: #5B3FD6; border-radius: 6px; padding: 2px 7px">{{c.n}}</span>
+<span style="font-size: 13px; font-weight: 600; flex: 1; min-width: 0">{{c.doc}}</span>
+</div>
+<div style="font-size: 12px; color: #5B6576; margin-bottom: 8px">{{c.loc}} · 유사도 {{c.score}}</div>
+<p style="margin: 0; font-size: 13px; color: #2A3445; background: #FFF8DB; border-radius: 6px; padding: 8px 10px">{{c.quote}}</p>
+</article>
+</sc-for>
+<p style="margin: 0; font-size: 12px; color: #EAF2FF; text-shadow: 0 1px 8px rgba(6, 22, 48, 0.45)">근거 문구는 목업 예시예요. 실제 공고문 PDF를 쪼개 임베딩하면 이 자리에 원문이 표시돼요.</p>
+</aside>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { q: 0 }; }
+  renderVals() {
+    const base = 'min-height: 40px; padding: 0 12px; border-radius: 999px; font: inherit; font-size: 13px; cursor: pointer; ';
+    const P = (text, kind, cite) => ({ text, cite: cite || '', ok: kind === 'ok', warn: kind === 'warn', info: kind === 'info' });
+    const convs = [
+      {
+        label: '시흥하중 신혼희망타운, 신청 가능해요?',
+        q: '시흥하중 A-4 신혼희망타운 공고, 제 조건으로 신청할 수 있나요?',
+        steps: [
+          { label: '프로필 조회', detail: '진단 결과 DB에서 혼인·무주택·소득·자산 불러오기' },
+          { label: '문서 검색', detail: '공고문 벡터 DB에서 “신청자격·소득·자산” 관련 조각 3개 검색' },
+          { label: '공고 데이터 조회', detail: '청약홈 API로 접수일·당첨자 발표일 확인' },
+          { label: '답변 생성', detail: 'LLM이 프로필과 근거를 비교해 판정·인용 작성' }
+        ],
+        headline: '자격 요건은 대부분 충족해요. 다만 이번 접수는 이미 마감됐어요.',
+        points: [
+          P('혼인 7년 이내 · 무주택세대구성원 → 신혼희망타운 신청 대상이에요.', 'ok', '[1]'),
+          P('월평균 소득 130% 이하로 입력하셨어요. 외벌이 기준 충족, 맞벌이면 기준이 달라 확인이 필요해요.', 'warn', '[2]'),
+          P('총자산 2.5억원 — 공고문의 자산 기준 금액과 비교가 필요해요. [공고문 추출값]', 'warn', '[2]'),
+          P('청약 접수 2026.09.28~09.29 마감 · 당첨자 발표 2026.10.08 예정이에요.', 'info', '[3]')
+        ],
+        next: '다음 신혼희망타운 공고가 올라오면 알려드릴까요? 비슷한 조건의 LH 신혼·신생아 매입임대는 10월 15일까지 접수 중이에요.',
+        action: '공고 AI 분석 보기', actionHref: 'NoticeAI.dc.html',
+        cites: [
+          { n: '[1]', doc: '시흥하중 A-4 신혼희망타운 공고문', loc: '신청자격', score: '0.89', quote: '입주자모집공고일 현재 혼인기간이 7년 이내인 무주택세대구성원 … (예시 문구)' },
+          { n: '[2]', doc: '시흥하중 A-4 신혼희망타운 공고문', loc: '소득 및 자산 기준', score: '0.84', quote: '전년도 도시근로자 가구원수별 월평균소득 130%(맞벌이 별도 기준) 이하, 총자산 기준 이하 … (예시 문구)' },
+          { n: '[3]', doc: '청약홈 분양정보 API', loc: 'RCEPT_BGNDE · PRZWNER_PRESNATN_DE', score: '구조화 데이터', quote: '접수 2026-09-28 ~ 2026-09-29, 당첨자 발표 2026-10-08' }
+        ]
+      },
+      {
+        label: '당첨되면 잔금 대출은요?',
+        q: '신혼희망타운 56㎡에 당첨되면 부족한 돈은 대출로 어떻게 마련하나요?',
+        steps: [
+          { label: '공고 데이터 조회', detail: '청약홈 주택형 API에서 56㎡ 최고 분양가 확인' },
+          { label: '자금 계산', detail: '분양가 − 가용자산 = 부족 자금 계산 (도구 호출)' },
+          { label: '대출 상품 검색', detail: '파인 주담대 상품 데이터에서 신혼·생애최초 조건 필터' },
+          { label: '답변 생성', detail: 'LLM이 계산 결과와 상품 조건을 묶어 설명' }
+        ],
+        headline: '부족 자금은 약 1억 4,358만원이에요. 정책대출부터 확인하는 걸 추천해요.',
+        points: [
+          P('56㎡ 최고 분양가 3억 9,358만원 − 가용자산 2억 5,000만원 = 약 1억 4,358만원', 'info', '[1]'),
+          P('신혼희망타운 당첨자는 전용 주택담보대출(수익공유형 모기지) 대상이 될 수 있어요. 금리·한도: [파인/HUG 데이터 연결]', 'ok', '[2]'),
+          P('은행 주택담보대출은 DSR 등 소득 심사가 따로 있어 대출 시뮬레이션에서 확인이 필요해요.', 'warn', '[3]')
+        ],
+        next: '계약금 납부일(2026.12.29~12.30)까지의 자금 일정을 함께 짜드릴까요?',
+        action: '대출 시뮬레이션 열기', actionHref: '#',
+        cites: [
+          { n: '[1]', doc: '청약홈 주택형 API', loc: 'HOUSE_TY 056 · LTTOT_TOP_AMOUNT', score: '구조화 데이터', quote: '주택형 056.0000O, 공급면적 85.57㎡, 최고 분양가 39,358만원' },
+          { n: '[2]', doc: '시흥하중 A-4 신혼희망타운 공고문', loc: '전용 주택담보대출 안내', score: '0.81', quote: '신혼희망타운 전용 주택담보 장기대출 상품 … (예시 문구)' },
+          { n: '[3]', doc: '파인 주담대 상품 데이터', loc: '은행별 상품·금리', score: '구조화 데이터', quote: '상품별 금리 유형, 최저·최고 금리, 상환 방식' }
+        ]
+      },
+      {
+        label: '제 가점으로 서울 민영 1순위 돼요?',
+        q: '가점 24점인데 서울 민영 아파트 1순위로 넣어볼 만한가요?',
+        steps: [
+          { label: '규칙 계산', detail: '가점·1순위 요건 계산 함수 호출 (규칙 엔진)' },
+          { label: '문서 검색', detail: '주택공급에 관한 규칙에서 가점제·추첨제 조항 검색' },
+          { label: '통계 조회', detail: '청약홈 당첨가점 데이터에서 서울 최근 당첨선 조회' },
+          { label: '답변 생성', detail: 'LLM이 요건 충족 여부와 현실적인 전략 제시' }
+        ],
+        headline: '1순위 요건은 충족하지만, 가점제만으로는 경쟁이 어려울 수 있어요.',
+        points: [
+          P('서울 예치금 300만원 · 가입 4년 · 세대주 → 1순위 요건 충족 예상', 'ok', '[1]'),
+          P('가점 24점 (무주택 8 · 부양가족 10 · 통장 6). 서울 최근 당첨 가점: [청약홈 당첨가점 통계 조회값]', 'warn', '[3]'),
+          P('가점이 낮다면 추첨제 물량이나 신혼부부·생애최초 특별공급이 현실적인 선택이에요.', 'info', '[2]')
+        ],
+        next: '특별공급 위주로 지원 순서를 정리한 전략 리포트를 만들어 드릴까요?',
+        action: 'AI 전략 리포트 받기', actionHref: 'AgentReport.dc.html',
+        cites: [
+          { n: '[1]', doc: '주택공급에 관한 규칙', loc: '1순위 요건 · 예치금 기준', score: '0.86', quote: '지역별·면적별 예치기준금액 이상 예치 … (예시 문구)' },
+          { n: '[2]', doc: '주택공급에 관한 규칙', loc: '가점제·추첨제 공급 비율', score: '0.82', quote: '전용면적별 가점제·추첨제 비율 … (예시 문구)' },
+          { n: '[3]', doc: '청약홈 당첨가점 API', loc: '주택형별 최저·평균 가점', score: '구조화 데이터', quote: '서울 최근 공고 주택형별 당첨 가점' }
+        ]
+      }
+    ];
+    const qs = convs.map((c, i) => ({
+      label: c.label,
+      pick: () => this.setState({ q: i }),
+      style: base + (this.state.q === i ? 'border: 1.5px solid #5B3FD6; background: #F1EEFD; color: #4A2FC0; font-weight: 700;' : 'border: 1px solid #CBD3DF; background: #FFFFFF; color: #2A3445; font-weight: 500;')
+    }));
+    const c = convs[this.state.q];
+    return { qs, cur: Object.assign({}, c, { stepCount: c.steps.length, citeCount: c.cites.length }) };
+  }
+}
+</script>
+</body>
+</html>
