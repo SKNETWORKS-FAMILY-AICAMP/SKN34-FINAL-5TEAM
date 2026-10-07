@@ -1,14 +1,17 @@
 # ERD
 
-정형 저장소는 PostgreSQL이다. 공고 질문 벡터는 1차에서 테이블에 넣지 않고, 조회 시 해당 공고 문장을 그 자리에서 검색한다. Vector DB는 RAG 평가 문서에서 역할을 나눌 때 추가한다.
+정형 저장소는 PostgreSQL이다. 공고문 원문 조각과 임베딩 벡터는 별도의 벡터 DB(Chroma, `backend/data/vectordb/` 또는 `VECTOR_DB_PATH`)에 저장한다. 조각마다 (출처 `source`, 공고번호 `external_id`, 조각 순번, 원문 해시)를 붙여 두고, 질문할 때 열어 둔 공고의 조각만 조회한다. 구조와 평가는 RAG 결과보고서를 본다.
 
 ```mermaid
 erDiagram
     user_profiles {
         int id PK
         string email UK
+        date birth_date "생년월일(선택), NULL 허용"
+        boolean is_married
         int no_house_period_months
         int available_assets
+        int annual_income "연 소득(원), NULL 허용"
         string desired_region_code
     }
     listings {
