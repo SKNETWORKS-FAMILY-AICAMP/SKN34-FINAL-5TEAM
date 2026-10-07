@@ -1,84 +1,145 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 import { HouseIcon } from "../components/MockupShell";
+import slideDiagnosis from "../assets/landing/slide-diagnosis.png";
+import slideResult from "../assets/landing/slide-result.png";
+import slideDashboard from "../assets/landing/slide-dashboard.png";
 import "../styles/mockup.css";
 
-// 목업 ⓪-B 홈 대안 · 랜딩형
-const BADGES = [
-  ["청약홈 공고 연동", "분양정보 · 경쟁률 · 당첨가점 API"],
-  ["LH · SH 공고 수집", "공공분양 · 임대 공고 한곳에"],
-  ["근거를 보여주는 AI", "공고문 · 법령 인용 답변"],
-  ["나만의 전략 리포트", "멀티 에이전트가 자금 계획까지"],
+// 첫 페이지(/): 제목 → 기능 화면 슬라이드(자동으로 넘어가고 도트로 선택) → "청약 진단 시작하기" 버튼 하나
+// 슬라이드 가운데 세로 바는 고정, 왼쪽은 기능 화면 캡처 · 오른쪽은 설명
+const SLIDES = [
+  {
+    title: "단계별 청약 진단",
+    desc: "나이 · 주택 · 가족 · 통장 · 소득 · 희망 조건 6단계에 버튼으로 답하면, 오른쪽 막대에 가점이 차곡차곡 쌓여요.",
+    tag: "가점 자동 계산 · 회원가입 없이",
+    img: slideDiagnosis,
+  },
+  {
+    title: "진단 결과 미리보기",
+    desc: "예상 가점과 1순위 요건, 특별공급 자격을 한눈에 확인하고, AI가 고른 내 조건에 맞는 공고 1건을 먼저 봐요.",
+    tag: "AI 공고 판정 1건 무료",
+    img: slideResult,
+  },
+  {
+    title: "로그인 후 맞춤 대시보드",
+    desc: "추천 공고와 자금 · 출퇴근 조건을 함께 보고, 공고문 근거 AI 상담과 전략 리포트까지 이어져요.",
+    tag: "RAG 상담 · 멀티 에이전트 리포트",
+    img: slideDashboard,
+  },
 ];
-
-function Laurel({ flip }) {
-  return (
-    <svg width="22" height="44" viewBox="0 0 22 44" fill="none" aria-hidden="true" style={flip ? { transform: "scaleX(-1)" } : undefined}>
-      <path d="M18 42C8 36 5 24 9 4" stroke="#B9A988" strokeWidth="1.6" strokeLinecap="round" />
-      <path
-        d="M9.5 10c-4-1-6-4-6-7 4 1 6 4 6 7ZM8 18c-4-1-6.5-3.5-7-7 4 .5 6.5 3.5 7 7ZM8 26.5c-3.5-.5-6.5-3-7-6.5 4 .5 6.5 3 7 6.5ZM10.5 34.5c-3.5 0-6.5-2.5-7.5-5.5 4 0 6.5 2.5 7.5 5.5Z"
-        fill="#CDBF9F"
-      />
-    </svg>
-  );
-}
+const INTERVAL_MS = 4000;
 
 export default function LandingPage() {
-  const month = new Date().getMonth() + 1;
+  const userId = useSelector((state) => state.user.id);
+  const [cur, setCur] = useState(0);
+  const timer = useRef(null);
+
+  // 움직임 줄이기를 켠 사용자에게는 자동으로 넘기지 않는다.
+  const start = useCallback(() => {
+    clearInterval(timer.current);
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    timer.current = setInterval(() => setCur((i) => (i + 1) % SLIDES.length), INTERVAL_MS);
+  }, []);
+
+  useEffect(() => {
+    start();
+    return () => clearInterval(timer.current);
+  }, [start]);
+
+  // 도트를 누르면 그 화면으로 가고, 그때부터 다시 4초를 센다.
+  const go = (k) => {
+    setCur(k);
+    start();
+  };
+
   return (
-    <div className="mk-landing">
-      <Link to="/" className="mk-landing-strip">
-        {month}월 신규 청약 공고, 내 조건에 맞는지 1분 만에 확인해 보세요 · <span style={{ textDecoration: "underline" }}>진단 시작</span>
-      </Link>
-      <div className="mk-landing-wrap">
-        <section className="mk-landing-hero">
-          <header className="mk-landing-nav">
-            <Link to="/intro" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "#0A2B5E" }}>
-              <HouseIcon color="#E8613C" size={26} />
-              <span style={{ fontFamily: "'Jua', 'Gothic A1', sans-serif", fontSize: 22 }}>청약전략</span>
-            </Link>
-            <nav aria-label="주요 메뉴">
-              <Link to="/">청약 진단</Link>
-              <Link to="/listings">공고 찾기</Link>
-              <Link to="/ai-chat">AI 청약 상담</Link>
-              <Link to="/report">전략 리포트</Link>
-              <Link to="/loans">대출 시뮬레이션</Link>
-            </nav>
-            <div style={{ display: "flex", gap: 8 }}>
-              <Link to="/" className="mk-btn-plain">
+    <div className="mk mk-first">
+      <header>
+        <div className="mk-header-inner" style={{ maxWidth: 1240 }}>
+          <Link to="/" className="mk-brand">
+            <HouseIcon />
+            <span>청약전략</span>
+          </Link>
+          <nav className="mk-nav" aria-label="주요 메뉴">
+            <Link to="/listings">공고 찾기</Link>
+            <Link to="/ai-chat">AI 청약 상담</Link>
+            {userId ? (
+              <Link to="/my" className="mk-pill-white">
+                내 대시보드
+              </Link>
+            ) : (
+              <Link to="/diagnosis" className="mk-pill-white">
                 로그인
               </Link>
-              <Link to="/" className="mk-btn-orange sm">
-                회원가입
-              </Link>
-            </div>
-          </header>
-          <div className="mk-landing-card">
-            <h1>청약, 이제 내 조건부터</h1>
-            <p>가점·1순위·특별공급 자격을 1분 만에 진단하고, AI가 공고문을 읽어 나에게 맞는 공고와 자금 계획까지 정리해 드려요.</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-              <Link to="/" className="mk-btn-orange">
-                1분 진단 시작하기
-              </Link>
-              <Link to="/ai-chat" style={{ display: "inline-flex", alignItems: "center", minHeight: 48, padding: "0 16px", color: "#1B2230", textDecoration: "none", fontWeight: 600 }}>
-                AI에게 먼저 물어보기 ›
-              </Link>
-            </div>
+            )}
+          </nav>
+        </div>
+      </header>
+
+      <main className="mk-first-main">
+        <div className="mk-first-title">
+          <span className="mk-badge-glass mk-glass-dark">청약홈 · LH · SH 공고 기반 AI 청약 진단</span>
+          <h1>1분 진단으로 당첨 가능한 공고와 전략까지</h1>
+          <p>가점·1순위·특별공급 자격을 진단하고, AI가 공고문을 읽어 내게 맞는 공고와 자금 계획까지 정리해 드려요</p>
+        </div>
+
+        <section className="mk-carousel" aria-roledescription="carousel" aria-label="기능 화면 미리보기">
+          <div className="mk-carousel-band">
+            {SLIDES.map((s, k) => (
+              <div
+                key={s.title}
+                className={k === cur ? "mk-slide on" : "mk-slide"}
+                role="group"
+                aria-roledescription="slide"
+                aria-label={`${k + 1} / ${SLIDES.length} · ${s.title}`}
+                aria-hidden={k !== cur}
+              >
+                <div className="mk-slide-img">
+                  <img src={s.img} alt={`${s.title} 화면 예시`} />
+                </div>
+                <div className="mk-slide-text">
+                  <div className="mk-slide-bar" aria-hidden="true" />
+                  <div className="mk-slide-card">
+                    <span className="mk-slide-step">
+                      <span>{k + 1}</span>STEP {k + 1} / {SLIDES.length}
+                    </span>
+                    <span className="mk-slide-title">{s.title}</span>
+                    <span className="mk-slide-desc">{s.desc}</span>
+                    <span className="mk-slide-tag">{s.tag}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mk-dots" role="group" aria-label="슬라이드 선택">
+            {SLIDES.map((s, k) => (
+              <button
+                key={s.title}
+                type="button"
+                aria-label={`${k + 1}번 화면 보기 · ${s.title}`}
+                aria-current={k === cur}
+                onClick={() => go(k)}
+              >
+                <span className={k === cur ? "on" : ""} />
+              </button>
+            ))}
           </div>
         </section>
-        <section className="mk-badges" aria-label="서비스 특징">
-          {BADGES.map(([title, sub]) => (
-            <div key={title}>
-              <Laurel />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 700 }}>{title}</div>
-                <div style={{ fontSize: 12.5, color: "#5B6576" }}>{sub}</div>
-              </div>
-              <Laurel flip />
-            </div>
-          ))}
-        </section>
-      </div>
+
+        <div className="mk-first-cta">
+          <Link to="/diagnosis" className="mk-btn-start">
+            청약 진단 시작하기
+          </Link>
+          <span>회원가입 없이 시작 · 결과를 저장할 때만 로그인</span>
+        </div>
+      </main>
+
+      <footer className="mk-footer" style={{ paddingTop: 0, paddingBottom: 12, fontSize: 12 }}>
+        진단 결과는 참고용이며, 실제 자격은 각 입주자모집공고문 기준으로 확인하세요 · 데이터: 청약홈 · LH · SH
+      </footer>
     </div>
   );
 }

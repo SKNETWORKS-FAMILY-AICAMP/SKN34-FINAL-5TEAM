@@ -5,7 +5,7 @@ import "../styles/mockup.css";
 
 // 목업(2026.10.04) 화면 공통 틀: 하늘 사진 배경 + 투명 헤더
 const NAV = [
-  ["/", "청약 진단"],
+  ["/diagnosis", "청약 진단"],
   ["/ai-chat", "AI 청약 상담"],
   ["/listings", "공고 찾기"],
   ["/report", "전략 리포트"],
@@ -46,15 +46,15 @@ export default function MockupShell({ children, onLogin, footer }) {
               </NavLink>
             ))}
             {userId ? (
-              <Link to="/dashboard" className="mk-pill-white">
-                마이페이지
+              <Link to="/my" className="mk-pill-white">
+                내 대시보드
               </Link>
             ) : onLogin ? (
               <button type="button" className="mk-pill-white" onClick={onLogin}>
                 로그인
               </button>
             ) : (
-              <Link to="/" className="mk-pill-white">
+              <Link to="/diagnosis" className="mk-pill-white">
                 진단 시작
               </Link>
             )}

@@ -11,18 +11,23 @@ import ChatPage from "./pages/ChatPage";
 import CommutePage from "./pages/CommutePage";
 import DiagnosisPage from "./pages/DiagnosisPage";
 import LandingPage from "./pages/LandingPage";
+import LandingAltPage from "./pages/LandingAltPage";
+import MyHomePage from "./pages/MyHomePage";
 import AIChatPage from "./pages/AIChatPage";
 import NoticeAIPage from "./pages/NoticeAIPage";
 import ReportPage from "./pages/ReportPage";
 
 // 누구나: 메인, 공고 목록·상세 / 내 정보가 필요한 화면: 입력, 추천, 자금 계획, 질문
-// 목업(2026.10.04) 화면: 청약 진단(/), 랜딩(/intro), AI 상담(/ai-chat), 공고 AI 분석(/listings/:id/ai), 전략 리포트(/report)
+// 목업 화면: 첫 페이지(/), 청약 진단(/diagnosis), 로그인 후 내 맞춤 대시보드(/my), 랜딩 대안(/intro),
+// AI 상담(/ai-chat), 공고 AI 분석(/listings/:id/ai), 전략 리포트(/report)
 function App() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<DiagnosisPage />} />
-        <Route path="/intro" element={<LandingPage />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/diagnosis" element={<DiagnosisPage />} />
+        <Route path="/my" element={<MyHomePage />} />
+        <Route path="/intro" element={<LandingAltPage />} />
         <Route path="/ai-chat" element={<AIChatPage />} />
         <Route path="/listings/:id/ai" element={<NoticeAIPage />} />
         <Route path="/report" element={<ReportPage />} />

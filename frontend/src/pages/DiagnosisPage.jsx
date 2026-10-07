@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import MockupShell, { SparkIcon } from "../components/MockupShell";
 import { setDiagnosisField } from "../store/diagnosisSlice";
@@ -17,7 +17,8 @@ import {
   STATUS_TEXT,
 } from "../utils/diagnosis";
 
-// 목업 ⓪ 홈: 6단계 진단 → 결과 미리보기 → 가입(저장) → AI 맞춤 조건
+// 청약 진단(/diagnosis): 6단계 진단 → 결과 미리보기 → 가입(저장) → 내 맞춤 대시보드(/my)
+// AI 맞춤 조건 화면은 대시보드에서 "조건 자세히 입력"으로 들어온다 (location.state.screen = "ai").
 // 비슷한 조건 평균·희망 지역 당첨선은 예시값 (사용자 통계 · 청약홈 당첨가점 API 연결 전)
 const PEER_AVG = 31;
 const CUTLINE = 52;
@@ -96,9 +97,10 @@ const pct = (v) => `${((Math.max(0, Math.min(84, v)) / 84) * 100).toFixed(2)}%`;
 export default function DiagnosisPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const d = useSelector((state) => state.diagnosis);
   const user = useSelector((state) => state.user);
-  const [screen, setScreen] = useState(d.done ? "result" : "step");
+  const [screen, setScreen] = useState(location.state?.screen === "ai" && user.id ? "ai" : d.done ? "result" : "step");
   const [step, setStep] = useState(1);
   const [modal, setModal] = useState(false);
   const [email, setEmail] = useState(user.email || "");
@@ -142,7 +144,7 @@ export default function DiagnosisPage() {
     const saved = await dispatch(saveUserProfile(merged));
     if (saveUserProfile.fulfilled.match(saved)) {
       setModal(false);
-      setScreen("ai");
+      navigate("/my");
     }
   };
 
@@ -467,8 +469,8 @@ export default function DiagnosisPage() {
                 </svg>
                 <div style={{ fontWeight: 700, fontSize: 17 }}>맞춤 공고와 AI 전략 리포트는 저장 후 볼 수 있어요</div>
                 {user.id ? (
-                  <button type="button" className="mk-btn" onClick={() => setScreen("ai")}>
-                    AI 맞춤 조건 입력하기
+                  <button type="button" className="mk-btn" onClick={() => navigate("/my")}>
+                    내 맞춤 대시보드 보기
                   </button>
                 ) : (
                   <button type="button" className="mk-btn" onClick={() => setModal(true)}>

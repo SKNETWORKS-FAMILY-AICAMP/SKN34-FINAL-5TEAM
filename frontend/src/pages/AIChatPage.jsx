@@ -81,7 +81,7 @@ export default function AIChatPage() {
           <section className="mk-glass" style={{ padding: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h2 style={{ fontSize: 15, fontWeight: 700 }}>내 진단 프로필</h2>
-              <Link to="/" style={{ fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+              <Link to="/diagnosis" style={{ fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
                 수정
               </Link>
             </div>

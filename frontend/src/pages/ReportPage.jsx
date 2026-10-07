@@ -131,7 +131,7 @@ export default function ReportPage() {
         {!userId && (
           <section className="mk-glass mk-card" style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
             <span>진단 정보를 저장하면 실제 추천 공고로 리포트를 채워요. 지금은 진단 계산 결과만 보여요.</span>
-            <Link to="/" className="mk-btn sm">
+            <Link to="/diagnosis" className="mk-btn sm">
               진단하고 저장하기
             </Link>
           </section>
