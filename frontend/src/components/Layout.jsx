@@ -26,6 +26,12 @@ export default function Layout({ children }) {
     return <main className="app-full">{children}</main>;
   }
 
+  // 목업 디자인 화면은 하늘 사진 배경 + 자체 헤더(components/MockupShell.jsx)를 쓴다.
+  const isMockup = ["/", "/intro", "/ai-chat", "/report"].includes(pathname) || /^\/listings\/\d+\/ai$/.test(pathname);
+  if (isMockup) {
+    return children;
+  }
+
   return (
     <div className="app-shell">
       <div className="util-bar">
