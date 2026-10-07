@@ -75,6 +75,8 @@ python -m scripts.eval_rag --fresh         # 검색 정확도 평가 (평가 질
 ```
 
 벡터 DB는 `backend/data/vectordb/`에 생기고 Git에는 올리지 않는다. 임베딩 모델을 바꾸면 `--force`로 다시 색인한다.
+처음 한 번 직접 색인해 두면, 그다음부터는 매일 수집(`save_listings`)이 끝날 때 접수 중·예정 공고 중 새로 들어오거나 정정된 공고문만 자동으로 색인한다.
+벡터 DB가 없거나 `RAG_EMBEDDING_MODEL`이 비어 있으면 이 단계는 건너뛰고 수집은 그대로 진행된다.
 
 > **주의: 프로젝트가 구글 드라이브·OneDrive 같은 동기화 폴더 안에 있으면 벡터 DB를 그 안에 두지 않는다.**
 > 동기화 폴더에서는 Chroma의 인덱스 파일이 제대로 저장되지 않아, 다시 열 때 `Error loading hnsw index`로 실패한다

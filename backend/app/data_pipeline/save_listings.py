@@ -527,6 +527,18 @@ def collect_all(trigger: str = "수동") -> None:
     print_stats()
 
 
+def index_new_notices() -> None:
+    """수집한 새 공고문을 벡터 DB에 색인한다 (공고문 질문 검색용). 이미 한 공고는 건너뛰어서 새 공고만 처리한다."""
+    try:
+        from app.services.notice_indexer import index_new_notices as run
+    except ImportError as exc:  # chromadb·fastembed를 아직 설치하지 않은 환경에서도 수집은 그대로 돌게 한다
+        logger.info(f"[색인] 벡터 검색 패키지가 없어 건너뜁니다 ({exc.name})")
+        return
+    result = run()
+    if result:
+        logger.info(f"[색인] 공고문 {result['문서']}건 중 새로 {result['새로 색인']}건, 건너뜀 {result['건너뜀(변경 없음)']}건, 실패 {result['실패']}건")
+
+
 def _collect_steps() -> None:
     notice_index = _run(save_applyhome_listings)
     _run(save_historical_results, notice_index)
@@ -538,6 +550,7 @@ def _collect_steps() -> None:
     _run(refresh_views, engine)
     _run(save_notice_costs)  # 가공 레이어(recommendable_listings)가 갱신된 뒤에 실행
     _run(save_listing_deposits)  # notice_costs를 쓰므로 그 다음
+    _run(index_new_notices)  # 공고문(notice_documents)이 모두 저장된 뒤, 새 공고문만 벡터 DB에 색인
 
 
 if __name__ == "__main__":
