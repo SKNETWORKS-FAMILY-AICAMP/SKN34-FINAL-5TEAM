@@ -17,7 +17,7 @@ import {
   STATUS_TEXT,
 } from "../utils/diagnosis";
 
-// 청약 진단(/diagnosis): 6단계 진단 → 결과 미리보기 → 가입(저장) → 내 맞춤 대시보드(/my)
+// 청약 진단(/diagnosis): 6단계 진단 → 결과 미리보기 → 가입(저장) → 청약 홈(/portal, jinyoung 메인 화면)
 // AI 맞춤 조건 화면은 대시보드에서 "조건 자세히 입력"으로 들어온다 (location.state.screen = "ai").
 // 비슷한 조건 평균·희망 지역 당첨선은 예시값 (사용자 통계 · 청약홈 당첨가점 API 연결 전)
 const PEER_AVG = 31;
@@ -144,7 +144,7 @@ export default function DiagnosisPage() {
     const saved = await dispatch(saveUserProfile(merged));
     if (saveUserProfile.fulfilled.match(saved)) {
       setModal(false);
-      navigate("/my");
+      navigate("/portal");
     }
   };
 
@@ -469,8 +469,8 @@ export default function DiagnosisPage() {
                 </svg>
                 <div style={{ fontWeight: 700, fontSize: 17 }}>맞춤 공고와 AI 전략 리포트는 저장 후 볼 수 있어요</div>
                 {user.id ? (
-                  <button type="button" className="mk-btn" onClick={() => navigate("/my")}>
-                    내 맞춤 대시보드 보기
+                  <button type="button" className="mk-btn" onClick={() => navigate("/portal")}>
+                    청약 홈으로 가기
                   </button>
                 ) : (
                   <button type="button" className="mk-btn" onClick={() => setModal(true)}>

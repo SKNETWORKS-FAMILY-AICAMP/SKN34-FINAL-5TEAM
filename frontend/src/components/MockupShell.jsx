@@ -46,8 +46,8 @@ export default function MockupShell({ children, onLogin, footer }) {
               </NavLink>
             ))}
             {userId ? (
-              <Link to="/my" className="mk-pill-white">
-                내 대시보드
+              <Link to="/portal" className="mk-pill-white">
+                청약 홈
               </Link>
             ) : onLogin ? (
               <button type="button" className="mk-pill-white" onClick={onLogin}>

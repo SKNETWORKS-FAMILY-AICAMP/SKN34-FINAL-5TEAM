@@ -67,8 +67,8 @@ export default function LandingPage() {
             <Link to="/listings">공고 찾기</Link>
             <Link to="/ai-chat">AI 청약 상담</Link>
             {userId ? (
-              <Link to="/my" className="mk-pill-white">
-                내 대시보드
+              <Link to="/portal" className="mk-pill-white">
+                청약 홈
               </Link>
             ) : (
               <Link to="/diagnosis" className="mk-pill-white">

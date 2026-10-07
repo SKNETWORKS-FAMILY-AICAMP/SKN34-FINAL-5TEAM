@@ -18,7 +18,8 @@ import NoticeAIPage from "./pages/NoticeAIPage";
 import ReportPage from "./pages/ReportPage";
 
 // 누구나: 메인, 공고 목록·상세 / 내 정보가 필요한 화면: 입력, 추천, 자금 계획, 질문
-// 목업 화면: 첫 페이지(/), 청약 진단(/diagnosis), 로그인 후 내 맞춤 대시보드(/my), 랜딩 대안(/intro),
+// 흐름: 첫 페이지(/) → 청약 진단(/diagnosis) → 로그인(가입) → 청약 홈(/portal, jinyoung 메인)
+// 목업 화면: 내 맞춤 대시보드(/my), 랜딩 대안(/intro),
 // AI 상담(/ai-chat), 공고 AI 분석(/listings/:id/ai), 전략 리포트(/report)
 function App() {
   return (
