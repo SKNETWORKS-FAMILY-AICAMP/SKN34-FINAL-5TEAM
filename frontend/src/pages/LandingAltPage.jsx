@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { HouseIcon } from "../components/MockupShell";
 import "../styles/mockup.css";
 
-// 목업 ⓪-B 홈 대안 · 랜딩형 (/intro) — 첫 화면은 LandingPage(/)
+// 목업 ⓪-B 홈 대안 · 랜딩형 (/intro) — 첫 화면은 /mockup/Landing
 const BADGES = [
   ["청약홈 공고 연동", "분양정보 · 경쟁률 · 당첨가점 API"],
   ["LH · SH 공고 수집", "공공분양 · 임대 공고 한곳에"],
