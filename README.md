@@ -87,5 +87,42 @@ python -m scripts.eval_rag --fresh         # 검색 정확도 평가 (평가 질
 
 진행 상태와 API 표는 `docs/요구사항_정의서.md`, `docs/프론트_API_연동표.md` 를 본다.
 
-- 됨: 수집 코드, 사용자·공고·추천·대출 API, 계약금 10% 가정치, D-day, 준비 서류, 공고 질문 분류·검색
-- 안 됨: Docker가 꺼져 있으면 로컬 listings 확인 불가, 클라우드 배포, 단지별 실제 계약금 PDF, LangGraph
+- 됨: 수집 코드, 사용자·공고·추천·대출·출퇴근 API, 공고문에 적힌 계약금 숫자 반영, D-day, 준비 서류, 공고 질문(LangGraph 그래프, 질문 분류, 벡터 검색, 로컬 LLM 답변과 근거 번호)
+- 안 됨: Docker가 꺼져 있으면 로컬 listings 확인 불가, 클라우드 배포, 공고문 파일 링크가 없는 공고의 계약금, GPU 없이 LLM 답변이 느림(한 답 40~80초)
+
+## 공고 질문 LLM 연결
+
+OpenAI 키가 없어도 로컬 [Ollama](https://ollama.com)로 답한다. `backend/.env`:
+
+```
+LLM_BASE_URL=http://localhost:11434/v1
+LLM_MODEL=exaone3.5:7.8b
+LLM_TIMEOUT_SECONDS=120
+```
+
+```bash
+ollama pull exaone3.5:7.8b                        # 약 4.8GB, 한국어 답변용
+cd backend && python -m scripts.eval_llm_answers --limit 10   # 답변 채점 (결과: backend/eval/llm_answer_result_<모델>.json)
+```
+
+OpenAI를 쓰려면 `LLM_BASE_URL=https://api.openai.com/v1`, `LLM_MODEL=gpt-4o-mini`로 바꾸고 `OPENAI_API_KEY`를 넣는다.
+LLM을 쓸 수 없으면(Ollama 꺼짐 등) 챗은 공고 문장을 그대로 보여 준다.
+
+## 구글·카카오·네이버·PASS 로그인
+
+백엔드 `GET /auth/google/login`, `/auth/kakao/login`, `/auth/naver/login`, `/auth/pass/login`으로 시작하고, 콜백 후 프론트 `/auth/callback`으로 돌아온다.
+
+`backend/.env` 예시:
+
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — [Google Cloud](https://console.cloud.google.com) OAuth 클라이언트
+- `GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/auth/google/callback`
+- `KAKAO_REST_API_KEY` — 카카오 로그인 client_id (REST API 키와 동일)
+- `KAKAO_OAUTH_REDIRECT_URI=http://localhost:8000/auth/kakao/callback` — [카카오 개발자](https://developers.kakao.com) 앱에 등록
+- `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` — [네이버 개발자센터](https://developers.naver.com) 로그인 API
+- `NAVER_OAUTH_REDIRECT_URI=http://localhost:8000/auth/naver/callback`
+- `PASS_CLIENT_ID`, `PASS_CLIENT_SECRET` — 통신3사 PASS 휴대폰번호 로그인 ([developers.passlogin.com](https://developers.passlogin.com) 제휴)
+- `PASS_OAUTH_REDIRECT_URI=http://localhost:8000/auth/pass/callback`
+- `FRONTEND_URL=http://localhost:3001` — OAuth 완료 후 리다이렉트할 프론트 주소
+- `OAUTH_STATE_SECRET` — state 서명용 (운영에서는 긴 랜덤 문자열)
+
+DB 마이그레이션: `alembic upgrade head` (006_user_oauth).
