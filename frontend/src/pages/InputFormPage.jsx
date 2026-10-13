@@ -34,7 +34,6 @@ export default function InputFormPage() {
 
   const isLast = step === STEPS.length - 1;
   const assets = Number(user.availableAssets) || 0;
-  const income = Number(user.annualIncome) || 0;
   const months = Number(user.noHousePeriodMonths) || 0;
 
   const handleSubmit = async (e) => {
@@ -137,25 +136,6 @@ export default function InputFormPage() {
                   />
                 </Field>
               </div>
-              <div className="field-row">
-                <Field
-                  label="생년월일 (선택)"
-                  hint="입력하면 만 30세 미만 미혼의 무주택기간 0점 규칙까지 반영해 가점을 계산해요. 비워 두면 반영하지 않아요."
-                >
-                  <input type="date" value={user.birthDate} onChange={handleChange("birthDate")} />
-                </Field>
-                <Field label="혼인 여부" hint="혼인신고를 했다면 선택하세요. 무주택기간은 혼인신고일부터 셉니다.">
-                  <div className="toggle-group">
-                    <button
-                      type="button"
-                      className={user.isMarried ? "toggle on" : "toggle"}
-                      onClick={() => setField("isMarried", !user.isMarried)}
-                    >
-                      {user.isMarried ? "✔ " : ""}기혼
-                    </button>
-                  </div>
-                </Field>
-              </div>
               <Field label="부양가족 수" hint="배우자를 제외한 직계존속·비속 등 부양하는 가족 수">
                 <div className="toggle-group">
                   {DEPENDENT_OPTIONS.map((n) => (
@@ -189,20 +169,6 @@ export default function InputFormPage() {
                   onChange={handleChange("availableAssets")}
                 />
                 <span className="money">{formatWon(assets)}</span>
-              </Field>
-              <Field
-                label="연 소득 (원, 세전) (선택)"
-                hint="입력하면 소득으로 감당할 수 있는 대출 한도도 계산해 드려요. 비워 두면 담보 기준 한도만 보여드립니다."
-              >
-                <input
-                  type="number"
-                  min="0"
-                  step="1000000"
-                  value={user.annualIncome}
-                  placeholder="예: 48000000"
-                  onChange={handleChange("annualIncome")}
-                />
-                {income > 0 && <span className="money">{formatWon(income)}</span>}
               </Field>
               <Field label="희망 지역" hint="이 지역의 공고를 추천해 드립니다.">
                 <select value={user.desiredRegionCode} onChange={handleChange("desiredRegionCode")}>
@@ -256,14 +222,10 @@ export default function InputFormPage() {
             <dl className="kv">
               <dt>무주택 기간</dt>
               <dd>{months ? `${Math.floor(months / 12)}년 ${months % 12}개월` : "-"}</dd>
-              <dt>생년월일</dt>
-              <dd>{user.birthDate ? `${user.birthDate}${user.isMarried ? " · 기혼" : ""}` : "-"}</dd>
               <dt>부양가족</dt>
               <dd>{user.dependentsCount}명</dd>
               <dt>통장 가입일</dt>
               <dd>{user.subscriptionJoinedAt || "-"}</dd>
-              <dt>연 소득</dt>
-              <dd>{income > 0 ? formatWon(income) : "-"}</dd>
               <dt>희망 지역</dt>
               <dd>{user.desiredRegionCode ? regionName(user.desiredRegionCode) : "-"}</dd>
               <dt>직장</dt>

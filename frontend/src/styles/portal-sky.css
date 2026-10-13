@@ -1,0 +1,60 @@
+/* 청약 홈(/portal) — 목업과 같은 하늘·아파트 사진 배경 (팀 회의 2026.10.07)
+   Layout.jsx 에서 /portal 일 때만 .app-shell 에 .sky 를 붙인다. 다른 화면은 기존 스타일 그대로. */
+.app-shell.sky {
+  position: relative;
+  min-height: 100vh;
+  background-color: #5fb8dc;
+  background-image: url("../assets/hero-sky.jpg");
+  background-size: cover;
+  background-position: center bottom;
+  background-attachment: fixed;
+}
+.app-shell.sky::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6, 30, 60, 0.3) 0%, rgba(6, 30, 60, 0.06) 30%, rgba(6, 30, 60, 0) 60%, rgba(6, 30, 60, 0.4) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+.app-shell.sky > * { position: relative; z-index: 1; }
+.app-shell.sky > .app-header { z-index: 20; }
+
+/* 상단: 사진 위 투명 헤더 */
+.app-shell.sky .util-bar { background: rgba(6, 30, 60, 0.32); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.app-shell.sky .app-header { background: transparent; border-bottom: 1px solid rgba(255, 255, 255, 0.25); }
+.app-shell.sky .app-header .brand { color: #fff; text-shadow: 0 2px 12px rgba(6, 22, 48, 0.35); }
+.app-shell.sky .gnb-item > a { color: #fff; text-shadow: 0 1px 10px rgba(6, 22, 48, 0.35); }
+.app-shell.sky .gnb-item > a.active,
+.app-shell.sky .gnb-item:hover > a { color: #fff; border-bottom-color: #fff; }
+.app-shell.sky .gnb-sub a { color: var(--ink); text-shadow: none; }
+.app-shell.sky .header-cta { background: #fff; color: #0a1a33 !important; border-radius: 999px; }
+.app-shell.sky .header-cta:hover { background: #eaf1fb; }
+
+/* 슬라이드 배너: 반투명 남색이라 뒤 사진이 비친다 */
+.app-shell.sky .banner {
+  background: linear-gradient(120deg, rgba(20, 64, 127, 0.82) 0%, rgba(31, 95, 174, 0.66) 60%, rgba(61, 127, 208, 0.5) 100%);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 22px;
+  box-shadow: 0 24px 60px rgba(6, 22, 48, 0.25);
+}
+
+/* 검색창 · 바로가기 · 카드: 유리 카드 */
+.app-shell.sky .search-bar,
+.app-shell.sky .quick-item,
+.app-shell.sky .home .card {
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 16px 40px rgba(6, 22, 48, 0.18);
+}
+.app-shell.sky .search-bar { border-radius: 16px; }
+.app-shell.sky .quick-item { border-radius: 16px; }
+.app-shell.sky .quick-item:hover { border-color: var(--accent); }
+.app-shell.sky .home .card { border-radius: 18px; }
+
+/* 하단 */
+.app-shell.sky .app-footer { background: rgba(10, 20, 40, 0.72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }

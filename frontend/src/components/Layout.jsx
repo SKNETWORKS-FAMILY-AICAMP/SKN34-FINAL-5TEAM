@@ -1,6 +1,8 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 
+import "../styles/portal-sky.css";
+
 // 상단 메뉴: 마우스를 올리면 하위 메뉴가 펼쳐지는 포털 스타일
 const MENUS = [
   {
@@ -26,8 +28,15 @@ export default function Layout({ children }) {
     return <main className="app-full">{children}</main>;
   }
 
+  // 목업 디자인 화면은 하늘 사진 배경 + 자체 헤더(components/MockupShell.jsx)를 쓴다.
+  const isMockup = ["/", "/diagnosis", "/my", "/intro", "/ai-chat", "/report"].includes(pathname) || /^\/listings\/\d+\/ai$/.test(pathname);
+  if (isMockup || pathname.startsWith("/mockup")) {
+    return children;
+  }
+
   return (
-    <div className="app-shell">
+    // 청약 홈(/portal)은 하늘·아파트 사진 배경 (styles/portal-sky.css)
+    <div className={pathname === "/portal" ? "app-shell sky" : "app-shell"}>
       <div className="util-bar">
         <span>청약홈·LH·SH 공고를 한곳에서</span>
         <Link to="/start">{userId ? `${email} · 내 정보` : "내 정보 입력"}</Link>

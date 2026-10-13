@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>서비스 이름 · 로고 제안</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700;800&amp;family=Jua&amp;display=swap">
+<style>
+body{margin:0;background:#EEF3FA}
+button{font-family:inherit}
+button:focus-visible{outline:3px solid #8DB2FF;outline-offset:2px}
+.sky{position:relative;background-color:#5FB8DC;background-image:url(__MOCKUP__/img/sky.jpg);background-size:cover;background-position:center 70%}
+.sky::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,30,60,0.28),rgba(6,30,60,0.05));pointer-events:none}
+.jua{font-family:'Jua','Gothic A1',sans-serif;font-weight:400;letter-spacing:0}
+</style>
+</helmet>
+<div style="font-family: 'Gothic A1', 'Malgun Gothic', sans-serif; color: #14213A; min-height: 100vh; padding: 36px 40px 48px; display: flex; flex-direction: column; gap: 22px; font-size: 15px; line-height: 1.55">
+
+<header>
+<div style="font-size: 13px; font-weight: 700; color: #1D5BD8">팀 논의 자료 · 2026.10.08</div>
+<h1 class="jua" style="margin: 4px 0; font-size: 36px; color: #0A2B5E">서비스 이름 · 로고 제안</h1>
+<p style="margin: 0; color: #3A4556">팀원 의견("청약돼?!" 말투)을 살리면서 <b>청약홈 · LH · SH 세 곳을 모두</b> 보여 주는 방향으로 정리했어요</p>
+</header>
+
+<!-- 1. 팀원 의견 정리 -->
+<section style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+<div style="padding: 16px 18px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DCE5F2">
+<div style="font-size: 12.5px; font-weight: 700; color: #5B6576">팀원 의견 1</div>
+<div class="jua" style="font-size: 24px; color: #0A2B5E; margin: 2px 0 6px">LH청약돼?!</div>
+<div style="font-size: 13.5px"><b style="color: #1E7D47">살릴 점</b> · "돼?!" — 사용자가 실제로 묻는 말이라 바로 와닿아요</div>
+<div style="font-size: 13.5px"><b style="color: #A65A00">아쉬운 점</b> · LH만 보여서 청약홈 · SH 공고는 안 다루는 것처럼 보여요</div>
+</div>
+<div style="padding: 16px 18px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DCE5F2">
+<div style="font-size: 12.5px; font-weight: 700; color: #5B6576">팀원 의견 2</div>
+<div class="jua" style="font-size: 24px; color: #0A2B5E; margin: 2px 0 6px">내 청약 돼? 내 청약 돼!</div>
+<div style="font-size: 13.5px"><b style="color: #1E7D47">살릴 점</b> · 질문(?) → 확신(!)으로 바뀌는 흐름 = 진단 → 리포트 흐름과 같아요</div>
+<div style="font-size: 13.5px"><b style="color: #A65A00">아쉬운 점</b> · 이름으로 쓰기엔 조금 길어요</div>
+</div>
+<div style="padding: 16px 18px; border-radius: 16px; background: #0A2B5E; color: #FFFFFF">
+<div style="font-size: 12.5px; font-weight: 700; color: #C9D7EE">합쳐서 정리하면</div>
+<div style="font-size: 15px; margin-top: 6px; line-height: 1.7">① <b>"돼?!"</b> 말투는 그대로 쓰고<br>② LH 대신 <b>세 곳을 뜻하는 표시</b>를 로고에 넣고<br>③ <b>"?" → "!"</b> 흐름을 로고 포인트로</div>
+</div>
+</section>
+
+<!-- 2. 이름 후보 -->
+<section style="padding: 18px 20px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DCE5F2; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px">
+<h2 style="margin: 0; font-size: 19px; color: #0A2B5E">이름 후보 3가지 · 눌러서 로고 미리보기</h2>
+<div role="tablist" aria-label="이름 후보" style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{opts}}" as="o" hint-placeholder-count="3"><button type="button" role="tab" aria-selected="{{o.pressed}}" onClick="{{o.pick}}" style="{{o.style}}"><span class="jua" style="font-size: 18px">{{o.name}}</span><span style="{{o.recStyle}}">추천</span></button></sc-for></div>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px">
+<div style="padding: 12px 14px; border-radius: 12px; background: #F4F7FC"><div style="font-size: 12.5px; color: #5B6576; font-weight: 700">한 줄 소개</div><div style="font-size: 15px; font-weight: 700; color: #0A2B5E; margin-top: 2px">{{cur.tagline}}</div></div>
+<div style="padding: 12px 14px; border-radius: 12px; background: #F4F7FC"><div style="font-size: 12.5px; color: #5B6576; font-weight: 700">세 곳을 담는 방법</div><div style="font-size: 14px; margin-top: 2px">{{cur.how}}</div></div>
+<div style="padding: 12px 14px; border-radius: 12px; background: #F4F7FC"><div style="font-size: 12.5px; color: #5B6576; font-weight: 700">이런 점이 좋아요 · 주의</div><div style="font-size: 14px; margin-top: 2px">{{cur.pro}}</div><div style="font-size: 13px; color: #A65A00; margin-top: 2px">{{cur.con}}</div></div>
+</div>
+</section>
+
+<!-- 3. 로고 -->
+<section style="display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; align-items: stretch">
+<!-- 헤더에 넣었을 때 -->
+<div class="sky" style="border-radius: 18px; overflow: hidden; min-height: 300px; display: flex; flex-direction: column">
+<div style="position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 18px 22px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="position: relative; display: inline-block; width: 40px; height: 40px"><svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M6 19 20 7l14 12v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" stroke="#FFFFFF" stroke-width="2.4" stroke-linejoin="round"></path><circle cx="14" cy="26" r="2.6" fill="#7FB0FF"></circle><circle cx="20" cy="26" r="2.6" fill="#5FD3A8"></circle><circle cx="26" cy="26" r="2.6" fill="#FF9B6A"></circle></svg></span>
+<sc-for list="{{cur.parts}}" as="w" hint-placeholder-count="2"><span class="jua" style="{{w.skyStyle}}">{{w.t}}</span></sc-for>
+</div>
+<div style="display: flex; gap: 18px; color: #FFFFFF; font-size: 14px; font-weight: 600"><span>전체 공고</span><span>내 청약 단계</span><span>마이페이지</span></div>
+</div>
+<div style="position: relative; z-index: 1; margin: auto 0 0; padding: 0 22px 26px; color: #FFFFFF">
+<div style="display: flex; gap: 6px; margin-bottom: 10px"><span style="font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 6px; background: #1D5BD8">청약홈</span><span style="font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 6px; background: #0B8A6A">LH</span><span style="font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 6px; background: #D9480F">SH</span></div>
+<div class="jua" style="font-size: 34px; text-shadow: 0 2px 16px rgba(6, 22, 48, 0.35)">{{cur.hero}}</div>
+<div style="font-size: 15px; color: #EAF2FF">{{cur.tagline}}</div>
+</div>
+</div>
+
+<!-- 로고 단독 · 앱 아이콘 -->
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="flex: 1; padding: 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DCE5F2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="position: relative; display: inline-block; width: 56px; height: 56px"><svg width="56" height="56" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M6 19 20 7l14 12v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" stroke="#0A2B5E" stroke-width="2.4" stroke-linejoin="round"></path><circle cx="14" cy="26" r="2.6" fill="#1D5BD8"></circle><circle cx="20" cy="26" r="2.6" fill="#0B8A6A"></circle><circle cx="26" cy="26" r="2.6" fill="#D9480F"></circle></svg></span>
+<sc-for list="{{cur.parts}}" as="w" hint-placeholder-count="2"><span class="jua" style="{{w.whiteStyle}}">{{w.t}}</span></sc-for>
+</div>
+<div style="display: flex; gap: 12px; font-size: 12.5px; color: #3A4556"><span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #1D5BD8"></span> 청약홈</span><span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #0B8A6A"></span> LH</span><span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #D9480F"></span> SH</span></div>
+</div>
+<div style="display: flex; gap: 12px">
+<div style="flex: 1; padding: 16px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DCE5F2; display: flex; align-items: center; gap: 14px">
+<span style="position: relative; flex: none; width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(160deg, #2B6BE0, #0A2B5E); display: inline-flex; align-items: center; justify-content: center"><svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M6 19 20 7l14 12v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" stroke="#FFFFFF" stroke-width="2.6" stroke-linejoin="round"></path><circle cx="14" cy="26" r="2.6" fill="#7FB0FF"></circle><circle cx="20" cy="26" r="2.6" fill="#5FD3A8"></circle><circle cx="26" cy="26" r="2.6" fill="#FF9B6A"></circle></svg></span>
+<div style="font-size: 13px; color: #3A4556"><b style="color: #0A2B5E">앱 아이콘 · 카카오 알림 프로필</b><br>집 = 내 집 마련 · 창문 점 3개 = 청약홈 · LH · SH · 이름 끝 "?!" = 돼?! (하나만)</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 4. 포인트 설명 -->
+<section style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+<div style="padding: 14px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DCE5F2"><b style="color: #0A2B5E">집 선 아이콘</b><div style="font-size: 13px; color: #3A4556; margin-top: 4px">지금 쓰는 집 아이콘을 그대로 이어서 화면 디자인이 바뀌지 않아요</div></div>
+<div style="padding: 14px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DCE5F2"><b style="color: #0A2B5E">창문 점 3개</b><div style="font-size: 13px; color: #3A4556; margin-top: 4px">파랑 청약홈 · 초록 LH · 주황 SH — 전체 공고의 출처 배지 색과 같아서 서비스 안에서도 계속 연결돼요</div></div>
+<div style="padding: 14px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DCE5F2"><b style="color: #0A2B5E">"?!" 말풍선</b><div style="font-size: 13px; color: #3A4556; margin-top: 4px">팀원 의견 2의 "돼? → 돼!" — 묻고(?) 확인하는(!) 서비스라는 뜻 · 알림 · 상담 아이콘으로도 써요</div></div>
+<div style="padding: 14px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DCE5F2"><b style="color: #0A2B5E">글꼴</b><div style="font-size: 13px; color: #3A4556; margin-top: 4px">지금처럼 이름은 Jua(둥근 제목체), 나머지는 Gothic A1 — 친근하지만 정보는 또렷하게</div></div>
+</section>
+<p style="margin: 0; font-size: 12.5px; color: #5B6576">상표 · 도메인 사용 가능 여부는 정하기 전에 확인이 필요해요 · LH · SH는 기관 이름이라 로고에 기관 마크는 쓰지 않고 이름(글자)과 색 점만 써요</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1250}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { opt: 0 }; }
+  renderVals() {
+    const OPTS = [
+      { name: '청약돼?!', rec: true, parts: ['청약돼', '?!'], hero: '이 공고, 나도 청약돼?!',
+        tagline: '청약홈 · LH · SH, 될지 안 될지 한 번에', how: '이름은 짧게 "청약돼?!" — 세 곳은 로고의 창문 점 3개(파랑 · 초록 · 주황)와 한 줄 소개로 보여 줘요',
+        pro: '팀원 의견 1을 그대로 살리면서 LH만 빼서 모든 공고로 넓혀요 · 짧아서 기억하기 쉬워요', con: '이름만으로는 세 곳이 바로 안 보여서 로고 · 소개 문구가 꼭 같이 가야 해요' },
+      { name: '내 청약 돼?!', rec: false, parts: ['내 청약 돼', '?!'], hero: '내 조건으로, 내 청약 돼?!',
+        tagline: '내 조건으로 청약홈 · LH · SH 다 따져 봐요', how: '"내"로 맞춤 진단을 강조 · 세 곳은 로고 점 3개와 소개 문구로',
+        pro: '팀원 의견 2를 살려 "나에게 맞춘 서비스"가 잘 드러나요', con: '조금 길어서 앱 아이콘 · 알림 이름에서 잘릴 수 있어요' },
+      { name: '다 돼?! 청약', rec: false, parts: ['다 돼', '?!', ' 청약'], hero: '청약홈 · LH · SH 다 돼?!',
+        tagline: '세 곳 공고를 다 모아, 다 따져 봐요', how: '"다" = 청약홈 · LH · SH 세 곳 다 — 이름 안에 세 곳을 담는 말장난',
+        pro: '이름만으로 "모든 공고"가 전달돼요', con: '"다 돼"가 "무조건 당첨"처럼 들릴 수 있어 소개 문구에서 오해를 줄여야 해요' }
+    ];
+    const k = this.state.opt, cur = OPTS[k];
+    const QM = 'display: inline-block; font-size: 0.82em; line-height: 1; padding: 3px 7px 4px; margin-left: 3px; border-radius: 10px 10px 10px 3px; background: #FF6B4A; color: #FFFFFF; vertical-align: 4px';
+    const parts = cur.parts.map((t) => ({ t,
+      skyStyle: t === '?!' ? QM + '; font-size: 20px' : 'font-size: 26px; color: #FFFFFF; text-shadow: 0 1px 10px rgba(6, 22, 48, 0.3)',
+      whiteStyle: t === '?!' ? QM + '; font-size: 26px' : 'font-size: 38px; color: #0A2B5E' }));
+    return {
+      opts: OPTS.map((o, i) => ({ name: o.name, pressed: i === k ? 'true' : 'false', pick: () => this.setState({ opt: i }),
+        recStyle: 'font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; margin-left: 6px; display: ' + (o.rec ? 'inline-block' : 'none') + '; ' + (i === k ? 'background: #FFFFFF; color: #1D5BD8;' : 'background: #E8F0FE; color: #1D4FB8;'),
+        style: 'display: inline-flex; align-items: center; min-height: 46px; padding: 0 16px; border-radius: 12px; cursor: pointer; ' + (i === k ? 'border: 0; background: #1D5BD8; color: #FFFFFF;' : 'border: 1px solid #CBD3DF; background: #FFFFFF; color: #14213A;') })),
+      cur: Object.assign({}, cur, { parts })
+    };
+  }
+}
+</script>
+</body>
+</html>

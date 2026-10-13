@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>청약돼?! 홈 · 랜딩형</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700&amp;family=Jua&amp;display=swap">
+<style>
+h1{font-family:'Jua','Gothic A1',sans-serif !important;font-weight:400 !important;letter-spacing:0 !important}
+button,input,textarea{font-family:inherit}
+body{margin:0;background:#F6F4EF}
+a{color:#1D4FB8}a:hover{color:#0A2B5E}
+button:focus-visible,a:focus-visible{outline:3px solid #8DB2FF;outline-offset:2px}
+.hero-photo{background-color:#5FB8DC;background-image:url(__MOCKUP__/img/sky.jpg);background-size:cover;background-position:center 78%}
+.glass{background:rgba(255,255,255,0.82);-webkit-backdrop-filter:blur(16px) saturate(1.2);backdrop-filter:blur(16px) saturate(1.2)}
+</style>
+</helmet>
+<div style="font-family: 'Gothic A1', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #1B2230; background: #F6F4EF; min-height: 100vh; font-size: 15px; line-height: 1.5; display: flex; flex-direction: column">
+
+<!-- 공지 띠 -->
+<a href="Home.dc.html" style="display: block; background: {{accent}}; color: #FFFFFF; text-align: center; font-size: 13.5px; font-weight: 600; padding: 9px 16px; text-decoration: none">10월 신규 청약 공고, 내 조건에 맞는지 1분 만에 확인해 보세요 · <span style="text-decoration: underline">진단 시작</span></a>
+
+<div style="flex: 1; width: 100%; max-width: 1360px; margin: 0 auto; padding: 14px 16px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+
+<!-- 히어로 -->
+<section class="hero-photo" style="position: relative; border-radius: 22px; overflow: hidden; min-height: 620px; display: flex; flex-direction: column; justify-content: space-between; padding: 16px">
+
+<!-- 흰 내비 바 -->
+<header style="background: #FFFFFF; border-radius: 14px; box-shadow: 0 6px 24px rgba(6, 22, 48, 0.12); min-height: 60px; padding: 8px 12px 8px 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px">
+<a href="HomeB.dc.html" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: #0A2B5E">
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M6 19 20 7l14 12v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" stroke="#FFFFFF" stroke-width="2.6" stroke-linejoin="round"></path><circle cx="14" cy="26" r="2.8" fill="#7FB0FF"></circle><circle cx="20" cy="26" r="2.8" fill="#5FD3A8"></circle><circle cx="26" cy="26" r="2.8" fill="#FF9B6A"></circle></svg>
+<span style="font-family: 'Jua', 'Gothic A1', sans-serif; font-size: 30px; font-weight: 400; letter-spacing: 0; white-space: nowrap">청약돼<span style="display: inline-block; margin-left: 4px; padding: 3px 7px 4px; border-radius: 10px 10px 10px 3px; background: #FF6B4A; color: #FFFFFF; font-size: 19px; line-height: 1; vertical-align: 4px">?!</span></span>
+</a>
+<nav aria-label="주요 메뉴" style="display: flex; flex-wrap: wrap; gap: 4px 26px; font-size: 14px; font-weight: 500">
+<a href="Home.dc.html" style="color: #2A3445; text-decoration: none">청약 진단</a>
+<a href="NoticeAI.dc.html" style="color: #2A3445; text-decoration: none">공고 찾기</a>
+<a href="AIChat.dc.html" style="color: #2A3445; text-decoration: none">AI 청약 상담</a>
+<a href="AgentReport.dc.html" style="color: #2A3445; text-decoration: none">전략 리포트</a>
+<a href="#" style="color: #2A3445; text-decoration: none">대출 시뮬레이션</a>
+</nav>
+<div style="display: flex; gap: 8px">
+<a href="Home.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid #D5D9E0; color: #1B2230; text-decoration: none; font-size: 14px; font-weight: 600">로그인</a>
+<a href="Home.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 10px; background: {{accent}}; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 700">회원가입</a>
+</div>
+</header>
+
+<!-- 좌하단 카드 -->
+<div class="glass" style="align-self: flex-start; width: 100%; max-width: 480px; box-sizing: border-box; margin: 0 0 16px 16px; border: 1px solid rgba(255, 255, 255, 0.75); border-radius: 18px; box-shadow: 0 18px 44px rgba(6, 22, 48, 0.22); padding: 26px 26px 24px">
+<h1 style="margin: 0 0 10px; font-size: 38px; line-height: 1.2; color: #0A1A33">청약, 이제 내 조건부터</h1>
+<p style="margin: 0 0 20px; font-size: 15.5px; color: #2E3746">가점·1순위·특별공급 자격을 1분 만에 진단하고, AI가 공고문을 읽어 나에게 맞는 공고와 자금 계획까지 정리해 드려요.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<a href="Home.dc.html" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 12px; background: {{accent}}; color: #FFFFFF; text-decoration: none; font-weight: 700">1분 진단 시작하기</a>
+<a href="AIChat.dc.html" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 16px; border-radius: 12px; color: #1B2230; text-decoration: none; font-weight: 600">AI에게 먼저 물어보기 ›</a>
+</div>
+</div>
+</section>
+
+<!-- 하단 신뢰 배지 띠 -->
+<section aria-label="서비스 특징" style="background: #FFFFFF; border-radius: 22px; padding: 18px 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px">
+<sc-for list="{{badges}}" as="b" hint-placeholder-count="4">
+<div style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 6px 0">
+<svg width="22" height="44" viewBox="0 0 22 44" fill="none" aria-hidden="true"><path d="M18 42C8 36 5 24 9 4" stroke="#B9A988" stroke-width="1.6" stroke-linecap="round"></path><path d="M9.5 10c-4-1-6-4-6-7 4 1 6 4 6 7ZM8 18c-4-1-6.5-3.5-7-7 4 .5 6.5 3.5 7 7ZM8 26.5c-3.5-.5-6.5-3-7-6.5 4 .5 6.5 3 7 6.5ZM10.5 34.5c-3.5 0-6.5-2.5-7.5-5.5 4 0 6.5 2.5 7.5 5.5Z" fill="#CDBF9F"></path></svg>
+<div style="text-align: center; min-width: 0">
+<div style="font-size: 15px; font-weight: 700; color: #1B2230">{{b.title}}</div>
+<div style="font-size: 12.5px; color: #5B6576">{{b.sub}}</div>
+</div>
+<svg width="22" height="44" viewBox="0 0 22 44" fill="none" aria-hidden="true" style="transform: scaleX(-1)"><path d="M18 42C8 36 5 24 9 4" stroke="#B9A988" stroke-width="1.6" stroke-linecap="round"></path><path d="M9.5 10c-4-1-6-4-6-7 4 1 6 4 6 7ZM8 18c-4-1-6.5-3.5-7-7 4 .5 6.5 3.5 7 7ZM8 26.5c-3.5-.5-6.5-3-7-6.5 4 .5 6.5 3 7 6.5ZM10.5 34.5c-3.5 0-6.5-2.5-7.5-5.5 4 0 6.5 2.5 7.5 5.5Z" fill="#CDBF9F"></path></svg>
+</div>
+</sc-for>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#E8613C","options":["#E8613C","#1D5BD8","#0A2B5E"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#E8613C',
+      badges: [
+        { title: '청약홈 공고 연동', sub: '분양정보 · 경쟁률 · 당첨가점 API' },
+        { title: 'LH · SH 공고 수집', sub: '공공분양 · 임대 공고 한곳에' },
+        { title: '근거를 보여주는 AI', sub: '공고문 · 법령 인용 답변' },
+        { title: '나만의 전략 리포트', sub: '멀티 에이전트가 자금 계획까지' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

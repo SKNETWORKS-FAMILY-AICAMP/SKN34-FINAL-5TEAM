@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>내 맞춤 대시보드</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700&amp;family=Jua&amp;display=swap">
+<style>
+h1{font-family:'Jua','Gothic A1',sans-serif !important;font-weight:400 !important;letter-spacing:0 !important}
+button,input,textarea{font-family:inherit}
+body{margin:0;background:#5FB8DC}
+a{color:#1D4FB8}a:hover{color:#0A2B5E}
+button:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid #8DB2FF;outline-offset:2px}
+.hero-bg{position:relative;background-color:#5FB8DC;background-image:url(__MOCKUP__/img/sky.jpg);background-size:cover;background-position:center bottom}
+.hero-bg::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,30,60,0.26) 0%,rgba(6,30,60,0.04) 28%,rgba(6,30,60,0) 60%,rgba(6,30,60,0.42) 100%);pointer-events:none}
+.glass{background:rgba(255,255,255,0.9);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2)}
+.glass-dark{background:rgba(255,255,255,0.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+</style>
+</helmet>
+<div class="hero-bg" style="font-family: 'Gothic A1', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #1A2433; min-height: 100vh; font-size: 14.5px; line-height: 1.5">
+
+<!-- 헤더 -->
+<header style="position: relative; z-index: 1">
+<div style="max-width: 1280px; margin: 0 auto; padding: 0 24px; min-height: 72px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<a href="HomeB.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #FFFFFF">
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M6 19 20 7l14 12v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" stroke="#FFFFFF" stroke-width="2.6" stroke-linejoin="round"></path><circle cx="14" cy="26" r="2.8" fill="#7FB0FF"></circle><circle cx="20" cy="26" r="2.8" fill="#5FD3A8"></circle><circle cx="26" cy="26" r="2.8" fill="#FF9B6A"></circle></svg>
+<span style="font-family: 'Jua', 'Gothic A1', sans-serif; font-size: 30px; font-weight: 400; letter-spacing: 0; white-space: nowrap">청약돼<span style="display: inline-block; margin-left: 4px; padding: 3px 7px 4px; border-radius: 10px 10px 10px 3px; background: #FF6B4A; color: #FFFFFF; font-size: 19px; line-height: 1; vertical-align: 4px">?!</span></span>
+</a>
+<nav aria-label="주요 메뉴" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 22px; font-size: 14px">
+<a href="MyHome.dc.html" aria-current="page" style="color: #FFFFFF; text-decoration: none; font-weight: 700; border-bottom: 2px solid #FFFFFF; padding-bottom: 2px">내 대시보드</a>
+<a href="NoticeAI.dc.html" style="color: #FFFFFF; text-decoration: none; font-weight: 500">공고 찾기</a>
+<a href="AIChat.dc.html" style="color: #FFFFFF; text-decoration: none; font-weight: 500">AI 청약 상담</a>
+<a href="AgentReport.dc.html" style="color: #FFFFFF; text-decoration: none; font-weight: 500">전략 리포트</a>
+<a href="#" style="color: #FFFFFF; text-decoration: none; font-weight: 500">자금 계획</a>
+<a href="Home.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border-radius: 999px; background: #FFFFFF; color: #0A1A33; text-decoration: none; font-weight: 700">내 정보</a>
+</nav>
+</div>
+</header>
+
+<main style="position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 8px 24px 48px; display: flex; flex-direction: column; gap: 18px">
+
+<!-- 환영 밴드 -->
+<section style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 14px 24px; color: #FFFFFF; text-shadow: 0 2px 16px rgba(6, 22, 48, 0.35)">
+<div>
+<span class="glass-dark" style="display: inline-block; font-size: 12.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.45); text-shadow: none">로그인 완료 · 진단 결과가 저장됐어요</span>
+<h1 style="margin: 10px 0 4px; font-size: 36px; line-height: 1.2">내 조건에 맞는 공고를 모았어요</h1>
+<p style="margin: 0; color: #EAF2FF">진단 정보와 AI 맞춤 조건으로 공고를 골라, 자격·자금·출퇴근까지 한 번에 보여드려요</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; text-shadow: none">
+<span class="glass-dark" style="padding: 8px 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.45); color: #FFFFFF; font-size: 13px">가점 <b style="font-size: 17px">24점</b></span>
+<span class="glass-dark" style="padding: 8px 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.45); color: #FFFFFF; font-size: 13px">1순위 <b style="font-size: 15px">충족 예상</b></span>
+<span class="glass-dark" style="padding: 8px 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.45); color: #FFFFFF; font-size: 13px">특별공급 <b style="font-size: 15px">신혼부부 · 생애최초</b></span>
+</div>
+</section>
+
+<!-- 바로가기 (팀원 홈의 퀵메뉴) -->
+<nav aria-label="바로가기" class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 18px; box-shadow: 0 16px 40px rgba(6, 22, 48, 0.18); padding: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px">
+<a href="NoticeAI.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 14px; border-radius: 12px; color: #1A2433; text-decoration: none; font-weight: 600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3" stroke="#1D5BD8" stroke-width="1.8"></rect><path d="M8 8h8M8 12h8M8 16h5" stroke="#1D5BD8" stroke-width="1.8" stroke-linecap="round"></path></svg>공고 둘러보기</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 14px; border-radius: 12px; color: #1A2433; text-decoration: none; font-weight: 600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="#1D5BD8" stroke-width="1.8"></circle><path d="M14.5 9.3c-.5-.8-1.5-1.3-2.6-1.3-1.5 0-2.6.8-2.6 2s1.1 1.6 2.7 2c1.6.3 2.7.9 2.7 2.1s-1.2 2-2.7 2c-1.2 0-2.2-.5-2.7-1.4M12 6.5V8M12 16v1.5" stroke="#1D5BD8" stroke-width="1.6" stroke-linecap="round"></path></svg>자금 계획</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 14px; border-radius: 12px; color: #1A2433; text-decoration: none; font-weight: 600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3.5" width="14" height="13" rx="3" stroke="#1D5BD8" stroke-width="1.8"></rect><path d="M5 11h14M8.5 20.5l1.5-4M15.5 20.5l-1.5-4" stroke="#1D5BD8" stroke-width="1.8" stroke-linecap="round"></path><circle cx="9" cy="13.8" r="0.9" fill="#1D5BD8"></circle><circle cx="15" cy="13.8" r="0.9" fill="#1D5BD8"></circle></svg>출퇴근 조회</a>
+<a href="AIChat.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 14px; border-radius: 12px; color: #1A2433; text-decoration: none; font-weight: 600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 4v-4h0A1.5 1.5 0 0 1 4 14.5v-8Z" stroke="#5B3FD6" stroke-width="1.8" stroke-linejoin="round"></path></svg>AI에게 공고 질문</a>
+<a href="AgentReport.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 14px; border-radius: 12px; color: #1A2433; text-decoration: none; font-weight: 600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.4 2.4M15.3 15.3l2.4 2.4M6.3 17.7l2.4-2.4M15.3 8.7l2.4-2.4" stroke="#5B3FD6" stroke-width="1.8" stroke-linecap="round"></path></svg>AI 전략 리포트</a>
+</nav>
+
+<!-- 3단 대시보드 -->
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+
+<!-- 왼쪽: AI 조건 + 필터 -->
+<aside aria-label="조건과 필터" style="flex: 1 1 230px; max-width: 100%; display: flex; flex-direction: column; gap: 12px">
+<section class="glass" style="border: 1.5px solid #CFC5F7; border-radius: 18px; box-shadow: 0 16px 40px rgba(6, 22, 48, 0.18); padding: 16px">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700; color: #3A2A8C">AI 맞춤 조건</h2>
+<span style="font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #F1EEFD; color: #4A2FC0">LLM 추출</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{conds}}" as="c" hint-placeholder-count="4">
+<div style="display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px; background: #FAFAFF; border: 1px solid #E3DEFA; font-size: 13px">
+<span style="flex: none; font-size: 11px; font-weight: 700; color: #FFFFFF; background: #5B3FD6; border-radius: 5px; padding: 1px 6px">{{c.cat}}</span>
+<span style="flex: 1">{{c.text}}</span>
+</div>
+</sc-for>
+</div>
+<label style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; font-size: 12.5px; color: #5B6576">조건 더하기
+<textarea rows="2" placeholder="예) 반려견과 살 수 있으면 좋겠어요" style="font: inherit; font-size: 13.5px; color: #1A2433; border: 1px solid #CBD3DF; border-radius: 10px; padding: 8px 10px; resize: none"></textarea>
+</label>
+<button type="button" style="margin-top: 8px; width: 100%; min-height: 42px; border-radius: 10px; border: 0; background: #5B3FD6; color: #FFFFFF; font: inherit; font-weight: 700; cursor: pointer">AI로 반영하기</button>
+</section>
+
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 18px; box-shadow: 0 16px 40px rgba(6, 22, 48, 0.18); padding: 16px">
+<h2 style="margin: 0 0 8px; font-size: 15px; font-weight: 700">공급 유형</h2>
+<sc-for list="{{supplyOpts}}" as="s" hint-placeholder-count="3">
+<button type="button" role="checkbox" aria-checked="{{s.checked}}" onClick="{{s.toggle}}" style="display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 4px; border: 0; background: transparent; font: inherit; font-size: 14px; color: #1A2433; cursor: pointer; text-align: left">
+<span style="{{s.box}}"><sc-if value="{{s.on}}" hint-placeholder-val="{{ true }}"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m2.5 6.2 2.2 2.2 4.8-4.8" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if></span>{{s.label}}<span style="margin-left: auto; font-size: 12px; color: #6B7785">{{s.count}}</span>
+</button>
+</sc-for>
+</section>
+
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 18px; box-shadow: 0 16px 40px rgba(6, 22, 48, 0.18); padding: 16px">
+<h2 style="margin: 0 0 8px; font-size: 15px; font-weight: 700">조건</h2>
+<sc-for list="{{filterOpts}}" as="s" hint-placeholder-count="3">
+<button type="button" role="checkbox" aria-checked="{{s.checked}}" onClick="{{s.toggle}}" style="display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 4px; border: 0; background: transparent; font: inherit; font-size: 14px; color: #1A2433; cursor: pointer; text-align: left">
+<span style="{{s.box}}"><sc-if value="{{s.on}}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m2.5 6.2 2.2 2.2 4.8-4.8" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if></span>{{s.label}}
+</button>
+</sc-for>
+</section>
+</aside>
+
+<!-- 가운데: AI 판정 + 추천 공고 -->
+<section aria-label="추천 공고" style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+
+<article class="glass" style="border: 1.5px solid #CFC5F7; border-radius: 18px; box-shadow: 0 16px 40px rgba(6, 22, 48, 0.18); padding: 18px 20px; display: flex; flex-wrap: wrap; gap: 14px 20px">
+<div style="flex: 1 1 320px; min-width: 0">
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px">
+<span style="font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #5B3FD6; color: #FFFFFF">AI 판정</span>
+<span style="font-size: 12px; color: #5B6576">진단 결과에서 미리 본 1건 · 가입 후 전체 공개</span>
+</div>
+<h2 style="margin: 0 0 6px; font-size: 18px; font-weight: 700">(예시) 하남 신혼희망타운 — 신청 자격 충족</h2>
+<ul style="margin: 0; padding-left: 18px; font-size: 13.5px; color: #2A3445; display: flex; flex-direction: column; gap: 3px">
+<li>혼인 7년 이내 · 무주택세대구성원 → 신혼부부 대상</li>
+<li>계약금 약 3,850만원 → 가용자산 2.5억으로 충분</li>
+<li>AI 맞춤 조건: 강남역 약 45분 · 입주 시기 조건 확인 필요</li>
+</ul>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; justify-content: center">
+<a href="NoticeAI.dc.html" style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 10px; background: #1D5BD8; color: #FFFFFF; text-decoration: none; font-weight: 700">공고 AI 분석 보기</a>
+<a href="AIChat.dc.html" style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid #CFC5F7; color: #3A2A8C; text-decoration: none; font-weight: 600">이 공고 AI에게 묻기</a>
+</div>
+</article>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; color: #FFFFFF; text-shadow: 0 1px 10px rgba(6, 22, 48, 0.45)">
+<h2 style="margin: 0; font-size: 19px; font-weight: 700">추천 공고 {{count}}건</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; text-shadow: none">
+<sc-for list="{{sorts}}" as="s" hint-placeholder-count="3"><button type="button" aria-pressed="{{s.pressed}}" onClick="{{s.pick}}" style="{{s.style}}">{{s.label}}</button></sc-for>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px">
+<sc-for list="{{cards}}" as="l" hint-placeholder-count="6">
+<a href="NoticeAI.dc.html" style="{{l.cardStyle}}">
+<span style="display: flex; justify-content: space-between; align-items: center; gap: 6px">
+<span style="{{l.eligStyle}}">{{l.elig}}</span>
+<span style="{{l.ddayStyle}}">{{l.dday}}</span>
+</span>
+<span style="font-size: 16px; font-weight: 700; color: #1A2433; line-height: 1.35">{{l.name}}</span>
+<span style="font-size: 12.5px; color: #6B7785">{{l.meta}}</span>
+<span style="display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 13px; color: #1A2433">
+<span style="color: #6B7785">분양가</span><span style="text-align: right">{{l.price}}</span>
+<span style="color: #6B7785">계약금</span><b style="text-align: right">{{l.deposit}}</b>
+<span style="color: #6B7785">출퇴근</span><span style="{{l.commuteStyle}}">{{l.commute}}</span>
+</span>
+<span style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid #EEF1F5">
+<span style="font-size: 12px; color: #6B7785">내 위치</span>
+<span style="{{l.bandStyle}}">{{l.band}}</span>
+</span>
+<span style="font-size: 12.5px; color: #3A2A8C; background: #F6F4FF; border-radius: 8px; padding: 6px 8px">AI · {{l.ai}}</span>
+</a>
+</sc-for>
+</div>
+<p style="margin: 0; font-size: 12px; color: #EAF2FF; text-shadow: 0 1px 8px rgba(6, 22, 48, 0.5)">공고·출퇴근 시간·내 위치(상/중/하)는 예시 데이터예요. 실제로는 추천 API와 출퇴근 조회 API 결과가 들어가요.</p>
+</section>
+
+<!-- 오른쪽: 내 정보 요약 -->
+<aside aria-label="내 청약 요약" style="flex: 1 1 270px; max-width: 100%; display: flex; flex-direction: column; gap: 12px">
+<section style="background: rgba(31, 95, 174, 0.92); color: #FFFFFF; border-radius: 18px; box-shadow: 0 16px 40px rgba(6, 22, 48, 0.22); padding: 18px">
+<div style="font-size: 13px; color: #D9E6FA">내 가용자산</div>
+<div style="font-size: 26px; font-weight: 700; margin: 2px 0 10px">2억 5,000만원</div>
+<a href="#" style="display: inline-flex; align-items: center; min-height: 38px; padding: 0 14px; border-radius: 999px; background: #FFFFFF; color: #14407F; text-decoration: none; font-size: 13px; font-weight: 700">대출 시뮬레이션 ›</a>
+</section>
+
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 18px; box-shadow: 0 16px 40px rgba(6, 22, 48, 0.18); padding: 16px 18px">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">내 청약 정보</h2>
+<a href="Home.dc.html" style="font-size: 13px; font-weight: 600; text-decoration: none">정보 수정</a>
+</div>
+<div style="display: flex; align-items: baseline; gap: 4px"><span style="font-size: 30px; font-weight: 700; color: #1D5BD8">24</span><span style="color: #6B7785">/ 84점</span></div>
+<div style="position: relative; height: 10px; border-radius: 99px; background: #E1E7F0; margin: 8px 0 22px" role="img" aria-label="내 가점 24점, 비슷한 조건 평균 31점(예시)">
+<div style="width: 28.6%; height: 100%; border-radius: 99px; background: #1D5BD8"></div>
+<div style="position: absolute; left: 36.9%; top: -4px; height: 18px; border-left: 2px dashed #B35300"></div>
+<span style="position: absolute; left: 36.9%; top: 14px; transform: translateX(-50%); font-size: 11px; color: #8F4300; white-space: nowrap">평균 31 (예시)</span>
+</div>
+<dl style="margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13.5px">
+<dt style="color: #6B7785">무주택</dt><dd style="margin: 0; text-align: right">3년</dd>
+<dt style="color: #6B7785">부양가족</dt><dd style="margin: 0; text-align: right">1명</dd>
+<dt style="color: #6B7785">청약통장</dt><dd style="margin: 0; text-align: right">4년 · 48회</dd>
+<dt style="color: #6B7785">희망 지역</dt><dd style="margin: 0; text-align: right">서울 · 경기</dd>
+</dl>
+</section>
+
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 18px; box-shadow: 0 16px 40px rgba(6, 22, 48, 0.18); padding: 16px 18px">
+<h2 style="margin: 0 0 8px; font-size: 15px; font-weight: 700">7일 안에 접수 마감</h2>
+<sc-for list="{{soon}}" as="s" hint-placeholder-count="3">
+<a href="NoticeAI.dc.html" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 40px; border-top: 1px solid #EEF1F5; color: #1A2433; text-decoration: none; font-size: 13.5px">
+<span>{{s.name}}</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: #1A2433; color: #FFFFFF">{{s.dday}}</span>
+</a>
+</sc-for>
+</section>
+
+<a href="AgentReport.dc.html" style="display: block; border-radius: 18px; padding: 18px; background: rgba(10, 43, 94, 0.9); color: #FFFFFF; text-decoration: none; box-shadow: 0 16px 40px rgba(6, 22, 48, 0.22)">
+<span style="display: block; font-size: 12.5px; color: #C9D7EE; font-weight: 600">멀티 에이전트</span>
+<span style="display: block; font-size: 16px; font-weight: 700; margin: 2px 0 6px">AI 전략 리포트 만들기 ›</span>
+<span style="display: block; font-size: 13px; color: #DCE6F6">추천 공고 · 자금 계획 · 일정을 한 장으로 정리해요</span>
+</a>
+</aside>
+</div>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sort: 'deadline', supply: ['APT', '신혼희망타운', '국민임대'], eligibleOnly: false, commuteOnly: false, budgetOnly: false };
+  }
+  renderVals() {
+    const st = this.state;
+    const ASSETS = 25000;
+    const L = [
+      { name: '(예시) 역세권 푸르지오 1단지', region: '경기', type: 'APT', sqm: 84, price: 52000, end: 2, endText: '10.08 마감', eligible: true, band: '하', commute: 70, ai: '1순위 충족 · 가점제 경쟁 높음, 추첨제 물량 확인' },
+      { name: '(예시) 은평 자이 더 센트럴', region: '서울', type: 'APT', sqm: 59, price: 69000, end: 3, endText: '10.09 마감', eligible: true, band: '하', commute: 55, ai: '생애최초 특별공급 신청 가능' },
+      { name: '(예시) 강서 행복주택', region: '서울', type: '국민임대', sqm: 36, price: 4200, end: 6, endText: '10.12 마감', eligible: true, band: '중', commute: 50, ai: '신혼부부 우선공급 대상' },
+      { name: '(예시) 남양주 국민임대', region: '경기', type: '국민임대', sqm: 46, price: 2900, end: 9, endText: '10.15 마감', eligible: false, band: '-', commute: 85, ai: '자산 기준 초과로 자격 미충족' },
+      { name: '(예시) 하남 신혼희망타운', region: '경기', type: '신혼희망타운', sqm: 55, price: 38500, end: 19, endText: '10.21 접수 시작', eligible: true, band: '상', commute: 45, ai: '신혼부부 대상 · 맞춤 조건 대부분 충족' },
+      { name: '(예시) 수원 힐스테이트 2차', region: '경기', type: 'APT', sqm: 74, price: 56000, end: 26, endText: '10.28 접수 시작', eligible: true, band: '중', commute: 65, ai: '생애최초 특별공급 가능 · 출퇴근 조건 초과' },
+      { name: '(예시) 김포 리버뷰', region: '경기', type: 'APT', sqm: 84, price: 47000, end: 31, endText: '11.03 접수 시작', eligible: true, band: '하', commute: 80, ai: '1순위 충족 · 출퇴근 조건 초과' }
+    ];
+    const won = (man) => man >= 10000 ? (Math.floor(man / 10000) + '억' + (man % 10000 ? ' ' + (man % 10000).toLocaleString() + '만' : '') + '원') : man.toLocaleString() + '만원';
+    const pill = 'font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; ';
+    const bandC = { '상': 'background: #EAF1FB; color: #14407F;', '중': 'background: #FFF0D6; color: #A65A00;', '하': 'background: #EEF1F5; color: #5D6B78;', '-': 'background: #EEF1F5; color: #5D6B78;' };
+    const bandOrder = { '상': 0, '중': 1, '하': 2, '-': 9 };
+    let list = L.filter((l) => st.supply.includes(l.type)
+      && (!st.eligibleOnly || l.eligible)
+      && (!st.commuteOnly || l.commute <= 60)
+      && (!st.budgetOnly || Math.round(l.price * 0.1) <= ASSETS));
+    const by = {
+      deadline: (a, b) => a.end - b.end,
+      deposit: (a, b) => a.price - b.price,
+      band: (a, b) => (a.eligible ? bandOrder[a.band] : 9) - (b.eligible ? bandOrder[b.band] : 9)
+    };
+    list = list.slice().sort(by[st.sort]);
+    const cards = list.map((l) => {
+      const dep = Math.round(l.price * 0.1);
+      const over = l.commute > 60;
+      return {
+        name: l.name, ai: l.ai, band: l.eligible ? l.band : '-',
+        meta: l.region + ' · ' + l.sqm + '㎡ · ' + l.type,
+        price: won(l.price), deposit: won(dep) + ' (10% 가정)',
+        commute: '강남역 약 ' + l.commute + '분' + (over ? ' · 조건 초과' : ''),
+        commuteStyle: 'text-align: right; ' + (over ? 'color: #A8231F; font-weight: 600;' : 'color: #0B6B43; font-weight: 600;'),
+        elig: l.eligible ? '자격 가능' : '자격 불가능',
+        eligStyle: pill + (l.eligible ? 'background: #E3F4EA; color: #1E7D47;' : 'background: #FBE9E7; color: #C0392B;'),
+        dday: l.end <= 7 ? 'D-' + l.end : l.endText,
+        ddayStyle: pill + (l.end <= 7 ? 'background: #1A2433; color: #FFFFFF;' : 'background: #EEF1F5; color: #5D6B78;'),
+        bandStyle: pill + bandC[l.eligible ? l.band : '-'],
+        cardStyle: 'display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 16px; text-decoration: none; background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(255, 255, 255, 0.7); box-shadow: 0 12px 30px rgba(6, 22, 48, 0.16);' + (l.eligible ? '' : ' opacity: 0.6;')
+      };
+    });
+    const chip = 'min-height: 36px; padding: 0 12px; border-radius: 999px; font: inherit; font-size: 13px; cursor: pointer; ';
+    const sorts = [['deadline', '마감 임박순'], ['deposit', '계약금 낮은순'], ['band', '내 위치순']].map((s) => ({
+      label: s[1], pressed: st.sort === s[0] ? 'true' : 'false', pick: () => this.setState({ sort: s[0] }),
+      style: chip + (st.sort === s[0] ? 'border: 0; background: #1A2433; color: #FFFFFF; font-weight: 700;' : 'border: 1px solid rgba(255, 255, 255, 0.7); background: rgba(255, 255, 255, 0.85); color: #2A3445; font-weight: 500;')
+    }));
+    const box = (on) => 'flex: none; width: 20px; height: 20px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; ' + (on ? 'background: #1D5BD8; border: 1.5px solid #1D5BD8;' : 'background: #FFFFFF; border: 1.5px solid #A9B4C4;');
+    const supplyOpts = ['APT', '신혼희망타운', '국민임대'].map((t) => {
+      const on = st.supply.includes(t);
+      return { label: t, on, checked: on ? 'true' : 'false', box: box(on), count: L.filter((l) => l.type === t).length + '건',
+        toggle: () => this.setState({ supply: on ? st.supply.filter((x) => x !== t) : st.supply.concat([t]) }) };
+    });
+    const fo = (key, label) => ({ label, on: st[key], checked: st[key] ? 'true' : 'false', box: box(st[key]), toggle: () => this.setState({ [key]: !st[key] }) });
+    const filterOpts = [fo('eligibleOnly', '자격 가능한 공고만'), fo('budgetOnly', '계약금 2.5억 이하'), fo('commuteOnly', '출퇴근 60분 이내만 (AI 조건)')];
+    const soon = L.filter((l) => l.end <= 7).sort((a, b) => a.end - b.end).map((l) => ({ name: l.name.replace('(예시) ', ''), dday: 'D-' + l.end }));
+    const conds = [
+      { cat: '위치', text: '강남역 대중교통 60분 이내' },
+      { cat: '생활', text: '초등학교 도보권' },
+      { cat: '자금', text: '월 상환 150만원 이하' },
+      { cat: '일정', text: '2028년 10월 이전 입주' }
+    ];
+    return { cards, count: cards.length, sorts, supplyOpts, filterOpts, soon, conds };
+  }
+}
+</script>
+</body>
+</html>
