@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     lh_api_key: str = ""  # LH API를 다른 공공데이터포털 계정에서 승인받았을 때. 비어 있으면 applyhome_api_key 사용
     fine_api_key: str = ""
     openai_api_key: str = ""
+    # OpenAI와 같은 형식의 채팅 API 주소. Ollama(로컬)는 http://localhost:11434/v1 이고 키가 없어도 된다
+    llm_base_url: str = "https://api.openai.com/v1"
+    llm_model: str = "gpt-4o-mini"
+    llm_timeout_seconds: float = 30.0  # 로컬 CPU 모델은 한 답에 수십 초가 걸려서 .env에서 늘린다
     # fastembed 임베딩 모델 이름. 비우면 벡터 검색을 끄고 공고 필드 검색만 쓴다.
     # 평가(docs의 RAG 결과보고서)로 고른 모델이다. 모델을 바꾸면 벡터 DB를 --force로 다시 만들고 기준값도 다시 정해야 한다
     rag_embedding_model: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
