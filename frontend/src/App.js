@@ -17,6 +17,7 @@ import NoticeAIPage from "./pages/NoticeAIPage";
 import ReportPage from "./pages/ReportPage";
 import MockupIndexPage from "./pages/MockupIndexPage";
 import MockupBoardPage from "./pages/MockupBoardPage";
+import CommunityPage from "./pages/CommunityPage";
 
 // 누구나: 메인, 공고 목록·상세 / 내 정보가 필요한 화면: 입력, 추천, 자금 계획, 질문
 // 첫 페이지(/) = 최종 목업 첫 화면(/mockup/Landing, claude.ai 목업 링크와 같은 화면)
@@ -45,6 +46,8 @@ function App() {
         <Route path="/loans" element={<LoanSimulatorPage />} />
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/commute" element={<CommutePage />} />
+        <Route path="/community" element={<CommunityPage />} />
+        <Route path="/community/posts/:postId" element={<CommunityPage />} />
       </Routes>
     </Layout>
   );

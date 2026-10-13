@@ -16,6 +16,7 @@ const MENUS = [
   { label: "자금 계획", to: "/loans", children: [["대출·자금 시뮬레이션", "/loans"]] },
   { label: "출퇴근 조회", to: "/commute", children: [["출발지·도착지 경로 조회", "/commute"]] },
   { label: "공고 질문", to: "/chat", children: [["공고문 궁금한 점 묻기", "/chat"]] },
+  { label: "커뮤니티", to: "/community", children: [["내 지역·전국 연합 게시판", "/community"]] },
 ];
 
 export default function Layout({ children }) {
@@ -35,8 +36,9 @@ export default function Layout({ children }) {
   }
 
   return (
-    // 청약 홈(/portal)은 하늘·아파트 사진 배경 (styles/portal-sky.css)
-    <div className={pathname === "/portal" ? "app-shell sky" : "app-shell"}>
+    // 청약 홈(/portal)은 하늘·아파트 사진 배경 (styles/portal-sky.css) · 커뮤니티(/community)는 community-shell
+    <div className={`app-shell${pathname === "/portal" ? " sky" : ""}${pathname.startsWith("/community") ? " community-shell" : ""}`}>
+
       <div className="util-bar">
         <span>청약홈·LH·SH 공고를 한곳에서</span>
         <Link to="/start">{userId ? `${email} · 내 정보` : "내 정보 입력"}</Link>
