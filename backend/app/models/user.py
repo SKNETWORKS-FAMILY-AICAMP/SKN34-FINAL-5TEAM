@@ -15,6 +15,8 @@ class UserProfile(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    oauth_provider: Mapped[str | None] = mapped_column(String(20), nullable=True)  # kakao | naver
+    oauth_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     birth_date: Mapped[Date] = mapped_column(Date, nullable=True)  # 생년월일(선택). 만 30세 미만 미혼의 무주택기간 0점 규칙에만 쓴다
     is_married: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")  # 혼인 여부 (신혼특공 해당 여부 is_newlywed와는 다르다)

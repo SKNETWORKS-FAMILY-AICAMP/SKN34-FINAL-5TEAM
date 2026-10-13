@@ -22,7 +22,23 @@ class Settings(BaseSettings):
     # 평가(docs의 RAG 결과보고서)로 고른 모델이다. 모델을 바꾸면 벡터 DB를 --force로 다시 만들고 기준값도 다시 정해야 한다
     rag_embedding_model: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
     vector_db_path: str = ""  # 벡터 DB 저장 폴더. 비우면 backend/data/vectordb
-    kakao_rest_api_key: str = ""  # 주소 → 좌표 (카카오 로컬)
+    kakao_rest_api_key: str = ""  # 주소 → 좌표 (카카오 로컬) · 카카오 로그인 client_id로도 쓴다
+    kakao_oauth_redirect_uri: str = "http://localhost:8000/auth/kakao/callback"
+    naver_client_id: str = ""
+    naver_client_secret: str = ""
+    naver_oauth_redirect_uri: str = "http://localhost:8000/auth/naver/callback"
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_oauth_redirect_uri: str = "http://localhost:8000/auth/google/callback"
+    # 통신3사 PASS 휴대폰번호 로그인 (developers.passlogin.com). URL은 발급 문서에 맞게 바꿀 수 있다
+    pass_client_id: str = ""
+    pass_client_secret: str = ""
+    pass_oauth_redirect_uri: str = "http://localhost:8000/auth/pass/callback"
+    pass_authorize_url: str = "https://id.passlogin.com/oauth2/v1/authorize"
+    pass_token_url: str = "https://id.passlogin.com/oauth2/v1/token"
+    pass_userinfo_url: str = "https://id.passlogin.com/oauth2/v1/userinfo"
+    frontend_url: str = "http://localhost:3000"  # OAuth 후 돌아갈 프론트 주소
+    oauth_state_secret: str = "change-me-in-production"
     odsay_api_key: str = ""  # 대중교통 경로 (ODsay LAB, 서버용 키)
 
 
