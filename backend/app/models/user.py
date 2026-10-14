@@ -15,6 +15,7 @@ class UserProfile(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    nickname: Mapped[str | None] = mapped_column(String(50), nullable=True)  # 화면 로그인용. 이메일 + 닉네임이 맞으면 로그인 (비밀번호 아님)
     oauth_provider: Mapped[str | None] = mapped_column(String(20), nullable=True)  # kakao | naver
     oauth_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
