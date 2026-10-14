@@ -40,6 +40,7 @@ from app.data_pipeline.document_client import (
     sh_extra_documents,
 )
 from app.data_pipeline.finlife_client import fetch_loan_products
+from app.data_pipeline.savings_client import save_savings_products
 from app.data_pipeline.house_list_client import house_costs, house_list_files, read_house_list
 from app.data_pipeline.lh_client import fetch_lh_notices, fetch_notice_detail, map_listing_rows
 from app.data_pipeline.notice_parser import parse_deposit_text
@@ -546,6 +547,7 @@ def _collect_steps() -> None:
     _run(save_sh_notices)
     _run(save_sh_recruitments)
     _run(save_loan_products)
+    _run(save_savings_products)
     _run(save_applyhome_stats)
     _run(refresh_views, engine)
     _run(save_notice_costs)  # 가공 레이어(recommendable_listings)가 갱신된 뒤에 실행
