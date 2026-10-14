@@ -11,7 +11,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <Provider store={store}>
-      <BrowserRouter>
+      <BrowserRouter basename={window.location.pathname === "/legacy" || window.location.pathname.startsWith("/legacy/") ? "/legacy" : "/"}>
         <App />
       </BrowserRouter>
     </Provider>

@@ -1,0 +1,3 @@
+.full-demo { position: fixed; inset: 0; background: #f7f8f2; }
+.full-demo-frame { display: block; width: 100%; height: 100%; border: 0; }
+.full-demo-loading { position: absolute; inset: 0; display: grid; place-items: center; color: #123e32; font-size: 16px; }
