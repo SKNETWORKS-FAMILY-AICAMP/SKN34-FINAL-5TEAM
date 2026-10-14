@@ -1,3 +1,4 @@
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,6 +24,10 @@ class Settings(BaseSettings):
     rag_embedding_model: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
     vector_db_path: str = ""  # 벡터 DB 저장 폴더. 비우면 backend/data/vectordb
     kakao_rest_api_key: str = ""  # 주소 → 좌표 (카카오 로컬) · 카카오 로그인 client_id로도 쓴다
+    # 카카오 지도·로드뷰(브라우저용 JavaScript 키). 원래 화면에 공개되는 키이고, 카카오 개발자 콘솔에 등록한 도메인에서만 동작한다.
+    # 비우면 공고 상세의 로드뷰를 쓰지 않는다.
+    # .env에는 KAKAO_JAVASCRIPT_KEY 이름으로 넣는 게 기본이고, 예전에 넣은 Java_Script_KEY 이름도 읽는다
+    kakao_javascript_key: str = Field(default="", validation_alias=AliasChoices("kakao_javascript_key", "java_script_key"))
     kakao_oauth_redirect_uri: str = "http://localhost:8000/auth/kakao/callback"
     naver_client_id: str = ""
     naver_client_secret: str = ""
