@@ -1,2 +1,31 @@
 input[type=radio]{width:auto;accent-color:var(--green);box-shadow:none;flex:none}
 .filter-group label{align-items:center}
+/* 공고 상세 > 면적별 정보: 주택형 탭 + ㎡/평 전환 + 3칸 표 */
+.unit-head{display:flex;align-items:stretch;border-bottom:1px solid var(--line);margin-bottom:18px}
+.unit-tabs{display:flex;flex:1;overflow-x:auto}
+.unit-tab{background:none;border:0;border-bottom:3px solid transparent;padding:12px 14px;font-size:16px;color:var(--muted);white-space:nowrap;cursor:pointer}
+.unit-tab.active{color:var(--ink);font-weight:700;border-bottom-color:var(--green)}
+.unit-toggle{flex:none;background:#6b6f6c;color:#fff;border:0;padding:0 14px;font-size:13px;cursor:pointer}
+.unit-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.unit-grid div{border-bottom:1px solid var(--line);text-align:center}
+.unit-grid div:not(:nth-child(3n)){border-right:1px solid var(--line)}
+.unit-grid small{display:block;background:var(--paper);padding:10px 4px;color:var(--muted);font-size:12px}
+.unit-grid strong{display:block;padding:12px 4px;font-size:14px}
+
+/* 공고 상세 > 교통: 경로 결과 카드 */
+.rt-card{margin-top:18px;background:#f6f9f4;border:1px solid var(--line);border-radius:16px;padding:22px 24px}
+.rt-alts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}.rt-alts .chip{padding:7px 14px;font-size:12px}
+.rt-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.rt-head small{display:block;margin-bottom:2px}.rt-head strong{font-size:30px;letter-spacing:-1px;color:var(--green)}
+.rt-stats{display:flex;gap:6px;flex-wrap:wrap}.rt-stats span{background:#fff;border:1px solid var(--line);border-radius:20px;padding:5px 11px;font-size:12px;color:#4f5e55}
+.rt-bar{display:flex;gap:3px;height:10px;margin:16px 0 20px}.rt-bar span{border-radius:5px;min-width:6px}
+.rt-steps{list-style:none;margin:0;padding:0;position:relative}
+.rt-steps:before{content:'';position:absolute;left:6px;top:12px;bottom:12px;width:2px;background:#dfe6dc}
+.rt-step,.rt-end{position:relative;display:flex;align-items:flex-start;gap:14px;padding:9px 0}
+.rt-dot{flex:none;width:14px;height:14px;border-radius:50%;margin-top:4px;border:3px solid #fff;box-shadow:0 0 0 1px #d5ddd2;position:relative;z-index:1}
+.rt-dot.start{background:var(--green)}.rt-dot.goal{background:var(--orange)}
+.rt-step-body{flex:1;min-width:0}.rt-step-body p{margin:3px 0 0;font-size:13px;line-height:1.6;color:#46564c}.rt-step-body small{font-size:11px}
+.rt-end .rt-step-body p{font-weight:600;color:var(--ink);margin-top:0}
+.rt-chip{display:inline-block;color:#fff;font-size:11px;font-weight:700;border-radius:6px;padding:3px 8px}
+.rt-step.walk{padding:2px 0}.rt-step.walk .rt-dot{width:10px;height:10px;margin:4px 2px 0;border-width:2px}.rt-step.walk p{margin:0;font-size:12px;color:var(--muted)}
+.rt-step b{flex:none;font-size:13px;color:var(--ink);margin-top:2px}

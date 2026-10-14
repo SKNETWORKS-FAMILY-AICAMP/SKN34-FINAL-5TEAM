@@ -21,6 +21,9 @@ function pathFromScreen(screen) {
   return `/${screen}`;
 }
 
+// iframe 안의 화면(public/prototype/live.js)이 부를 백엔드 주소. api/client.js와 같은 환경변수를 쓴다.
+window.CY_API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+
 // Keep the hosted prototype's complete UI and interactions together, isolated from legacy CSS.
 // Assets are part of this repository; the deployed Sites URL is not embedded or required.
 export default function FullDemoPage() {

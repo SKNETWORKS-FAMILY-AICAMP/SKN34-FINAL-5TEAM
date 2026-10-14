@@ -139,5 +139,4 @@
     }
     if(f.id==='c3-comment'){const body=f.querySelector('input').value.trim(),p=posts.find(p=>p.id===Number(f.dataset.id));if(!p||!body)return;requireLogin(()=>{p.comments.push({author:'익명 '+state.user.name,body});persistPosts();render();toast('댓글을 저장했어요.');});}
   },true);
-  render();
 })();
