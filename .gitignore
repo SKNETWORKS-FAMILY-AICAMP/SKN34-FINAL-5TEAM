@@ -23,3 +23,6 @@ postgres_data/
 .vscode/
 .idea/
 
+# Claude (로컬 산출물·개인 설정)
+Claude outputs/
+.claude/
