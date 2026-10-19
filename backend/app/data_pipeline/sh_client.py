@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import logging
 import html as html_lib
 import json
 import re
@@ -16,6 +17,8 @@ import time
 import httpx
 
 from app.data_pipeline.applyhome_client import parse_date
+
+logger = logging.getLogger(__name__)
 
 SH_ORIGIN = "https://www.i-sh.co.kr"
 USER_AGENT = "cheongyak-platform/0.1 (public SH notice list ingest)"
@@ -54,7 +57,7 @@ def _url(board: dict, page: str) -> str:
 def _list_page(client: httpx.Client, board: dict, page: int) -> list[dict]:
     response = client.get(_url(board, "list"), params={"multi_itm_seq": board["multi_itm_seq"], "page": page})
     if response.status_code >= 400:
-        print("[SH] HTTP", response.status_code, board["label"], page, flush=True)
+        logger.warning(f"[SH] HTTP {response.status_code} {board['label']} {page}")
         return []
     body = response.text[response.text.find("<tbody"):response.text.find("</tbody>")]
     rows = []
@@ -129,8 +132,8 @@ def fetch_sh_notices(known_seqs: set[tuple[str, str]], max_pages: int | None = N
                     # 최신 글이 앞에 오므로, 한 페이지가 모두 이미 저장된 글이면 그 뒤도 이미 있다
                     if not new_rows and known_seqs:
                         break
-                print(f"[SH] {board['label']} 게시판 {page - 1}페이지", flush=True)
+                logger.info(f"[SH] {board['label']} 게시판 {page - 1}페이지")
     except httpx.HTTPError as exc:
-        print("[SH] 호출 실패", exc.__class__.__name__, flush=True)
-    print(f"[SH] 글 {len(notices)}건 (상세 새로 읽음 {sum('body_text' in n for n in notices)}건)", flush=True)
+        logger.warning(f"[SH] 호출 실패 {exc.__class__.__name__}")
+    logger.info(f"[SH] 글 {len(notices)}건 (상세 새로 읽음 {sum('body_text' in n for n in notices)}건)")
     return notices

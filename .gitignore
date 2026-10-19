@@ -26,3 +26,6 @@ postgres_data/
 # Claude (로컬 산출물·개인 설정)
 Claude outputs/
 .claude/
+
+# RAG 벡터 DB (python -m scripts.build_vector_index 로 각자 만든다)
+backend/data/

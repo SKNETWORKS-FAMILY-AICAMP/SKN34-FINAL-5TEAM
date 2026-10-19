@@ -8,43 +8,17 @@
   const ui = {...defaults};
   const now = Date.now();
   const safeAge = value => ages.includes(value) ? value : value === '40대 이상' ? '40대' : value?.startsWith('6') || value === '50대' ? '50대 이상' : '20대';
-  let posts = read('posts-v3', null);
-  if (!posts) {
-    posts = state.posts.map(p => ({...p, age:p.example ? safeAge(p.age) : p.age}));
-    let n = 30000;
-    const seeds = [
-      ['청약·집 구하기','공고문, 이 다섯 군데부터 읽으니까 훨씬 쉽네요','공급 대상 → 신청 일정 → 자격 기준 → 제출 서류 → 공식 접수처 순서로 메모했어요. 처음 준비하는 분들께 제 정리 방법을 공유합니다.',128,'checklist'],
-      ['동네 생활정보','퇴근길에 발견한, 조용히 걷기 좋은 산책 코스','이어폰 잠깐 빼고 걸었는데 생각이 정리되더라고요. 여러분 동네에도 좋아하는 산책길이 있나요?',36,'walk'],
-      ['금융','보증금만 모으면 끝인 줄 알았던 이사 예산','이사비, 중개보수, 가전 설치비까지 적으니 계획이 달라졌어요. 비용 항목을 먼저 적는 게 도움이 됐습니다.',104,'budget'],
-      ['입주 새내기','처음 독립한 날, 가장 먼저 산 물건이 뭐였어요?','큰 가구보다 작은 생활용품이 먼저 필요하더라고요. 첫 자취 준비 목록을 같이 만들어 봐요.',23,'room'],
-      ['자유','집 크기와 출퇴근 30분, 하나만 고른다면?','매일 오가는 시간과 주말에 보내는 공간 사이에서 고민이에요. 직접 살아본 경험이 궁금합니다.',9,null],
-      ['자취생','일요일에 세 끼만 미리 준비해도 한 주가 편해요','재료를 겹쳐서 쓰니 음식물도 덜 남네요. 냉장고가 작은 집의 식재료 관리 팁을 나눠요.',16,'room']
-    ];
-    const comment = [{author:'익명 새싹', body:'저도 준비 중인데 이런 경험 공유가 도움이 되네요!'}];
-    regionsV2.forEach((region, ri) => seeds.forEach((s, i) => posts.push({id:n++,scope:'지역',region,board:s[0],title:s[1],body:s[2],likes:s[3]+ri,art:s[4],age:ages[(ri+i)%4],author:['익명 초록','익명 모모','익명 이웃'][i%3],comments:i%2?[]:comment.map(c=>({...c})),createdAt:now-(i+1)*3600000,time:'오늘',example:true})));
-    [
-      ['청약·집 구하기','처음 집을 구할 때 알았으면 좋았을 것들',145,'checklist'],
-      ['재테크','가계부 3개월, 소비를 줄인 건 의외로 작은 습관',118,'budget'],
-      ['취업·커리어','퇴근하고 자격증 공부, 다들 어떻게 이어가세요?',28,null],
-      ['음식·맛집','배달 대신 15분, 냉장고 재료로 만든 저녁',32,'room'],
-      ['자유','주말에 아무 약속이 없으면 오히려 좋은 사람',17,null],
-      ['금융','금리 숫자와 함께 읽어야 했던 상품 조건들',107,'budget']
-    ].forEach((s,i)=>posts.push({id:n++,scope:'연합',region:null,board:s[0],title:s[1],body:'지역이 달라도 비슷한 고민을 하고 있더라고요. 직접 겪은 일과 나에게 도움이 되었던 방법을 함께 나눠요.',likes:s[2],art:s[3],age:ages[i%4],author:'익명 구름',comments:comment.map(c=>({...c})),createdAt:now-(i+1)*7200000,time:'오늘',example:true}));
-    ages.forEach((age,i)=>posts.push({id:n++,scope:'연합',region:null,board:'또래 이야기',age,title:['첫 독립 준비, 다들 얼마씩 모으고 있어요?','집과 일 사이, 나만의 기준이 생겼나요?','가족의 생활 동선을 고려하니 집 보는 기준이 달라져요','앞으로 살고 싶은 동네의 조건은 무엇인가요?'][i],body:'비슷한 시기를 보내는 분들의 이야기가 궁금해요. 각자의 상황은 다르니 편하게 경험을 나눠 주세요.',author:'익명 이웃',likes:14+i*3,comments:[],createdAt:now-(i+1)*3600000,example:true}));
-    // Earlier periods have their own sample records, so BEST period controls are meaningful.
-    for (const scope of ['지역','연합']) for (const region of scope==='지역'?regionsV2:[null]) {
-      [new Date(new Date().getFullYear(),new Date().getMonth()-1,15),new Date(new Date().getFullYear(),new Date().getMonth()<6?-1:2,15)].forEach((date,i)=>posts.push({id:n++,scope,region,board:'청약·집 구하기',title:i?'집 찾기를 시작하며 적어 둔 나만의 체크리스트':'이사 한 달 뒤에야 알게 된 생활의 작은 변화',body:'시간이 지나도 다시 꺼내 보고 싶은 이웃의 경험을 모았어요. 이전 기간을 보여 주는 예시 글입니다.',author:'익명 나무',age:'30대',likes:156+i*21,comments:[],createdAt:date.getTime(),example:true,art:'checklist'}));
-    }
-    save('posts-v3',posts);
-  }
+  // (복원 후 서버 연결) 글·댓글·공감은 서버 DB에 저장한다. 아래 posts는 서버에서 받은 글로 채운다 (community-live.js의 communityLoad). 예시 글은 더 이상 만들지 않는다.
+  // 스크랩·즐겨찾는 게시판·읽음 표시는 이 브라우저에만 저장한다.
+  const posts = [];
   state.posts = posts;
-  const persistPosts = () => save('posts-v3', posts);
+  const persistPosts = () => {};   // 예전 브라우저 저장 호출 자리 (이제 서버가 저장)
   const scopePosts = () => posts.filter(p => p.scope===ui.scope && (ui.scope!=='지역'||p.region===ui.region));
   const scoreSort = (a,b) => b.likes-a.likes || b.comments.length-a.comments.length || b.createdAt-a.createdAt;
   const isHot = p => p.likes>=10 && p.createdAt>=Date.now()-7*86400000;
   const context = p => p.board==='또래 이야기'?`전국 · ${esc(p.age)} 또래`:p.scope==='지역'?`${esc(p.region)} · ${esc(p.board)}`:`연합 · ${esc(p.board)}`;
   const time = p => {const diff=Date.now()-p.createdAt;if(diff<60000)return '방금';if(diff<3600000)return Math.floor(diff/60000)+'분 전';if(diff<86400000)return Math.floor(diff/3600000)+'시간 전';return new Date(p.createdAt).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'});};
-  const liked = id => read('liked-v3',[]).includes(id);
+  const liked = id => !!posts.find(p=>p.id===id)?.liked;
   const savedPost = id => read('scraps-v3',[]).includes(id);
   const key = (scope,region,board) => [scope,scope==='지역'?region:'전국',board].join('|');
   const boardKey = board => key(ui.scope,ui.region,board);
@@ -118,7 +92,7 @@
       case'pin':{const list=pins(),active=pinned(value);save('board-pins-v3',active?list.filter(p=>key(p.scope,p.region,p.board)!==boardKey(value)):[...list,{scope:ui.scope,region:ui.scope==='지역'?ui.region:null,board:value}]);render();toast(active?'즐겨찾기를 해제했어요.':'즐겨찾는 게시판에 담았어요.');break;}
       case'open-pin':{const p=pins()[id];if(p){ui.scope=p.scope;if(p.region)ui.region=p.region;navigate('board',p.board);}break;}
       case'back-post':{const p=posts.find(p=>p.id===id);if(p){ui.scope=p.scope;ui.region=p.region||ui.region;ui.age=safeAge(p.age);navigate(p.board==='또래 이야기'?'peers':'board',p.board);}break;}
-      case'like':{const p=posts.find(p=>p.id===id);if(!p)return;requireLogin(()=>{const list=read('liked-v3',[]),active=list.includes(id);p.likes=Math.max(0,p.likes+(active?-1:1));save('liked-v3',active?list.filter(v=>v!==id):[...list,id]);persistPosts();render();toast(active?'공감을 취소했어요.':'공감을 보냈어요.');});break;}
+      case'like':{const p=posts.find(p=>p.id===id);if(!p)return;requireLogin(async()=>{try{const r=await api('/community/posts/'+id+'/like',{method:'POST',body:{user_id:state.user.id}});p.likes=r.likes;p.liked=r.liked;render();toast(r.liked?'공감을 보냈어요.':'공감을 취소했어요.');}catch(error){toast(error.message);}});break;}
       case'scrap':requireLogin(()=>{const list=read('scraps-v3',[]),active=list.includes(id);save('scraps-v3',active?list.filter(v=>v!==id):[...list,id]);render();toast(active?'스크랩을 해제했어요.':'다시 읽을 글로 담았어요.');});break;
     }
   },true);
@@ -135,9 +109,8 @@
     if(f.id==='c3-write'){
       const title=$('#c3-write-title').value.trim(),body=$('#c3-write-body').value.trim();if(!title||!body){toast('제목과 내용을 입력해 주세요.');return;}
       const selection=$('#c3-write-scope').value,scope=selection==='지역'?'지역':'연합',peer=selection==='또래',board=peer?'또래 이야기':$('#c3-write-board').value,region=scope==='지역'?$('#c3-write-region').value:null;
-      const p={id:Date.now(),scope,region,board,age:peer?$('#c3-write-board').value:state.user.age,title,body,author:'익명 '+state.user.name,likes:0,comments:[],createdAt:Date.now(),example:false};posts.unshift(p);persistPosts();ui.scope=scope;ui.region=region||ui.region;ui.board=board;ui.view=peer?'peers':'board';ui.age=safeAge(p.age);go('post/'+p.id);toast('이 브라우저에 이야기를 저장했어요.');return;
+      (async()=>{try{const p=await api('/community/posts',{method:'POST',body:{user_id:state.user.id,scope,region,board,age:peer?$('#c3-write-board').value:null,title,body}});posts.unshift(p);ui.scope=scope;ui.region=region||ui.region;ui.board=board;ui.view=peer?'peers':'board';ui.age=safeAge(p.age);go('post/'+p.id);toast('이야기를 저장했어요.');}catch(error){toast(error.message);}})();return;
     }
-    if(f.id==='c3-comment'){const body=f.querySelector('input').value.trim(),p=posts.find(p=>p.id===Number(f.dataset.id));if(!p||!body)return;requireLogin(()=>{p.comments.push({author:'익명 '+state.user.name,body});persistPosts();render();toast('댓글을 저장했어요.');});}
+    if(f.id==='c3-comment'){const body=f.querySelector('input').value.trim(),p=posts.find(p=>p.id===Number(f.dataset.id));if(!p||!body)return;requireLogin(async()=>{try{p.comments.push(await api('/community/posts/'+p.id+'/comments',{method:'POST',body:{user_id:state.user.id,body}}));render();toast('댓글을 저장했어요.');}catch(error){toast(error.message);}});}
   },true);
-  render();
 })();

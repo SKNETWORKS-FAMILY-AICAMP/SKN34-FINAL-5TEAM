@@ -22,12 +22,8 @@ function makeExamplePostsV2(){
   return posts;
 }
 // Nationwide examples cover all 17 regions and each supported supply type.
-for(const [ri,region] of regionsV2.entries())for(const [ti,type] of supplyTypesV2.entries())if(!houses.some(h=>h.region===region&&h.type===type))houses.push({id:100+ri*3+ti,name:`${region} ${['숲길 분양타운','온빛 센트럴','함께 임대주택'][ti]}`,region,loc:`${region} · 가상 단지`,type,area:['59㎡','84㎡','46㎡'][ti],price:[32500,48000,6500][ti]+ri*100,deposit:[3250,4800,650][ti],status:'접수 예정',date:'10.21 ~ 10.23',tags:['지역 탐색 예시','목업 공고'],color:['#bfcfbf','#c6d1da','#d8d0b9'][ti],commute:'경로 확인 필요'});
-const originalDiagnosisV2=diagnosis;
-diagnosis=function(){return originalDiagnosisV2().replace(options('region',['서울','경기','인천','기타']),regionSelectV2('region',regionsV2,state.answers.region,'현재 거주 지역 선택')).replace(options('wish',['서울','경기','인천','전체']),regionSelectV2('wish',['전체',...regionsV2],state.answers.wish,'희망 지역 선택'));};
+// (복원 시 뺀 부분: 예시 공고 추가·진단 지역 선택·집 찾기 지역 필터 덮어쓰기. 지금은 서버 공고와 live.js가 맡는다)
 function regionSelectV2(key,values,selected,label){return `<select aria-label="${label}" data-region-answer="${key}">${values.map(v=>`<option ${v===selected?'selected':''}>${v}</option>`).join('')}</select>`;}
-const originalHomesV2=homes;
-homes=function(){return originalHomesV2().replace(/<div class="filter-group"><h3>지역<\/h3>[\s\S]*?<\/div>/,`<div class="filter-group"><h3>지역</h3><div class="region-options-v2">${['전체',...regionsV2].map(v=>`<label><input type="radio" name="region" value="${v}" data-filter="filterRegion" ${state.filterRegion===v?'checked':''}> ${v}</label>`).join('')}</div></div>`).replace(/목업에서는 가상 단지 6건으로<br>검색·저장·비교를 체험합니다\./,`전국 17개 지역의 예시 공고 ${houses.length}건으로<br>검색·저장·비교를 체험합니다.`);};
 function boardOptionsV2(){return communityV2.scope==='지역'?regionalBoardsV2:unionBoardsV2;}
 function postContextV2(p){return p.scope==='지역'?`${p.region} · 지역`:'전국 · 연합';}
 function likedV2(id){return read('liked-v2',[]).includes(id);}
@@ -41,4 +37,3 @@ document.addEventListener('change',e=>{const el=e.target;if(el.dataset.v2Filter)
 document.addEventListener('submit',e=>{const f=e.target;if(!['board-search-v2','post-form-v2','comment-form-v2'].includes(f.id))return;e.preventDefault();e.stopImmediatePropagation();if(f.id==='board-search-v2'){communityV2.search=f.querySelector('input').value.trim();render();return;}if(f.id==='post-form-v2'){const title=$('#post-title-v2').value.trim(),body=$('#post-body-v2').value.trim();if(!title||!body){toast('제목과 내용을 입력해 주세요.');return;}const scope=$('#post-scope-v2').value,region=scope==='지역'?$('#post-region-v2').value:null,board=$('#post-board-v2').value;const p={id:Date.now(),scope,region,board,age:$('#post-age-v2').value,job:'일반',title,body,author:'익명 '+state.user.name,likes:0,comments:[],createdAt:Date.now(),time:'방금',example:false};state.posts.unshift(p);save('posts-v2',state.posts);Object.assign(communityV2,{scope,region:region||communityV2.region,board,age:'전체 연령',search:''});go('post/'+p.id);toast('이 브라우저에 글을 저장했어요.');return;}const body=f.querySelector('input').value.trim(),p=state.posts.find(p=>p.id===Number(f.dataset.id));if(!body||!p)return;requireLogin(()=>{p.comments.push({author:'익명 '+state.user.name,body});save('posts-v2',state.posts);render();toast('댓글을 저장했어요.');});},true);
 const originalRenderV2=render;
 render=function(){originalRenderV2();for(const el of document.querySelectorAll('.flow-card small'))if(el.textContent.includes('통합·주제'))el.textContent='지역·연합 게시판, HOT과 연령 필터';};
-render();

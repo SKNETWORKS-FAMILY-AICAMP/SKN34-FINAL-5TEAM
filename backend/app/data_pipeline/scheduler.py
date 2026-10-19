@@ -10,6 +10,7 @@ FastAPI 서버가 켜져 있는 동안 매일 오전 6시(한국 시간)에 전�
 같은 시각에 두 번 돌지 않도록, 이미 수집 중이면(이 서버든 다른 터미널이든) 건너뛴다.
 """
 
+import logging
 import threading
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -20,6 +21,8 @@ from sqlalchemy import select
 from app.data_pipeline.save_listings import collect_all, init_tables
 from app.db.session import SessionLocal
 from app.models.notice_sources import CollectRun
+
+logger = logging.getLogger(__name__)
 
 KST = ZoneInfo("Asia/Seoul")
 DAILY_HOUR = 6
@@ -57,15 +60,15 @@ def _recent_runs(now: datetime) -> list[tuple[datetime, str]]:
 def _collect(trigger: str) -> None:
     """수집 1회. 이 서버에서 이미 도는 중이거나 다른 곳(터미널 수동 실행 등)에서 도는 중이면 건너뛴다."""
     if not _lock.acquire(blocking=False):
-        print(f"[스케줄러] {trigger}: 이미 수집 중이라 건너뜁니다.", flush=True)
+        logger.warning(f"[스케줄러] {trigger}: 이미 수집 중이라 건너뜁니다.")
         return
     try:
         now = datetime.now(KST)
         running = [s for s, status in _recent_runs(now) if status == "running" and now - s < RUNNING_TIMEOUT]
         if running:
-            print(f"[스케줄러] {trigger}: 다른 곳에서 수집 중({running[0]:%H:%M} 시작)이라 건너뜁니다.", flush=True)
+            logger.warning(f"[스케줄러] {trigger}: 다른 곳에서 수집 중({running[0]:%H:%M} 시작)이라 건너뜁니다.")
             return
-        print(f"[스케줄러] {trigger} 시작", flush=True)
+        logger.info(f"[스케줄러] {trigger} 시작")
         collect_all(trigger=trigger)
     finally:
         _lock.release()
@@ -91,10 +94,10 @@ def start_scheduler():
             run_at = now + CATCH_UP_DELAY
             scheduler.add_job(_collect, "date", run_date=run_at, args=["놓친 수집 보충(서버 시작 시)"],
                               id="catch_up_collect", replace_existing=True)
-            print(f"[스케줄러] {last_scheduled_time(now):%m-%d %H:%M} 이후 수집 기록이 없어 "
-                  f"{run_at:%H:%M}에 보충 수집합니다.", flush=True)
+            logger.info(f"[스케줄러] {last_scheduled_time(now):%m-%d %H:%M} 이후 수집 기록이 없어 "
+                  f"{run_at:%H:%M}에 보충 수집합니다.")
     except Exception as exc:  # noqa: BLE001 — DB가 아직 안 떠 있어도 서버는 켜지도록
-        print(f"[스케줄러] 보충 수집 확인 실패: {exc.__class__.__name__} {exc}", flush=True)
+        logger.warning(f"[스케줄러] 보충 수집 확인 실패: {exc.__class__.__name__} {exc}")
 
 
 def stop_scheduler():

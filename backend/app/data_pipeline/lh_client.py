@@ -14,6 +14,7 @@
 LH API 3개는 공공데이터포털에서 따로 활용 신청한 계정의 키로만 호출된다 (다른 키면 403 SERVICE_KEY_IS_NOT_REGISTERED_ERROR).
 """
 
+import logging
 import time
 from datetime import date
 
@@ -21,6 +22,8 @@ import httpx
 
 from app.core.config import settings
 from app.data_pipeline.applyhome_client import parse_date, parse_month, to_float, to_int
+
+logger = logging.getLogger(__name__)
 
 LH_BASE_URL = "https://apis.data.go.kr/B552555"
 NOTICE_PATH = "lhLeaseNoticeInfo1/lhLeaseNoticeInfo1"
@@ -99,7 +102,7 @@ def map_notice(row: dict) -> dict:
 def fetch_lh_notices(since: date = LH_START) -> list[dict]:
     """since 이후 게시된 주택 관련 LH 공고 목록 원본 (dsList 행). 기본은 API가 주는 전체 기간."""
     if not lh_key():
-        print("[LH] 인증키가 없어 건너뜁니다.", flush=True)
+        logger.warning("[LH] 인증키가 없어 건너뜁니다.")
         return []
     end = date.today()
     start = since
@@ -113,15 +116,15 @@ def fetch_lh_notices(since: date = LH_START) -> list[dict]:
                     "PAN_ST_DT": start.strftime("%Y%m%d"), "PAN_ED_DT": end.strftime("%Y%m%d"),
                 })
                 if response.status_code != 200:
-                    print(f"[LH] {name} 목록 호출 실패 HTTP {response.status_code} "
-                          "— LH API를 승인받은 계정의 키를 LH_API_KEY에 넣어 주세요.", flush=True)
+                    logger.warning(f"[LH] {name} 목록 호출 실패 HTTP {response.status_code} "
+                          "— LH API를 승인받은 계정의 키를 LH_API_KEY에 넣어 주세요.")
                     return rows_all
                 rows, total = extract_notices(response.json())
                 rows_all.extend(rows)
                 if not rows or page * PAGE_SIZE >= total:
                     break
                 page += 1
-    print(f"[LH] 공고 {len(rows_all)}건", flush=True)
+    logger.info(f"[LH] 공고 {len(rows_all)}건")
     return rows_all
 
 

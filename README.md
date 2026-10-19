@@ -5,6 +5,13 @@
 
 기획 배경과 데이터/아키텍처 설계는 `docs/청약_전략_플랫폼_기획안.pdf` 참고.
 
+## 최종 프로젝트 가이드와 최신 기획 기준
+
+- [최종 프로젝트 가이드 적용 계획](docs/최종프로젝트_가이드_적용계획.md): 내 집 마련·금융정보·학습 기획과 5팀의 대화형 분석·자동 리포팅 주제, 필수 기능, 주차별 산출물, 평가·확인 항목을 연결한 기준 문서입니다.
+- [최종 프로젝트 가이드 원문](docs/최종프로젝트_가이드_원문.md): 2026-10-16 사용자가 제공한 가이드 보관본입니다.
+
+기획·기능·일정 변경 시 위 문서를 먼저 확인합니다. 기존 문서의 구현/검증 표시는 새 기획 전체나 현재 실행 환경의 완료를 의미하지 않으며, 강사 확인 전 제안과 실제 구현 상태를 구분합니다.
+
 ## 프로젝트 구조
 
 ```
@@ -66,9 +73,69 @@ npm start
 docker compose up --build
 ```
 
+## 공고문 질문(RAG) 검색 준비
+
+공고 상세에서 "소득 기준이 뭐야" 같은 질문에 답하려면, 공고문 원문을 벡터 DB에 한 번 색인해야 한다.
+색인하지 않아도 앱은 동작하고, 그때는 단지명·분양가·접수일 같은 공고 필드에서만 찾는다.
+
+```bash
+cd backend
+pip install -r requirements.txt            # chromadb, fastembed 포함
+# backend/.env 에 RAG_EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-mpnet-base-v2 를 넣는다
+# (비워 두면 벡터 검색이 꺼진다. 처음 쓸 때 모델 약 1GB를 내려받는다)
+python -m scripts.build_vector_index       # 공고문 조각 색인. 이미 한 공고는 건너뛴다 (전체는 CPU로 약 1시간)
+python -m scripts.eval_rag --fresh         # 검색 정확도 평가 (평가 질문: backend/eval/rag_eval_set.json)
+```
+
+벡터 DB는 `backend/data/vectordb/`에 생기고 Git에는 올리지 않는다. 임베딩 모델을 바꾸면 `--force`로 다시 색인한다.
+처음 한 번 직접 색인해 두면, 그다음부터는 매일 수집(`save_listings`)이 끝날 때 접수 중·예정 공고 중 새로 들어오거나 정정된 공고문만 자동으로 색인한다.
+벡터 DB가 없거나 `RAG_EMBEDDING_MODEL`이 비어 있으면 이 단계는 건너뛰고 수집은 그대로 진행된다.
+
+> **주의: 프로젝트가 구글 드라이브·OneDrive 같은 동기화 폴더 안에 있으면 벡터 DB를 그 안에 두지 않는다.**
+> 동기화 폴더에서는 Chroma의 인덱스 파일이 제대로 저장되지 않아, 다시 열 때 `Error loading hnsw index`로 실패한다
+> (실제로 겪었다. 이때 앱은 오류 없이 공고 필드 검색으로 대체된다).
+> `backend/.env`에 로컬 폴더를 지정한다. 예: `VECTOR_DB_PATH=C:/Users/내계정/AppData/Local/cheongyak/vectordb`
+
 ## 지금 여기까지 되어 있는 것 / 아직 안 되어 있는 것
 
 진행 상태와 API 표는 `docs/요구사항_정의서.md`, `docs/프론트_API_연동표.md` 를 본다.
 
-- 됨: 수집 코드, 사용자·공고·추천·대출 API, 계약금 10% 가정치, D-day, 준비 서류, 공고 질문 분류·검색
-- 안 됨: Docker가 꺼져 있으면 로컬 listings 확인 불가, 클라우드 배포, 단지별 실제 계약금 PDF, LangGraph
+- 됨: 수집 코드, 사용자·공고·추천·대출·출퇴근 API, 공고문에 적힌 계약금 숫자 반영, D-day, 준비 서류, 공고 질문(LangGraph 그래프, 질문 분류, 벡터 검색, 로컬 LLM 답변과 근거 번호)
+- 안 됨: Docker가 꺼져 있으면 로컬 listings 확인 불가, 클라우드 배포, 공고문 파일 링크가 없는 공고의 계약금, GPU 없이 LLM 답변이 느림(한 답 40~80초)
+
+## 공고 질문 LLM 연결
+
+OpenAI 키가 없어도 로컬 [Ollama](https://ollama.com)로 답한다. `backend/.env`:
+
+```
+LLM_BASE_URL=http://localhost:11434/v1
+LLM_MODEL=exaone3.5:7.8b
+LLM_TIMEOUT_SECONDS=120
+```
+
+```bash
+ollama pull exaone3.5:7.8b                        # 약 4.8GB, 한국어 답변용
+cd backend && python -m scripts.eval_llm_answers --limit 10   # 답변 채점 (결과: backend/eval/llm_answer_result_<모델>.json)
+```
+
+OpenAI를 쓰려면 `LLM_BASE_URL=https://api.openai.com/v1`, `LLM_MODEL=gpt-4o-mini`로 바꾸고 `OPENAI_API_KEY`를 넣는다.
+LLM을 쓸 수 없으면(Ollama 꺼짐 등) 챗은 공고 문장을 그대로 보여 준다.
+
+## 구글·카카오·네이버·PASS 로그인
+
+백엔드 `GET /auth/google/login`, `/auth/kakao/login`, `/auth/naver/login`, `/auth/pass/login`으로 시작하고, 콜백 후 프론트 `/auth/callback`으로 돌아온다.
+
+`backend/.env` 예시:
+
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — [Google Cloud](https://console.cloud.google.com) OAuth 클라이언트
+- `GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/auth/google/callback`
+- `KAKAO_REST_API_KEY` — 카카오 로그인 client_id (REST API 키와 동일)
+- `KAKAO_OAUTH_REDIRECT_URI=http://localhost:8000/auth/kakao/callback` — [카카오 개발자](https://developers.kakao.com) 앱에 등록
+- `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` — [네이버 개발자센터](https://developers.naver.com) 로그인 API
+- `NAVER_OAUTH_REDIRECT_URI=http://localhost:8000/auth/naver/callback`
+- `PASS_CLIENT_ID`, `PASS_CLIENT_SECRET` — 통신3사 PASS 휴대폰번호 로그인 ([developers.passlogin.com](https://developers.passlogin.com) 제휴)
+- `PASS_OAUTH_REDIRECT_URI=http://localhost:8000/auth/pass/callback`
+- `FRONTEND_URL=http://localhost:3001` — OAuth 완료 후 리다이렉트할 프론트 주소
+- `OAUTH_STATE_SECRET` — state 서명용 (운영에서는 긴 랜덤 문자열)
+
+DB 마이그레이션: `alembic upgrade head` (006_user_oauth).

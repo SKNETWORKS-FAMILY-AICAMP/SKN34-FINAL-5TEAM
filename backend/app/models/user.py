@@ -15,7 +15,12 @@ class UserProfile(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    nickname: Mapped[str | None] = mapped_column(String(50), nullable=True)  # 화면 로그인용. 이메일 + 닉네임이 맞으면 로그인 (비밀번호 아님)
+    oauth_provider: Mapped[str | None] = mapped_column(String(20), nullable=True)  # kakao | naver
+    oauth_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
+    birth_date: Mapped[Date] = mapped_column(Date, nullable=True)  # 생년월일(선택). 만 30세 미만 미혼의 무주택기간 0점 규칙에만 쓴다
+    is_married: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")  # 혼인 여부 (신혼특공 해당 여부 is_newlywed와는 다르다)
     no_house_period_months: Mapped[int] = mapped_column(Integer, default=0)  # 무주택기간(개월)
     is_householder: Mapped[bool] = mapped_column(Boolean, default=False)  # 세대주 여부
     dependents_count: Mapped[int] = mapped_column(Integer, default=0)  # 부양가족수
@@ -25,6 +30,7 @@ class UserProfile(Base):
     subscription_payment_count: Mapped[int] = mapped_column(Integer, default=0)  # 납입회차
 
     available_assets: Mapped[int] = mapped_column(Numeric(14, 0), default=0)  # 가용자산(원)
+    annual_income: Mapped[int] = mapped_column(Numeric(14, 0), nullable=True)  # 연 소득(원, 세전). 입력 안 했으면 NULL (0원과 구분)
     desired_region_code: Mapped[str] = mapped_column(String(20), nullable=True)  # 희망지역 코드
 
     is_newlywed: Mapped[bool] = mapped_column(Boolean, default=False)  # 신혼특공 해당여부
