@@ -17,3 +17,6 @@ openpyxl==3.1.5
 chromadb==1.5.9
 fastembed==0.8.1
 langgraph==1.2.14
+# 딥러닝(커트라인 MLP). CPU 전용 빌드를 받도록 PyTorch CPU 저장소를 함께 본다 (GPU용은 수 GB라 Docker 이미지가 커진다)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1

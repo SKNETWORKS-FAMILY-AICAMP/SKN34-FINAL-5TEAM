@@ -96,6 +96,21 @@ python -m scripts.eval_rag --fresh         # 검색 정확도 평가 (평가 질
 > (실제로 겪었다. 이때 앱은 오류 없이 공고 필드 검색으로 대체된다).
 > `backend/.env`에 로컬 폴더를 지정한다. 예: `VECTOR_DB_PATH=C:/Users/내계정/AppData/Local/cheongyak/vectordb`
 
+## 커트라인 예측 모델 학습 (ML + 딥러닝)
+
+공고별 예상 커트라인 모델은 후보 4종을 같은 조건(2020~2024 학습 / 2025~ 검증)으로 비교해 MAE가 가장 작은 것을 운영에 쓴다.
+후보: Ridge 선형회귀, 랜덤포레스트, 그래디언트 부스팅, **PyTorch MLP(딥러닝, `app/services/cutoff_mlp.py`)**.
+
+```bash
+cd backend
+pip install -r requirements.txt               # torch(CPU) 포함. Docker는 docker compose up -d --build backend
+python -m scripts.tune_cutoff_mlp             # (선택) MLP 설정 비교 → models/cutoff_mlp_tuning.json
+python -m scripts.train_cutoff_model          # 4종 비교·저장 → models/cutoff_reg_metrics.json, cutoff_mlp_history.json
+```
+
+Docker로 실행 중이면 `docker compose exec backend python -m scripts.train_cutoff_model`로 같은 학습을 돌린다.
+torch가 없으면 MLP 후보만 빠지고 나머지 3종은 그대로 비교된다.
+
 ## 지금 여기까지 되어 있는 것 / 아직 안 되어 있는 것
 
 진행 상태와 API 표는 `docs/요구사항_정의서.md`, `docs/프론트_API_연동표.md` 를 본다.
