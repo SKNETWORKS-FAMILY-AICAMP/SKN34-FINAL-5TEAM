@@ -93,6 +93,58 @@
       guideLink.replaceWith(btn);
     }
     if (isMember()) $('.hero-help')?.remove();
+    homeListings();
+  }
+
+  // 메인 "다음 시작을 기다리는 집"
+  // · 진단 기록이 없으면: 추천할 근거가 없으니 공고 대신 "진단 하러 가기" 안내
+  // · 진단 기록이 있으면: 내 조건 추천 공고(서버 계산, 모자라면 접수 중 공고로 채움)를 전광판처럼 계속 흘려 보낸다
+  let marquee = null;
+  function homeListings() {
+    if (marquee) { cancelAnimationFrame(marquee.raf); marquee = null; }
+    const grid = $('#app .section .grid3');
+    if (!grid) return;
+    const head = grid.closest('.section')?.querySelector('.section-head p');
+    if (!state.diagnosis) {
+      if (head) head.textContent = '내 조건을 알려 주시면, 지금 신청할 수 있는 공고를 골라 드려요.';
+      grid.outerHTML = `<div class="lp-reco-empty"><div><b>아직 추천할 공고가 없어요</b><p>6단계 진단을 마치면 내 조건에 맞는 공고를 여기에서 보여 드려요.</p></div><button type="button" class="btn orange" data-action="redo-diagnosis">진단 하러 가기 <span>↗</span></button></div>`;
+      return;
+    }
+    if (state.user?.id && live.recs === null && !live.recsLoading) loadRecs();
+    const recs = (live.recs || []).map((r) => r.house).filter(Boolean);
+    const seen = new Set(recs.map((h) => h.id));
+    const houses = [...recs, ...featuredHouses().filter((h) => !seen.has(h.id))].slice(0, 12);
+    if (head) head.textContent = recs.length ? '내 진단 조건으로 고른 공고예요. 마우스를 올리면 잠시 멈춰요.' : '지금 접수 중인 공고예요. 마우스를 올리면 잠시 멈춰요.';
+    if (houses.length < 4) return;                                // 공고가 적으면 원래 3칸 그대로
+    grid.outerHTML = `<div class="lp-marquee" aria-label="추천 공고 (자동으로 넘어가요)"><div class="lp-track">${houses.map((h) => houseCard(h)).join('')}</div></div>`;
+    if (typeof cardMedia === 'function') cardMedia();            // 카드 사진(로드뷰) 다시 붙이기
+    startMarquee();
+  }
+
+  function startMarquee() {
+    const box = $('.lp-marquee'), track = $('.lp-track');
+    if (!box || !track || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const m = { raf: 0, offset: 0, last: 0, paused: false };
+    marquee = m;
+    box.addEventListener('mouseenter', () => { m.paused = true; });
+    box.addEventListener('mouseleave', () => { m.paused = false; });
+    box.addEventListener('focusin', () => { m.paused = true; });
+    box.addEventListener('focusout', () => { m.paused = false; });
+    const SPEED = 40;                                             // px / 초
+    const step = (t) => {
+      if (marquee !== m || !track.isConnected) return;
+      const dt = m.last ? Math.min(64, t - m.last) / 1000 : 0; m.last = t;
+      if (!m.paused) m.offset += SPEED * dt;
+      const first = track.firstElementChild;
+      const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+      if (first && m.offset >= first.offsetWidth + gap) {         // 맨 앞 카드가 다 지나가면 맨 뒤로 옮겨 끝없이 이어지게
+        m.offset -= first.offsetWidth + gap;
+        track.appendChild(first);
+      }
+      track.style.transform = `translateX(${-m.offset}px)`;
+      m.raf = requestAnimationFrame(step);
+    };
+    m.raf = requestAnimationFrame(step);
   }
 
   // 진단 단계마다 "나중에 입력하기": 진단을 멈추고 메인으로 (입력한 답은 이 화면을 닫기 전까지 남아 있다)

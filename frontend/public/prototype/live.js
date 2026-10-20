@@ -167,7 +167,7 @@ async function reloadList() {
 async function loadFeatured() {
   live.featuredStarted = true;
   try {
-    const data = await api('/listings/', { params: { per_page: 3, status: ['접수중'] } });
+    const data = await api('/listings/', { params: { per_page: 12, status: ['접수중'] } });
     live.featured = data.items.map(toHouse).map(upsertHouse).map((h) => h.id);
   } catch { live.featured = []; }
   render();

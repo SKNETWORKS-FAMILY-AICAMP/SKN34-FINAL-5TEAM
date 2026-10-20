@@ -82,3 +82,14 @@ body.landing-active footer{display:none}
 .step-actions .lp-later{margin-left:auto;background:none;border:0;padding:10px 6px;font-family:inherit;font-size:13px;font-weight:600;color:#748079;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
 .step-actions .lp-later:hover{color:#163f33}
 .hero-actions .lp-redo{background:none;border:0;padding:0;font-family:inherit;cursor:pointer}
+
+/* 메인 추천 공고: 전광판처럼 흐르는 줄 */
+.lp-marquee{overflow:hidden;margin:0 -8px;padding:8px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 40px,#000 calc(100% - 40px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 40px,#000 calc(100% - 40px),transparent 100%)}
+.lp-track{display:flex;gap:20px;width:max-content;will-change:transform}
+.lp-track>*{flex:none;width:340px}
+@media (prefers-reduced-motion:reduce){.lp-marquee{overflow-x:auto}}
+@media (max-width:860px){.lp-track>*{width:280px}}
+/* 진단 기록이 없을 때 */
+.lp-reco-empty{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;background:#fff;border:1px dashed #cfd9cc;border-radius:18px;padding:30px 32px}
+.lp-reco-empty b{display:block;font-size:17px;color:var(--ink,#172a24)}
+.lp-reco-empty p{margin:6px 0 0;font-size:13px;color:#748079}
