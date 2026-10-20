@@ -112,3 +112,38 @@ body.landing-active footer{display:none}
 @media (max-width:760px){
   .hero .feature-strip.lp-hero-cards{flex-direction:column;padding:0 18px 32px}
 }
+
+/* 메인을 100% 배율 한 화면에 — 히어로(+기능 박스)와 추천 공고 줄까지 스크롤 없이 보이게 화면 높이에 맞춰 줄인다 */
+/* 히어로를 [문구 | 기능 박스] 2칸 그리드로: 높이는 둘 중 큰 쪽에 맞춰지고 박스가 밖으로 넘치지 않는다 */
+body.lp-home .hero.lp-hero-with-cards{display:grid;grid-template-columns:minmax(0,1fr) 380px;column-gap:40px;align-items:center;min-height:0;
+  padding:clamp(16px,3vh,56px) max(40px,calc((min(100%,1440px) - 1200px) / 2 + 40px))}
+body.lp-home .hero.lp-hero-with-cards .hero-body{max-width:none;margin:0;padding:0}
+body.lp-home .hero .feature-strip.lp-hero-cards{position:relative;top:auto;right:auto;transform:none;width:auto;padding:0;gap:10px}
+body.lp-home .hero h1{font-size:clamp(30px,4.3vh,55px);line-height:1.26}
+body.lp-home .hero p{margin:clamp(10px,1.6vh,21px) 0 clamp(14px,2.4vh,28px)}
+body.lp-home .lp-hero-cards .feature-panel{padding:clamp(12px,1.9vh,20px) 22px}
+body.lp-home .lp-hero-cards .feature-panel h3{font-size:clamp(14px,1.9vh,17px);margin:4px 0 0}
+body.lp-home .lp-hero-cards .feature-panel p{display:none}
+body.lp-home .lp-hero-cards .feature-panel a,body.lp-home .lp-hero-cards .lp-guide-link{margin-top:clamp(6px,1.1vh,12px)}
+body.lp-home .lp-hero-cards .feature-number{font-size:clamp(32px,4.4vh,46px)}
+body.lp-home #app .section:first-of-type{padding-top:clamp(14px,2.6vh,40px)}
+body.lp-home #app .section:first-of-type .section-head .eyebrow{display:none}
+body.lp-home .section-head{margin-bottom:clamp(10px,1.6vh,25px)}
+body.lp-home .section-head h2{font-size:clamp(20px,2.7vh,30px)}
+body.lp-home .section-head p{margin-top:4px}
+body.lp-home .lp-marquee .house-visual{height:clamp(70px,9vh,170px)}
+body.lp-home .lp-marquee .house-body{padding:10px 16px 12px}
+body.lp-home .lp-marquee .house-card a h3{max-width:100%}
+body.lp-home .lp-marquee .house-body h3{font-size:15px;margin:6px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.lp-home .lp-marquee .house-body .location{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.lp-home .lp-marquee .house-bottom{margin-top:8px;padding-top:8px}
+body.lp-home .lp-marquee .house-bottom strong{font-size:16px}
+body.lp-home .lp-marquee .house-body>.tags:last-child{display:none}
+@media (max-width:1100px){
+  body.lp-home .hero.lp-hero-with-cards{display:flex;flex-direction:column;align-items:stretch;row-gap:20px;padding:28px 40px 36px}
+  body.lp-home .hero .feature-strip.lp-hero-cards{flex-direction:row}
+}
+@media (max-width:760px){
+  body.lp-home .hero.lp-hero-with-cards{padding:28px 18px 30px}
+  body.lp-home .hero .feature-strip.lp-hero-cards{flex-direction:column}
+}

@@ -163,6 +163,7 @@
     if (routeNow() === 'start' && isMember()) { landing.open = false; location.replace('#home'); return; }
     const active = routeNow() === 'start';
     document.body.classList.toggle('landing-active', active);
+    document.body.classList.toggle('lp-home', routeNow() === 'home');
     if (!active) { landing.open = false; prevRender(); if (routeNow() === 'home') tidyHome(); addLaterButton(); return; }
     header('start');
     const scroller = $('.landing-diag');
