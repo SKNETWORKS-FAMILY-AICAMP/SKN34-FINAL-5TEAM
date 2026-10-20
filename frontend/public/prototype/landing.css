@@ -94,31 +94,26 @@ body.landing-active footer{display:none}
 .lp-reco-empty b{display:block;font-size:17px;color:var(--ink,#172a24)}
 .lp-reco-empty p{margin:6px 0 0;font-size:13px;color:#748079}
 
-/* 메인(스크롤형): 밝은 배경 2칸 히어로 — 왼쪽 글(진한 색), 오른쪽 사진. 아래 추천 줄과 같은 배경색이라 이어져 보인다 */
-body.lp-home .hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(28px,4vw,56px);align-items:center;
-  max-width:1200px;box-sizing:border-box;padding:clamp(28px,5vh,60px) 40px clamp(16px,3vh,32px);min-height:0;background:transparent;color:var(--ink,#172a24);overflow:visible}
+/* 메인(스크롤형): 낮은 초록 카드 히어로 — [글·숫자·버튼 | 사진 띠], 아래 추천 공고가 첫 화면에 보이게 */
+body.lp-home .hero{display:grid;grid-template-columns:minmax(0,1fr) 28%;align-items:stretch;max-width:1200px;box-sizing:border-box;
+  margin:clamp(16px,3vh,28px) auto 0;min-height:0;border-radius:24px;overflow:hidden;background:var(--green,#163f33);color:#fff}
 body.lp-home .hero:after,body.lp-home .hero .hero-image,body.lp-home .hero-label{display:none}
-body.lp-home .hero .hero-body{max-width:none;margin:0;padding:0}
-body.lp-home .hero .eyebrow{color:var(--green,#163f33)}
-body.lp-home .hero h1{font-size:clamp(36px,5vh,52px);color:var(--ink,#172a24);text-shadow:none}
-body.lp-home .hero h1 em{color:#d9622a}
-body.lp-home .hero p{color:#5f6b64}
-body.lp-home .hero .hero-link{color:var(--green,#163f33)}
-body.lp-home .hero .hero-help{color:#748079}
-body.lp-home .hero .lp-stats>div{background:#fff;border:1px solid var(--line,#e4e9e2);color:var(--ink,#172a24);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 6px 18px rgba(22,63,51,.05)}
-body.lp-home .hero .lp-stats b{color:var(--green,#163f33)}
-body.lp-home .hero .lp-stats b small{color:#748079}
-body.lp-home .hero .lp-stats span{color:#5f6b64}
-body.lp-home .hero .lp-stats>div:first-child b{color:#d9622a}
-.lp-hero-photo{align-self:stretch;min-height:clamp(300px,46vh,500px);border-radius:24px;box-shadow:0 18px 40px rgba(22,63,51,.12);
-  background:#dfe7dd url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1400&q=85') center 55%/cover}
-body.lp-home #app .section:first-of-type{padding-top:clamp(24px,4vh,48px)}
-body.lp-home #app .section:first-of-type .section-head{margin-bottom:22px}
-@media (max-width:900px){
-  body.lp-home .hero{grid-template-columns:1fr;padding:28px 24px 8px}
-  .lp-hero-photo{min-height:200px}
-}
-@media (max-width:760px){body.lp-home .hero{padding:22px 18px 4px}.lp-hero-photo{display:none}}
+body.lp-home .hero .hero-body{max-width:none;margin:0;padding:clamp(26px,4vh,40px) clamp(28px,3.4vw,48px)}
+body.lp-home .hero .eyebrow{color:#cfe0d3}
+body.lp-home .hero h1{font-size:clamp(28px,3.6vh,40px);line-height:1.3;max-width:none;letter-spacing:-1.6px;margin:10px 0 0}
+body.lp-home .hero h1 em{color:#f6c9a4}
+body.lp-home .hero p{margin:12px 0 18px;color:#dbe5dd}
+body.lp-home .lp-hero-row{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px;margin-top:clamp(16px,2.6vh,24px)}
+body.lp-home .lp-hero-row .lp-stats{margin:0}
+body.lp-home .lp-hero-row .hero-actions{flex-wrap:wrap;gap:14px 18px}
+body.lp-home .hero .lp-stats>div{min-width:118px;padding:9px 14px}
+body.lp-home .hero .lp-stats b{font-size:24px}
+.lp-hero-photo{min-height:100%;background:#2b4a3e url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=80') 62% 55%/cover}
+body.lp-home #app .section:first-of-type{padding-top:clamp(26px,4vh,48px)}
+body.lp-home #app .section:first-of-type .section-head{margin-bottom:20px}
+@media (max-width:1240px){body.lp-home .hero{margin-left:24px;margin-right:24px}}
+@media (max-width:900px){body.lp-home .hero{grid-template-columns:1fr}.lp-hero-photo{display:none}}
+@media (max-width:760px){body.lp-home .hero{margin:14px 18px 0;border-radius:18px}body.lp-home .hero .hero-body{padding:24px 20px}body.lp-home .lp-hero-row .lp-stats{flex-wrap:nowrap;width:100%;gap:8px}body.lp-home .hero .lp-stats>div{min-width:0;flex:1;padding:8px 10px}body.lp-home .hero .lp-stats b{font-size:20px}body.lp-home .hero .lp-stats span{font-size:10.5px}}
 
 /* 히어로 "내 현황" 숫자 */
 .lp-stats{display:flex;gap:10px;margin:clamp(12px,2vh,22px) 0 clamp(14px,2.4vh,28px);flex-wrap:wrap}
