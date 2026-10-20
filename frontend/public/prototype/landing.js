@@ -61,11 +61,52 @@
 
   const routeNow = () => (location.hash.slice(1) || 'home').split('/')[0];
 
+  const isMember = () => Boolean(state.user?.member);
+
+  // 상단 메뉴: "내 공간"은 계정 이름(○○님) 버튼과 같은 화면이라 메뉴에서 뺀다.
+  // 로그인 전에는 로고가 첫 페이지(#start)로, 로그인 뒤에는 메인(#home)으로 간다.
+  const prevHeader = header;
+  header = function (route) {
+    prevHeader(route);
+    $('#header .nav-links a[href="#dashboard"]')?.remove();
+    const brand = $('#header .brand');
+    if (brand) brand.setAttribute('href', isMember() ? '#home' : '#start');
+  };
+
+  // 메인(#home): 상단 "청약 진단" 메뉴와 겹치는 진단 시작 버튼·바로가기 카드를 정리한다
+  function tidyHome() {
+    const card = $('.quick-bar a.quick[href="#diagnosis"]');
+    if (card) { card.remove(); $('.quick-bar')?.classList.add('quick-3'); }
+    const cta = $('.hero-actions a.btn[href="#diagnosis"]');
+    if (cta) {
+      if (state.diagnosis) {
+        cta.setAttribute('href', '#result');
+        cta.innerHTML = '내 진단 결과 보기 <span>↗</span>';
+        const link = $('.hero-actions .hero-link'); if (link) link.textContent = '공고 둘러보기';
+      } else {
+        cta.setAttribute('href', '#homes');
+        cta.innerHTML = '공고 둘러보기 <span>↗</span>';
+        $('.hero-actions .hero-link')?.remove();
+      }
+    }
+    // 아래 "시작 가이드" 칸의 진단 링크도 겹치므로 이용 흐름 안내로 바꾼다
+    const guideLink = $('.feature-panel a[href="#diagnosis"]');
+    if (guideLink) {
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.dataset.action = 'guide'; btn.className = 'lp-guide-link';
+      btn.textContent = '이용 흐름 알아보기 ↗';
+      guideLink.replaceWith(btn);
+    }
+    if (isMember()) $('.hero-help')?.remove();
+  }
+
   const prevRender = render;
   render = function () {
+    // 첫 페이지는 로그인하지 않았을 때만 — 로그인한 사람이 #start 로 오면 메인으로 보낸다
+    if (routeNow() === 'start' && isMember()) { landing.open = false; location.replace('#home'); return; }
     const active = routeNow() === 'start';
     document.body.classList.toggle('landing-active', active);
-    if (!active) { landing.open = false; prevRender(); return; }
+    if (!active) { landing.open = false; prevRender(); if (routeNow() === 'home') tidyHome(); return; }
     header('start');
     const scroller = $('.landing-diag');
     const top = scroller ? scroller.scrollTop : 0;
@@ -115,6 +156,7 @@
     const act = b.dataset.action;
     if (act === 'landing-open') { e.preventDefault(); openPanel(); return; }
     if (act === 'landing-close') { e.preventDefault(); closePanel(); return; }
+    if (act === 'logout') { setTimeout(() => { if (!isMember()) go('start'); }, 0); return; }   // 로그아웃하면 첫 페이지로
     if (routeNow() === 'start' && act === 'next' && state.step === 5) {
       e.preventDefault(); e.stopImmediatePropagation();
       finishDiagnosis();
@@ -123,7 +165,7 @@
 
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && landing.open && !$('#modal-root').innerHTML.trim()) closePanel(); });
 
-  // 주소에 화면 지정이 없으면 항상 첫 페이지로 연다 (메인은 #home)
-  if (!location.hash) history.replaceState(null, '', '#start');
+  // 주소에 화면 지정이 없으면: 로그인 전에는 첫 페이지, 로그인 뒤에는 메인
+  if (!location.hash) history.replaceState(null, '', isMember() ? '#home' : '#start');
   render();
 })();

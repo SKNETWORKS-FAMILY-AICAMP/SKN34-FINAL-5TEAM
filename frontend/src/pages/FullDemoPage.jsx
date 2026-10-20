@@ -9,10 +9,18 @@ function normalizeRoute(value) {
   return SCREENS.has(route.split("/")[0]) ? route : "start";
 }
 
+function isMember() {
+  try {
+    return Boolean(JSON.parse(window.localStorage.getItem("cydemo-user") || "null")?.member);
+  } catch {
+    return false;
+  }
+}
+
 function screenFromLocation(pathname, hash) {
   if (hash) return normalizeRoute(hash);
-  // localhost:3000 (/) 은 항상 첫 페이지(start: 기능 소개 + 진단 시작). 기존 메인은 /home
-  if (pathname === "/") return "start";
+  // localhost:3000 (/) 은 로그인 전에는 첫 페이지(start: 기능 소개 + 진단 시작), 로그인 뒤에는 메인(home)
+  if (pathname === "/") return isMember() ? "home" : "start";
   if (pathname.startsWith("/community/posts/")) return normalizeRoute(pathname.replace("/community/posts/", "post/"));
   return normalizeRoute(pathname);
 }
