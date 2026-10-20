@@ -75,6 +75,7 @@
 
   // 메인(#home): 상단 카테고리 메뉴(청약 진단·집 찾기·금융 정보·커뮤니티)와 같은 곳으로 가는 버튼은 정리한다
   function tidyHome() {
+    $('#app .feature-strip')?.remove();                            // 자금 계획(= 금융 정보)·이용 흐름(= 상단 안내) 박스: 다른 곳과 겹침
     $('#app .community-preview')?.remove();                         // 커뮤니티 미리보기 = 상단 "커뮤니티" 카테고리와 겹침 (메인에는 메인에서만 쓰는 기능만)
     $('.quick-bar')?.remove();                                   // 집 찾기·금융 정보·우리 이야기 바로가기 카드 = 상단 메뉴와 같음
     document.querySelectorAll('#app .section-head a[href="#homes"], #app .section-head a[href="#community"], #app a.text-link[href="#homes"], #app a.text-link[href="#community"]').forEach((a) => a.remove());   // "공고 전체 보기"·"커뮤니티 둘러보기" = 상단 메뉴
@@ -96,14 +97,43 @@
     if (isMember()) $('.hero-help')?.remove();
     heroSummary();
     homeListings();
+    deadlineSection();
+  }
+
+  const DAY = 86400000;
+  function daysLeft(h) {
+    const e = h?.raw?.receipt_end; if (!e) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const end = new Date(e); end.setHours(0, 0, 0, 0);
+    return Math.round((end - today) / DAY);
+  }
+
+  // 메인에서만 의미 있는 내용: 내 추천 공고 중 7일 안에 접수가 끝나는 것 (지금 신청하지 않으면 놓치는 것)
+  function deadlineSection() {
+    $('#lp-deadline')?.remove();
+    const anchor = $('#app .section');
+    if (!anchor || !state.diagnosis || !live.recs) return;
+    const rows = live.recs
+      .map((r) => ({ h: r.house, eligible: r.eligible, d: daysLeft(r.house) }))
+      .filter((x) => x.h && x.d != null && x.d >= 0 && x.d <= 7)
+      .sort((a, b) => a.d - b.d || (b.eligible ? 1 : 0) - (a.eligible ? 1 : 0));
+    const list = rows.slice(0, 8).map(({ h, eligible, d }) => `<a class="lp-dl-row" href="#detail/${h.id}">
+        <span class="lp-dday${d <= 2 ? ' hot' : ''}">${d === 0 ? '오늘 마감' : `D-${d}`}</span>
+        <span class="lp-dl-main"><b>${esc(h.name)}</b><small>${esc(h.region)} · ${esc(h.type)} · ${esc(h.date)}</small></span>
+        <span class="lp-dl-price"><small>${esc(h.priceLabel)}</small>${moneyOr(h.price)}</span>
+        <span class="lp-dl-tag${eligible ? ' ok' : ''}">${eligible ? '신청 자격 충족' : '자격 확인 필요'}</span>
+      </a>`).join('');
+    const more = rows.length > 8 ? `<p class="lp-dl-more">이 밖에 ${rows.length - 8}건이 더 있어요. 전체는 <a href="#result">내 진단 결과</a>에서 볼 수 있어요.</p>` : '';
+    anchor.insertAdjacentHTML('afterend', `<section class="section lp-deadline" id="lp-deadline">
+      <div class="section-head"><div><div class="eyebrow">DON'T MISS IT</div><h2>곧 접수가 끝나는 내 공고</h2><p>내 조건 추천 공고 중 7일 안에 접수가 마감되는 공고예요. 마감이 가까운 순서예요.</p></div></div>
+      ${rows.length ? `<div class="lp-dl-list">${list}</div>${more}` : '<div class="lp-reco-empty"><div><b>7일 안에 마감되는 추천 공고가 없어요</b><p>여유 있게 내 조건에 맞는 공고를 살펴보세요.</p></div></div>'}
+    </section>`);
   }
 
   // 히어로 요약: 진단한 사람에게는 일반 소개 문구 대신 "내 현황" 숫자 3개를 보여 준다 (한눈에 읽히도록)
   function heroSummary() {
     const body = $('#app .hero-body');
     if (!body || !state.diagnosis || !live.recs || !live.recs.length) return;
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const daysLeft = (h) => { const e = h?.raw?.receipt_end; if (!e) return null; return Math.round((new Date(e) - today) / 86400000); };
     const houses = live.recs.map((r) => r.house).filter(Boolean);
     const eligible = live.recs.filter((r) => r.eligible).length;
     const soon = houses.filter((h) => { const d = daysLeft(h); return d != null && d >= 0 && d <= 7; }).length;
@@ -113,7 +143,7 @@
     const stats = `<div class="lp-stats" aria-label="내 청약 현황">
       <a href="#result"><b>${houses.length}<small>건</small></b><span>내 조건 추천 공고</span></a>
       <a href="#result"><b>${eligible}<small>건</small></b><span>신청 자격 충족</span></a>
-      <a href="#result"><b>${soon}<small>건</small></b><span>7일 안에 접수 마감</span></a>
+      <a href="#home" data-action="scroll-section" data-target="lp-deadline"><b>${soon}<small>건</small></b><span>7일 안에 접수 마감</span></a>
     </div>`;
     if (p) p.outerHTML = stats; else body.querySelector('.hero-actions')?.insertAdjacentHTML('beforebegin', stats);
   }
