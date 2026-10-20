@@ -78,3 +78,7 @@ body.landing-active footer{display:none}
   .landing-sources{position:static;margin-top:40px}
 }
 .lp-guide-link{display:inline-block;margin-top:17px;font-size:12px;background:none;border:0;padding:0;font-family:inherit;font-weight:700;color:inherit;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.step-actions{align-items:center;gap:10px}
+.step-actions .lp-later{margin-left:auto;background:none;border:0;padding:10px 6px;font-family:inherit;font-size:13px;font-weight:600;color:#748079;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.step-actions .lp-later:hover{color:#163f33}
+.hero-actions .lp-redo{background:none;border:0;padding:0;font-family:inherit;cursor:pointer}

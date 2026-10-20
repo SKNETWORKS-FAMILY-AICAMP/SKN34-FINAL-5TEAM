@@ -76,16 +76,13 @@
   // 메인(#home): 상단 카테고리 메뉴(청약 진단·집 찾기·금융 정보·커뮤니티)와 같은 곳으로 가는 버튼은 정리한다
   function tidyHome() {
     $('.quick-bar')?.remove();                                   // 집 찾기·금융 정보·우리 이야기 바로가기 카드 = 상단 메뉴와 같음
-    $('.hero-actions .hero-link')?.remove();                     // "공고 둘러보기" = 집 찾기
     document.querySelectorAll('#app .section-head a[href="#homes"], #app .section-head a[href="#community"], #app a.text-link[href="#homes"], #app a.text-link[href="#community"]').forEach((a) => a.remove());   // "공고 전체 보기"·"커뮤니티 둘러보기" = 상단 메뉴
-    const cta = $('.hero-actions a.btn[href="#diagnosis"]');
-    if (cta) {
-      if (state.diagnosis) {                                     // 진단 결과는 상단 메뉴에 없는 곳이라 남긴다
-        cta.setAttribute('href', '#result');
-        cta.innerHTML = '내 진단 결과 보기 <span>↗</span>';
-      } else {
-        $('.hero-actions')?.remove();                            // 진단 시작 = 상단 "청약 진단"
-      }
+    // 히어로 버튼: 진단 안 한 사람 → "진단 하러 가기", 진단한 사람 → "내 진단 결과 보기" + "진단 다시 하기"
+    const actions = $('.hero-actions');
+    if (actions) {
+      actions.innerHTML = state.diagnosis
+        ? '<a class="btn orange" href="#result">내 진단 결과 보기 <span>↗</span></a><button type="button" class="hero-link lp-redo" data-action="redo-diagnosis">진단 다시 하기</button>'
+        : '<a class="btn orange" href="#diagnosis" data-action="redo-diagnosis">진단 하러 가기 <span>↗</span></a>';
     }
     // 아래 "시작 가이드" 칸의 진단 링크도 겹치므로 이용 흐름 안내로 바꾼다
     const guideLink = $('.feature-panel a[href="#diagnosis"]');
@@ -98,19 +95,27 @@
     if (isMember()) $('.hero-help')?.remove();
   }
 
+  // 진단 단계마다 "나중에 입력하기": 진단을 멈추고 메인으로 (입력한 답은 이 화면을 닫기 전까지 남아 있다)
+  function addLaterButton() {
+    const bar = $('.step-actions');
+    if (!bar || bar.querySelector('[data-action="diagnosis-later"]')) return;
+    bar.querySelector('[data-action="next"]')?.insertAdjacentHTML('beforebegin', '<button type="button" class="lp-later" data-action="diagnosis-later">나중에 입력하기</button>');
+  }
+
   const prevRender = render;
   render = function () {
     // 첫 페이지는 로그인하지 않았을 때만 — 로그인한 사람이 #start 로 오면 메인으로 보낸다
     if (routeNow() === 'start' && isMember()) { landing.open = false; location.replace('#home'); return; }
     const active = routeNow() === 'start';
     document.body.classList.toggle('landing-active', active);
-    if (!active) { landing.open = false; prevRender(); if (routeNow() === 'home') tidyHome(); return; }
+    if (!active) { landing.open = false; prevRender(); if (routeNow() === 'home') tidyHome(); addLaterButton(); return; }
     header('start');
     const scroller = $('.landing-diag');
     const top = scroller ? scroller.scrollTop : 0;
     $('#app').innerHTML = landingHtml();
     const next = $('.landing-diag');
     if (next) next.scrollTop = top;
+    addLaterButton();
   };
 
   function openPanel() {
@@ -120,6 +125,7 @@
     landing.open = true;
     const root = $('.landing');
     $('.landing-diag').insertAdjacentHTML('beforeend', diagnosis());
+    addLaterButton();
     root.offsetWidth; // 강제 레이아웃: 전환 시작점 확정
     root.classList.add('open');
     $('.landing-side').setAttribute('aria-hidden', 'true');
@@ -154,6 +160,14 @@
     const act = b.dataset.action;
     if (act === 'landing-open') { e.preventDefault(); openPanel(); return; }
     if (act === 'landing-close') { e.preventDefault(); closePanel(); return; }
+    if (act === 'redo-diagnosis') { e.preventDefault(); state.step = 0; if (state.diagnosis) state.answers = { ...state.answers, ...state.diagnosis }; go('diagnosis'); window.scrollTo(0, 0); return; }
+    if (act === 'diagnosis-later') {
+      e.preventDefault(); e.stopImmediatePropagation();
+      landing.open = false; state.step = 0;
+      go('home'); window.scrollTo(0, 0);
+      toast('진단은 상단 "청약 진단"에서 언제든 할 수 있어요.');
+      return;
+    }
     if (act === 'logout') { setTimeout(() => { if (!isMember()) go('start'); }, 0); return; }   // 로그아웃하면 첫 페이지로
     if (routeNow() === 'start' && act === 'next' && state.step === 5) {
       e.preventDefault(); e.stopImmediatePropagation();
