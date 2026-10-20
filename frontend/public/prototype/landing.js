@@ -24,6 +24,8 @@
   </section>
   <aside class="landing-panel" aria-label="청약 진단">
     <div class="landing-side" ${landing.open ? 'aria-hidden="true"' : ''}>
+      <div class="lp-window" aria-hidden="true">
+      <div class="lp-window-bar"><i></i><i></i><i></i><span>진단 화면 미리보기</span></div>
       <div class="lp-mini">
         <div class="lp-eyebrow">GET TO KNOW YOUR CONDITIONS</div>
         <div class="lp-title">내 집 찾기, 내 조건부터.</div>
@@ -47,6 +49,8 @@
           <div><span>03 추천 공고 확인</span><em>서버 계산</em></div>
         </div>
       </div>
+      </div>
+      <p class="lp-caption">왼쪽 <b>1분 청약 진단 시작하기</b>를 누르면<br>이 화면이 펼쳐져요</p>
     </div>
     <div class="landing-diag" ${landing.open ? '' : 'aria-hidden="true"'}>
       <div class="landing-diag-top">
