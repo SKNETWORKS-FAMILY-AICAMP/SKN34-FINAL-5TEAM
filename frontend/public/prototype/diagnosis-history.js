@@ -122,7 +122,7 @@
       : `<p class="dash-diag-sub">${esc(a.age)} · ${esc(a.marriage)} · 희망 ${esc(a.wish)} · ${esc(typeLabel(a.type))}</p>`;
     return `<section class="dash-diag" aria-label="내 진단 결과">
       <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 진단 결과` : '내 진단 결과'}</h3><p class="dash-diag-sub">${r ? `최근 진단 ${when(r.created_at, true)}` : '최근 진단 결과'}</p>${facts}</div>
-      <div class="dash-diag-actions"><a class="btn orange" href="#result">진단 결과 보기 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교하기</button>` : ''}</div>
+      <div class="dash-diag-actions"><a class="btn orange" href="#result">진단 결과 보기 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교하기</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 보기 · PDF 저장 ↗</a></div>
     </section>`;
   }
 
@@ -148,6 +148,20 @@
     if (!latest) left.insertAdjacentHTML('beforeend', '<p class="rb-note">이 박스는 고른 기록 기준이에요. 아래 추천 공고는 최근 진단 기준이에요.</p>');
   }
 
+
+  /* ── 내 공간 오른쪽: "내 조건 요약"에는 조건만, 계정은 따로, 리포트는 진단 카드로, 내 집 기준은 집 찾기 쪽으로 ── */
+  function tidyDashAside() {
+    const panel = $('#app .dash-aside .panel');
+    if (!panel || panel.dataset.tidy) return;
+    panel.dataset.tidy = '1';
+    panel.querySelectorAll('a.dash-action[href="#profile"], a.dash-action[href="#report"], a.dash-action[href="#preferences"]').forEach((a) => a.remove());
+    panel.insertAdjacentHTML('beforeend', '<button type="button" class="dash-action dash-edit" data-action="redo-diagnosis">조건 수정하기 (다시 진단) <span>→</span></button>');
+    const account = state.user?.member
+      ? `<section class="panel"><h3>내 계정</h3><div class="kv"><span>닉네임</span><strong>${esc(state.user.name)}</strong></div><div class="kv"><span>이메일</span><strong>${esc(state.user.email)}</strong></div><a href="#profile" class="dash-action">내 정보 관리 <span>→</span></a></section>`
+      : '<section class="panel"><h3>내 계정</h3><p style="font-size:12.5px;color:#5f6b64;margin:6px 0 14px">로그인하면 진단 기록과 관심 공고를 다른 기기에서도 이어 볼 수 있어요.</p><button class="btn soft small" data-action="signup">로그인</button></section>';
+    panel.insertAdjacentHTML('afterend', account);
+  }
+
   const prevRender = render;
   render = function () {
     prevRender();
@@ -162,6 +176,7 @@
     if (route === 'dashboard' && state.diagnosis) {
       const welcome = $('#app .welcome');
       if (welcome && !$('.dash-diag')) welcome.outerHTML = dashboardCard();   // 인사 박스는 진단 카드로 합친다 (이름 인사는 카드 제목에)
+      tidyDashAside();
     }
   };
 
