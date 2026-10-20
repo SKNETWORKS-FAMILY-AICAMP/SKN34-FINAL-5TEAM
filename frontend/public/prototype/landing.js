@@ -94,9 +94,6 @@
     }
     if (isMember()) $('.hero-help')?.remove();
     heroSummary();
-    // 아래쪽 기능 박스(자금 계획·시작 가이드)를 그림 오른쪽으로 올려 첫 화면에서 바로 보이게
-    const strip = $('#app .feature-strip'), hero = $('#app .hero');
-    if (strip && hero) { strip.classList.add('lp-hero-cards'); hero.appendChild(strip); hero.classList.add('lp-hero-with-cards'); }
     homeListings();
   }
 
