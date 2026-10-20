@@ -2,15 +2,26 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/full-demo.css";
 
-const SCREENS = new Set(["home", "diagnosis", "result", "homes", "detail", "dashboard", "saved", "finance", "community", "post", "chat", "report", "profile", "preferences"]);
+const SCREENS = new Set(["start", "home", "diagnosis", "result", "homes", "detail", "dashboard", "saved", "finance", "community", "post", "chat", "report", "profile", "preferences"]);
 
 function normalizeRoute(value) {
   const route = value.replace(/^[/#]+/, "");
   return SCREENS.has(route.split("/")[0]) ? route : "home";
 }
 
+// 진단 기록이 없는 첫 방문은 첫 페이지(#start: 기능 소개 + 진단 시작)로 연다. 진단을 마친 뒤에는 기존 메인(#home).
+function hasDiagnosis() {
+  try {
+    const saved = window.localStorage.getItem("cydemo-diagnosis");
+    return Boolean(saved && saved !== "null");
+  } catch {
+    return false;
+  }
+}
+
 function screenFromLocation(pathname, hash) {
   if (hash) return normalizeRoute(hash);
+  if (pathname === "/" && !hasDiagnosis()) return "start";
   if (pathname.startsWith("/community/posts/")) return normalizeRoute(pathname.replace("/community/posts/", "post/"));
   return normalizeRoute(pathname);
 }
