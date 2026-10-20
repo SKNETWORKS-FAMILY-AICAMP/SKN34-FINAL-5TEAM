@@ -310,8 +310,17 @@ const loadingBox = (text) => `<div class="wrap page"><div class="empty"><h3>${te
 const noteBox = (text) => `<div class="callout">${esc(text)}</div>`;
 
 // 공고 카드: 화면에 보이는 값은 모두 백엔드 값. 없는 값은 "공고문 확인"으로 표시한다.
+// 카드 가격 자리: 가격이 없으면 공고 원문으로 바로 가는 링크 (원문 주소도 없으면 회색 안내 글자)
+function priceOrNotice(h) {
+  if (h.price != null) return moneyOr(h.price);
+  const url = h.raw?.notice_url;
+  return url
+    ? `<a class="notice-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="공고 기관 사이트에서 원문 열기">공고문에서 확인 ↗</a>`
+    : '<span class="price-na">공고문 참고</span>';
+}
+
 function houseCard(h) {
-  return `<article class="house-card"><div class="house-visual" data-hid="${h.id}"><a href="#detail/${h.id}" tabindex="-1">${building(h)}</a><span class="badge">${esc(h.type)}</span></div><div class="house-body"><div class="tags"><span class="badge ${h.status === '접수 중' ? 'orange-badge' : 'gray'}">${h.status}</span></div><a href="#detail/${h.id}"><h3>${esc(h.name)}</h3></a><p class="location">${esc(h.loc)} · ${h.area}</p><div class="house-bottom"><div><small>${h.priceLabel}</small><br><strong>${moneyOr(h.price)}</strong></div><span class="text-link">${h.date}</span></div><div class="tags" style="margin-top:13px">${h.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div></div></article>`;
+  return `<article class="house-card"><div class="house-visual" data-hid="${h.id}"><a href="#detail/${h.id}" tabindex="-1">${building(h)}</a><span class="badge">${esc(h.type)}</span></div><div class="house-body"><div class="tags"><span class="badge ${h.status === '접수 중' ? 'orange-badge' : 'gray'}">${h.status}</span></div><a href="#detail/${h.id}"><h3>${esc(h.name)}</h3></a><p class="location">${esc(h.loc)} · ${h.area}</p><div class="house-bottom"><div><small>${h.priceLabel}</small><br><strong>${priceOrNotice(h)}</strong></div><span class="text-link">${h.date}</span></div><div class="tags" style="margin-top:13px">${h.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div></div></article>`;
 }
 
 // 집 찾기: 필터를 바꿀 때마다 서버에 다시 물어보고, 12건씩 "더 보기"로 이어 붙인다

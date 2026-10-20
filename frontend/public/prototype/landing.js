@@ -118,9 +118,9 @@
     const eyebrow = body.querySelector('.eyebrow'); if (eyebrow) { eyebrow.innerHTML = `<span class="dot"></span> ${who}`; eyebrow.classList.add('lp-eyebrow-ko'); }
     const p = body.querySelector('p');
     const stats = `<div class="lp-stats" aria-label="내 청약 현황">
-      <a href="#result"><b>${houses.length}<small>건</small></b><span>내 조건 추천 공고</span></a>
-      <a href="#result"><b>${eligible}<small>건</small></b><span>신청 자격 충족</span></a>
-      <a href="#home" data-action="scroll-section" data-target="lp-reco"><b>${soon}<small>건</small></b><span>7일 안에 접수 마감</span></a>
+      <div><b>${houses.length}<small>건</small></b><span>내 조건 추천 공고</span></div>
+      <div><b>${eligible}<small>건</small></b><span>신청 자격 충족</span></div>
+      <div><b>${soon}<small>건</small></b><span>7일 안에 접수 마감</span></div>
     </div>`;
     if (p) p.outerHTML = stats; else body.querySelector('.hero-actions')?.insertAdjacentHTML('beforebegin', stats);
   }
