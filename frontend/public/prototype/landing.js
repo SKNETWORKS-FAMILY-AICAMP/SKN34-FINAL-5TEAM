@@ -96,9 +96,9 @@
     }
     if (isMember()) $('.hero-help')?.remove();
     heroSummary();
-    // 사진 아래쪽을 페이지 배경으로 녹이는 층 (추천 줄이 사진에 걸쳐 이어지게)
+    // 히어로: 밝은 배경 + 진한 글씨(왼쪽), 인테리어 사진은 오른쪽에 둥근 그림으로 — 위아래 배경색이 같아 끊김이 없다
     const heroEl = $('#app .hero');
-    if (heroEl && !heroEl.querySelector('.lp-hero-fade')) heroEl.insertAdjacentHTML('beforeend', '<div class="lp-hero-fade" aria-hidden="true"></div>');
+    if (heroEl && !heroEl.querySelector('.lp-hero-photo')) heroEl.insertAdjacentHTML('beforeend', '<div class="lp-hero-photo" role="img" aria-label="햇살이 드는 거실 인테리어"></div>');
     homeListings();
   }
 
