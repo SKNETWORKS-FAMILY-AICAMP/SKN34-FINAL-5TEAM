@@ -114,7 +114,7 @@
       ? `<div class="dash-diag-facts"><div><small>청약 가점</small><b>${r.score}<span>/84</span></b></div><div><small>추천 공고</small><b>${r.recommend_count}<span>건</span></b></div><div><small>신청 자격 충족</small><b>${r.eligible_count}<span>건</span></b></div></div>`
       : `<p class="dash-diag-sub">${esc(a.age)} · ${esc(a.marriage)} · 희망 ${esc(a.wish)} · ${esc(a.type)}</p>`;
     return `<section class="dash-diag" aria-label="내 진단 결과">
-      <div class="dash-diag-main"><div class="eyebrow">MY DIAGNOSIS</div><h3>내 진단 결과</h3><p class="dash-diag-sub">${r ? `최근 진단 ${when(r.created_at, true)}` : '최근 진단 결과'}</p>${facts}</div>
+      <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 진단 결과` : '내 진단 결과'}</h3><p class="dash-diag-sub">${r ? `최근 진단 ${when(r.created_at, true)}` : '최근 진단 결과'}</p>${facts}</div>
       <div class="dash-diag-actions"><a class="btn orange" href="#result">진단 결과 보기 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교하기</button>` : ''}</div>
     </section>`;
   }
@@ -131,10 +131,7 @@
     }
     if (route === 'dashboard' && state.diagnosis) {
       const welcome = $('#app .welcome');
-      if (welcome && !$('.dash-diag')) {
-        welcome.querySelector('a[href="#result"]')?.remove();   // 작은 "진단 결과" 버튼 → 아래 큰 카드로
-        welcome.insertAdjacentHTML('afterend', dashboardCard());
-      }
+      if (welcome && !$('.dash-diag')) welcome.outerHTML = dashboardCard();   // 인사 박스는 진단 카드로 합친다 (이름 인사는 카드 제목에)
     }
   };
 

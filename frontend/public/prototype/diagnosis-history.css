@@ -38,7 +38,7 @@
 }
 
 /* 내 공간: 최근 진단 카드 (눈에 띄게) */
-.dash-diag{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px 32px;margin:18px 0 36px;padding:28px 32px;border-radius:20px;background:var(--green,#163f33);color:#fff}
+.dash-diag{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px 32px;margin:0 0 36px;padding:28px 32px;border-radius:20px;background:var(--green,#163f33);color:#fff}
 .dash-diag .eyebrow{color:#cfe0d3}
 .dash-diag h3{margin:6px 0 2px;font-size:24px;color:#fff}
 .dash-diag-sub{margin:0;font-size:13px;color:#cfe0d3}
