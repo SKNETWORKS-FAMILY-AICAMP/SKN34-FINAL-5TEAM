@@ -54,3 +54,9 @@
 .hist-more{display:block;margin:10px auto 0;background:none;border:0;font:inherit;font-size:13px;font-weight:700;color:var(--green,#163f33);text-decoration:underline;text-underline-offset:4px;cursor:pointer}
 .recs-kinds{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:-8px 0 22px}
 .recs-kinds>span{font-size:12.5px;font-weight:700;color:#5f6b64;margin-right:4px}
+
+/* 진단 6단계: 관심 주거 유형 여러 개 고르기 */
+.type-help{margin:0 0 10px;font-size:12.5px;color:#5f6b64}
+.type-all{display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;font-weight:700;cursor:pointer}
+.type-all input{width:18px;height:18px;accent-color:var(--green,#163f33);margin:0}
+.type-desc{display:block;margin-top:10px;font-size:11.5px;line-height:1.7;color:#748079}

@@ -23,7 +23,7 @@
     children: ['미성년 자녀', (r) => r.answers.children],
     region: ['현재 거주', (r) => r.answers.region],
     wish: ['희망 지역', (r) => r.answers.wish],
-    type: ['관심 유형', (r) => r.answers.type],
+    type: ['관심 유형', (r) => typeLabel(r.answers.type)],
   };
   const DEFAULT_CRITERIA = ['score', 'eligible', 'years', 'family', 'account', 'payments'];
   const criteria = new Set(read('history-criteria', DEFAULT_CRITERIA).filter((k) => CRITERIA[k]));
@@ -78,7 +78,7 @@
         <span class="hist-date">${when(r.created_at, true)}${r.id === latestId ? ' <em>최근</em>' : ''}</span>
         <span class="hist-score"><b>${r.score}</b>점</span>
         <span class="hist-meta">추천 ${r.recommend_count}건 · 자격 충족 ${r.eligible_count}건</span>
-        <span class="hist-meta">${esc(r.answers.wish || '전체')} · ${esc(r.answers.type || '전체')}</span>
+        <span class="hist-meta">${esc(r.answers.wish || '전체')} · ${esc(typeLabel(r.answers.type))}</span>
         <button type="button" class="hist-del" data-action="hist-del" data-id="${r.id}" aria-label="${when(r.created_at, true)} 기록 삭제">삭제</button>
       </label>`).join('');
     const picked = recs.filter((r) => hist.selected.has(r.id)).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -119,7 +119,7 @@
     const n = hist.records?.length || 0;
     const facts = r
       ? `<div class="dash-diag-facts"><div><small>청약 가점</small><b>${r.score}<span>/84</span></b></div><div><small>추천 공고</small><b>${r.recommend_count}<span>건</span></b></div><div><small>신청 자격 충족</small><b>${r.eligible_count}<span>건</span></b></div></div>`
-      : `<p class="dash-diag-sub">${esc(a.age)} · ${esc(a.marriage)} · 희망 ${esc(a.wish)} · ${esc(a.type)}</p>`;
+      : `<p class="dash-diag-sub">${esc(a.age)} · ${esc(a.marriage)} · 희망 ${esc(a.wish)} · ${esc(typeLabel(a.type))}</p>`;
     return `<section class="dash-diag" aria-label="내 진단 결과">
       <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 진단 결과` : '내 진단 결과'}</h3><p class="dash-diag-sub">${r ? `최근 진단 ${when(r.created_at, true)}` : '최근 진단 결과'}</p>${facts}</div>
       <div class="dash-diag-actions"><a class="btn orange" href="#result">진단 결과 보기 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교하기</button>` : ''}</div>
