@@ -52,3 +52,5 @@
 .dash-diag-actions .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,.45);color:#fff}
 .dash-diag-actions .btn.secondary:hover{background:rgba(255,255,255,.12)}
 .hist-more{display:block;margin:10px auto 0;background:none;border:0;font:inherit;font-size:13px;font-weight:700;color:var(--green,#163f33);text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.recs-kinds{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:-8px 0 22px}
+.recs-kinds>span{font-size:12.5px;font-weight:700;color:#5f6b64;margin-right:4px}

@@ -55,7 +55,7 @@
   }
 
   // 진단을 마치면 신호가 온다 → 프로필 저장이 끝난(사용자 번호가 있는) 다음 render 에서 기록을 남긴다
-  window.addEventListener('cy:diagnosis-done', () => { hist.pending = true; live.recsEligibleOnly = false; live.recsShowAll = false; });   // 새 진단이면 결과 목록 보기 방식도 처음으로
+  window.addEventListener('cy:diagnosis-done', () => { hist.pending = true; live.recsEligibleOnly = false; live.recsShowAll = false; live.recsKind = null; });   // 새 진단이면 결과 목록 보기 방식도 처음으로
 
   function sync() {
     const uid = state.user?.id || 0;
