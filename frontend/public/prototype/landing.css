@@ -1,0 +1,59 @@
+/* 첫 페이지(#start): 왼쪽 소개 + 오른쪽 진단 사이드바. 버튼을 누르면 사이드바가 화면 전체로 펼쳐지며 팀 진단 화면이 그 안에 열린다. */
+body.landing-active footer{display:none}
+.landing{position:relative;display:flex;overflow:hidden;min-height:calc(100vh - 112px);min-height:max(640px,calc(100vh - 112px));background:#f7f8f4}
+.landing-intro{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px calc(34% + 40px) 28px 40px;text-align:center;
+  background-image:radial-gradient(circle,#dde3da 1px,transparent 1.2px);background-size:22px 22px}
+.landing-chip{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.4px;color:#163f33;background:#e9f3ec;border:1px solid #d3e3d8;padding:6px 12px;border-radius:6px}
+.landing-chip::before{content:"";width:6px;height:6px;border-radius:50%;background:#ef783e}
+.landing-intro h1{margin:26px 0 0;font-size:clamp(40px,6.2vh,64px);font-weight:800;line-height:1.16;letter-spacing:-2.8px;color:#172a24}
+.landing-intro h1 .o{color:#d9622a}.landing-intro h1 .g{color:#7d877f}
+.landing-intro>p{margin:22px 0 0;max-width:520px;color:#5f6b64;font-size:16px;line-height:1.8}
+.landing-cta{margin-top:30px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+.landing-cta .lp-main{min-height:54px;padding:0 26px;border-radius:12px;border:0;background:#163f33;color:#fff;font-size:15px;font-weight:800;box-shadow:0 10px 22px rgba(22,63,51,.22);cursor:pointer;font-family:inherit}
+.landing-cta .lp-main span{color:#f6c9a4}
+.landing-cta .lp-sub{display:inline-flex;align-items:center;min-height:54px;padding:0 24px;border-radius:12px;border:1px solid #d7ded5;background:#fff;color:#163f33;font-size:15px;font-weight:700;text-decoration:none}
+.landing-note{margin-top:14px;font-size:12px;color:#7a857d}
+.landing-sources{margin-top:auto;padding-top:40px}
+.landing-sources small{display:block;font-size:10.5px;font-weight:700;letter-spacing:1.6px;color:#8a948c}
+.landing-sources div{margin-top:12px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px 34px;font-size:15px;font-weight:800;color:#a3ada5;letter-spacing:-.3px}
+
+.landing-panel{position:absolute;top:0;right:0;bottom:0;width:34%;overflow:hidden;z-index:2;transition:width .6s cubic-bezier(.2,.7,.2,1)}
+.landing.open .landing-panel{width:100%}
+.landing-side{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 36px;color:#fff;transition:opacity .25s ease .4s;
+  background-color:#163f33;background-image:linear-gradient(160deg,rgba(14,37,29,.55) 0%,rgba(14,37,29,.88) 70%),url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1400&q=80');background-size:cover;background-position:center}
+.landing.open .landing-side{opacity:0;pointer-events:none}
+.lp-glass{width:100%;max-width:330px;border-radius:18px;padding:18px 20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.lp-glass .k{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:1.2px;color:#dfe9e1}
+.lp-glass .k i{width:8px;height:8px;border-radius:50%;background:#ef783e}
+.lp-glass .l{margin-top:10px;font-size:12px;color:#c9d4ca}
+.lp-glass .opts{margin-top:6px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;font-size:12px}
+.lp-glass .opts span{border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:7px 0;text-align:center}
+.lp-glass .opts .on{background:#eec6a0;border-color:#eec6a0;color:#172a24;font-weight:800}
+.lp-glass .score{margin-top:6px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
+.lp-glass .score b{font-size:34px;font-weight:800;letter-spacing:-1.5px}
+.lp-glass .score .lp-tag{letter-spacing:0;margin-left:auto;white-space:nowrap;font-style:normal;font-size:11.5px;font-weight:700;color:#f6c9a4}
+.lp-glass .bar{margin-top:10px;height:6px;background:rgba(255,255,255,.2);border-radius:4px}
+.lp-glass .bar div{width:29%;height:6px;background:#ef783e;border-radius:4px}
+.lp-side-title{text-align:center;margin-top:10px}
+.lp-side-title b{display:block;font-size:20px;font-weight:800;letter-spacing:-.6px}
+.lp-side-title span{display:block;margin-top:6px;font-size:13px;color:#d3ddd4;line-height:1.6}
+.lp-open{min-height:52px;padding:0 24px;border-radius:12px;border:0;background:#ef783e;color:#1f1208;font-size:15px;font-weight:800;box-shadow:0 10px 22px rgba(8,30,22,.35);cursor:pointer;font-family:inherit}
+
+.landing-diag{position:absolute;inset:0;overflow-y:auto;background:#f6f8f4;opacity:0;transition:opacity .3s ease .5s}
+.landing:not(.open) .landing-diag{transition-delay:0s}
+.landing:not(.open) .landing-side{transition-delay:.05s}
+.landing.open .landing-diag{opacity:1}
+.landing:not(.open) .landing-diag{pointer-events:none;visibility:hidden}
+.landing-diag-top{max-width:960px;margin:0 auto;padding:22px 30px 0;display:flex;justify-content:space-between;align-items:center}
+.lp-close{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #d7ded5;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;color:#163f33;cursor:pointer;font-family:inherit}
+.landing-diag-top small{font-size:12px;color:#7a857d}
+.landing-diag .diagnosis-wrap{padding-top:10px}
+
+@media (max-width:860px){
+  .landing{flex-direction:column;min-height:0}
+  .landing-intro{padding:44px 18px 28px}
+  .landing-panel{position:relative;width:100%;min-height:520px}
+  .landing.open .landing-intro{display:none}
+  .landing.open .landing-panel{min-height:calc(100vh - 112px)}
+}
+@media (prefers-reduced-motion:reduce){.landing-panel,.landing-side,.landing-diag{transition:none}}
