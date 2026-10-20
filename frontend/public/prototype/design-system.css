@@ -1,0 +1,11 @@
+/* Shared service palette, typography and controls. Community data remains independent. */
+:root{--ink:#172a24;--muted:#748079;--green:#163f33;--mint:#e9f3ec;--orange:#ef783e;--paper:#f7f8f4;--line:#e4e9e2;--white:#fff;--header-background:#fffefbf2;--radius:20px;--font-family:'Noto Sans KR',sans-serif;--font-size:14px;--letter-spacing:-.4px;--text-secondary:#54645a;--soft:var(--mint);--gold:var(--orange)}
+.btn,.primary,.secondary{display:inline-flex;align-items:center;justify-content:center;gap:15px;background:var(--green);color:white;padding:15px 23px;border-radius:12px;font-size:14px;font-weight:700;transition:background .2s,transform .2s}
+.btn:hover,.primary:hover{background:#275946;transform:translateY(-1px)}
+.btn.orange{background:var(--orange)}
+.btn.orange:hover{background:#dd6830}
+.btn.secondary,.secondary{background:#fff;border:1px solid var(--line);color:var(--green)}
+.btn.soft{background:var(--mint);color:var(--green)}
+.btn.small{padding:10px 16px;font-size:12px}
+.primary,.secondary { line-height: normal; }
+.secondary:not(.btn):hover { background: var(--mint); color: var(--green); }
