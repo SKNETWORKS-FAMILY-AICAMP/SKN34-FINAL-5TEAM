@@ -24,18 +24,29 @@
   </section>
   <aside class="landing-panel" aria-label="청약 진단">
     <div class="landing-side" ${landing.open ? 'aria-hidden="true"' : ''}>
-      <div class="lp-glass">
-        <div class="k"><i></i>STEP 1 / 6 · 기본 정보</div>
-        <div class="l">연령대</div><div class="opts"><span>20대</span><span class="on">30대</span><span>40대 이상</span></div>
-        <div class="l">혼인 상태</div><div class="opts"><span>미혼</span><span class="on">신혼</span><span>기혼</span></div>
+      <div class="lp-mini">
+        <div class="lp-eyebrow">GET TO KNOW YOUR CONDITIONS</div>
+        <div class="lp-title">내 집 찾기, 내 조건부터.</div>
+        <ol class="lp-steps" aria-hidden="true">
+          ${['기본 정보','주택 소유','가족 구성','청약통장','소득·자산','희망 조건'].map((t, i) => `<li class="${i === 0 ? 'on' : ''}"><span>${i + 1}</span>${t}</li>`).join('')}
+        </ol>
+        <div class="lp-progress"><div></div></div>
+        <div class="lp-card">
+          <div class="lp-count">STEP 01 / 06</div>
+          <b class="lp-q">기본 정보</b>
+          <div class="lp-l">연령대</div>
+          <div class="lp-opts"><span>20대</span><span class="on">30대</span><span>40대 이상</span></div>
+          <div class="lp-l">혼인 상태</div>
+          <div class="lp-opts"><span>미혼</span><span class="on">신혼</span><span>기혼</span></div>
+          <div class="lp-actions"><span class="lp-prev">이전</span><span class="lp-next">다음 →</span></div>
+        </div>
+        <div class="lp-flow">
+          <b>이렇게 이어져요</b>
+          <div><span>01 내 조건 입력</span><em>지금</em></div>
+          <div><span>02 결과 미리보기</span><em>가입 없이</em></div>
+          <div><span>03 추천 공고 확인</span><em>서버 계산</em></div>
+        </div>
       </div>
-      <div class="lp-glass">
-        <div class="k">내 청약 가점 · 예시</div>
-        <div class="score"><b>24</b><span>/ 84점</span><span class="lp-tag">신혼 특별공급 확인</span></div>
-        <div class="bar"><div></div></div>
-        <div class="l">계약금 10% 기준 가능한 분양가 · <b style="color:#fff">5억 원 이하</b></div>
-      </div>
-      <div class="lp-side-title"><b>여기서 바로 진단해요</b><span>6단계 버튼만 누르면 가점과<br>가능한 공고가 정리돼요</span></div>
     </div>
     <div class="landing-diag" ${landing.open ? '' : 'aria-hidden="true"'}>
       <div class="landing-diag-top">
