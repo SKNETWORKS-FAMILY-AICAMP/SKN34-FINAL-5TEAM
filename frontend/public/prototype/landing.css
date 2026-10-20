@@ -93,3 +93,22 @@ body.landing-active footer{display:none}
 .lp-reco-empty{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;background:#fff;border:1px dashed #cfd9cc;border-radius:18px;padding:30px 32px}
 .lp-reco-empty b{display:block;font-size:17px;color:var(--ink,#172a24)}
 .lp-reco-empty p{margin:6px 0 0;font-size:13px;color:#748079}
+
+/* 메인 히어로 오른쪽: 자금 계획·시작 가이드 박스 */
+.hero .feature-strip.lp-hero-cards{position:absolute;z-index:3;top:50%;transform:translateY(-50%);right:max(40px,calc((100% - 1200px) / 2 + 40px));width:390px;margin:0;display:flex;flex-direction:column;gap:14px;color:var(--ink,#172a24)}
+.lp-hero-cards .feature-panel{padding:22px 26px;border:1px solid rgba(255,255,255,.5);background:rgba(235,242,233,.95);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 18px 40px rgba(8,30,22,.28)}
+.lp-hero-cards .feature-panel.warm{background:rgba(248,238,225,.95)}
+.lp-hero-cards .feature-panel h3{font-size:17px;line-height:1.45;margin:6px 0;color:var(--ink,#172a24)}
+.lp-hero-cards .feature-panel p{margin:0;font-size:11.5px;color:#657362}
+.lp-hero-cards .feature-panel a,.lp-hero-cards .lp-guide-link{margin-top:12px;color:var(--ink,#172a24)}
+.lp-hero-cards .feature-number{font-size:46px}
+.hero.lp-hero-with-cards .hero-label{display:none}
+@media (max-width:1100px){
+  .hero.lp-hero-with-cards{display:flex;flex-direction:column}
+  .hero.lp-hero-with-cards .hero-body{width:100%;box-sizing:border-box;margin:0}
+  .hero .feature-strip.lp-hero-cards{position:relative;top:auto;right:auto;transform:none;width:auto;flex-direction:row;padding:0 40px 44px}
+  .lp-hero-cards .feature-panel{flex:1}
+}
+@media (max-width:760px){
+  .hero .feature-strip.lp-hero-cards{flex-direction:column;padding:0 18px 32px}
+}
