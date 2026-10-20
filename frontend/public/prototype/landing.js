@@ -97,7 +97,6 @@
     if (isMember()) $('.hero-help')?.remove();
     heroSummary();
     homeListings();
-    deadlineSection();
   }
 
   const DAY = 86400000;
@@ -106,28 +105,6 @@
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const end = new Date(e); end.setHours(0, 0, 0, 0);
     return Math.round((end - today) / DAY);
-  }
-
-  // 메인에서만 의미 있는 내용: 내 추천 공고 중 7일 안에 접수가 끝나는 것 (지금 신청하지 않으면 놓치는 것)
-  function deadlineSection() {
-    $('#lp-deadline')?.remove();
-    const anchor = $('#app .section');
-    if (!anchor || !state.diagnosis || !live.recs) return;
-    const rows = live.recs
-      .map((r) => ({ h: r.house, eligible: r.eligible, d: daysLeft(r.house) }))
-      .filter((x) => x.h && x.d != null && x.d >= 0 && x.d <= 7)
-      .sort((a, b) => a.d - b.d || (b.eligible ? 1 : 0) - (a.eligible ? 1 : 0));
-    const list = rows.slice(0, 8).map(({ h, eligible, d }) => `<a class="lp-dl-row" href="#detail/${h.id}">
-        <span class="lp-dday${d <= 2 ? ' hot' : ''}">${d === 0 ? '오늘 마감' : `D-${d}`}</span>
-        <span class="lp-dl-main"><b>${esc(h.name)}</b><small>${esc(h.region)} · ${esc(h.type)} · ${esc(h.date)}</small></span>
-        <span class="lp-dl-price"><small>${esc(h.priceLabel)}</small>${moneyOr(h.price)}</span>
-        <span class="lp-dl-tag${eligible ? ' ok' : ''}">${eligible ? '신청 자격 충족' : '자격 확인 필요'}</span>
-      </a>`).join('');
-    const more = rows.length > 8 ? `<p class="lp-dl-more">이 밖에 ${rows.length - 8}건이 더 있어요. 전체는 <a href="#result">내 진단 결과</a>에서 볼 수 있어요.</p>` : '';
-    anchor.insertAdjacentHTML('afterend', `<section class="section lp-deadline" id="lp-deadline">
-      <div class="section-head"><div><div class="eyebrow">DON'T MISS IT</div><h2>곧 접수가 끝나는 내 공고</h2><p>내 조건 추천 공고 중 7일 안에 접수가 마감되는 공고예요. 마감이 가까운 순서예요.</p></div></div>
-      ${rows.length ? `<div class="lp-dl-list">${list}</div>${more}` : '<div class="lp-reco-empty"><div><b>7일 안에 마감되는 추천 공고가 없어요</b><p>여유 있게 내 조건에 맞는 공고를 살펴보세요.</p></div></div>'}
-    </section>`);
   }
 
   // 히어로 요약: 진단한 사람에게는 일반 소개 문구 대신 "내 현황" 숫자 3개를 보여 준다 (한눈에 읽히도록)
@@ -143,7 +120,7 @@
     const stats = `<div class="lp-stats" aria-label="내 청약 현황">
       <a href="#result"><b>${houses.length}<small>건</small></b><span>내 조건 추천 공고</span></a>
       <a href="#result"><b>${eligible}<small>건</small></b><span>신청 자격 충족</span></a>
-      <a href="#home" data-action="scroll-section" data-target="lp-deadline"><b>${soon}<small>건</small></b><span>7일 안에 접수 마감</span></a>
+      <a href="#home" data-action="scroll-section" data-target="lp-reco"><b>${soon}<small>건</small></b><span>7일 안에 접수 마감</span></a>
     </div>`;
     if (p) p.outerHTML = stats; else body.querySelector('.hero-actions')?.insertAdjacentHTML('beforebegin', stats);
   }
@@ -165,11 +142,21 @@
     if (state.user?.id && live.recs === null && !live.recsLoading) loadRecs();
     const recs = [...(live.recs || [])].sort((x, y) => (y.eligible ? 1 : 0) - (x.eligible ? 1 : 0)).map((r) => r.house).filter(Boolean);   // 신청 자격 충족 공고를 앞에
     const seen = new Set(recs.map((h) => h.id));
-    const houses = [...recs, ...featuredHouses().filter((h) => !seen.has(h.id))].slice(0, 12);
-    if (head) head.textContent = recs.length ? '내 진단 조건으로 고른 공고예요. 마우스를 올리면 잠시 멈춰요.' : '지금 접수 중인 공고예요. 마우스를 올리면 잠시 멈춰요.';
+    const eligibleIds = new Set((live.recs || []).filter((r) => r.eligible).map((r) => r.house?.id));
+    const dd = (h) => { const d = daysLeft(h); return d == null || d < 0 ? 9999 : d; };
+    const houses = [...recs, ...featuredHouses().filter((h) => !seen.has(h.id))].slice(0, 12)
+      .sort((x, y) => dd(x) - dd(y) || (eligibleIds.has(y.id) ? 1 : 0) - (eligibleIds.has(x.id) ? 1 : 0));   // 마감이 가까운 순서(D-day 오름차순)
+    if (head) head.textContent = (recs.length ? '내 진단 조건으로 고른 공고예요.' : '지금 접수 중인 공고예요.') + ' 접수 마감이 가까운 순서로 흘러가요. 마우스를 올리면 잠시 멈춰요.';
+    grid.closest('.section')?.setAttribute('id', 'lp-reco');
     const h2 = grid.closest('.section')?.querySelector('.section-head h2'); if (h2 && recs.length) h2.textContent = '내 조건에 맞는 공고';
     if (houses.length < 4) return;                                // 공고가 적으면 원래 3칸 그대로
     grid.outerHTML = `<div class="lp-marquee" aria-label="추천 공고 (자동으로 넘어가요)"><div class="lp-track">${houses.map((h) => houseCard(h)).join('')}</div></div>`;
+    document.querySelectorAll('.lp-track .house-card').forEach((card) => {   // 카드마다 D-day 표시
+      const h = houseById(Number(card.querySelector('[data-hid]')?.dataset.hid));
+      const d = daysLeft(h);
+      if (d == null || d < 0) return;
+      card.querySelector('.house-body .tags')?.insertAdjacentHTML('beforeend', `<span class="lp-dday${d <= 2 ? ' hot' : ''}">${d === 0 ? '오늘 마감' : `마감 D-${d}`}</span>`);
+    });
     if (typeof cardMedia === 'function') cardMedia();            // 카드 사진(로드뷰) 다시 붙이기
     startMarquee();
   }

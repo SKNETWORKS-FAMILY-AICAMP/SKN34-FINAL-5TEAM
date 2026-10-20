@@ -112,25 +112,6 @@ body.lp-home #app .section:first-of-type .section-head{margin-bottom:22px}
 @media (max-width:760px){.lp-stats a{min-width:0;flex:1}}
 .hero .eyebrow.lp-eyebrow-ko{letter-spacing:.2px;font-size:13px}
 
-/* 메인: 곧 접수가 끝나는 내 공고 */
-.lp-deadline{padding-bottom:56px}
-.lp-dl-list{background:#fff;border:1px solid var(--line,#e4e9e2);border-radius:18px;overflow:hidden}
-.lp-dl-row{display:grid;grid-template-columns:86px minmax(0,1fr) 150px 120px;align-items:center;gap:18px;padding:16px 24px;border-top:1px solid var(--line,#e4e9e2);color:var(--ink,#172a24);text-decoration:none;transition:background .15s}
-.lp-dl-row:first-child{border-top:0}
-.lp-dl-row:hover{background:#f6f9f4}
-.lp-dday{justify-self:start;font-weight:800;font-size:14px;color:var(--green,#163f33);background:var(--mint,#e9f3ec);border-radius:8px;padding:6px 10px}
+/* 추천 공고 카드의 마감 D-day */
+.lp-dday{display:inline-block;margin-left:6px;font-weight:800;font-size:11.5px;color:var(--green,#163f33);background:var(--mint,#e9f3ec);border-radius:6px;padding:4px 8px;vertical-align:middle}
 .lp-dday.hot{color:#fff;background:var(--orange,#ef783e)}
-.lp-dl-main{min-width:0;display:flex;flex-direction:column;gap:3px}
-.lp-dl-main b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lp-dl-main small{font-size:12px;color:#748079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lp-dl-price{display:flex;flex-direction:column;font-weight:800;font-size:15px;text-align:right}
-.lp-dl-price small{font-weight:500;font-size:11px;color:#748079}
-.lp-dl-tag{justify-self:end;font-size:11.5px;font-weight:700;color:#8a6a4a;background:#f8eee1;border-radius:6px;padding:5px 9px;white-space:nowrap}
-.lp-dl-tag.ok{color:var(--green,#163f33);background:var(--mint,#e9f3ec)}
-.lp-dl-more{margin:12px 4px 0;font-size:12.5px;color:#748079}
-.lp-dl-more a{color:var(--green,#163f33);font-weight:700;text-decoration:underline}
-@media (max-width:760px){
-  .lp-dl-row{grid-template-columns:64px minmax(0,1fr);row-gap:8px;padding:14px 16px}
-  .lp-dl-price{grid-column:2;text-align:left;flex-direction:row;gap:6px;align-items:baseline}
-  .lp-dl-tag{grid-column:2;justify-self:start}
-}
