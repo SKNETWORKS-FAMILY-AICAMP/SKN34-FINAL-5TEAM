@@ -67,3 +67,4 @@
 .rb-pick select{width:auto;min-width:220px;padding:8px 34px 8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background-color:rgba(255,255,255,.1);color:#fff;font-size:13px;font-weight:700}
 .rb-pick select option{color:#172a24;background:#fff}
 .rb-note{margin-top:10px !important;font-size:11.5px !important;color:#f6c9a4 !important}
+.type-empty{display:block;margin-top:8px;font-size:12px;font-weight:700;color:#b5501d}
