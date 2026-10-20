@@ -20,6 +20,8 @@
     marriage: ['혼인 상태', (r) => r.answers.marriage],
     head: ['세대주', (r) => r.answers.head],
     ownership: ['주택 소유', (r) => r.answers.ownership],
+    firstHome: ['과거 주택 소유', (r) => r.answers.firstHome],
+    income: ['연 소득 구간', (r) => r.answers.income],
     children: ['미성년 자녀', (r) => r.answers.children],
     region: ['현재 거주', (r) => r.answers.region],
     wish: ['희망 지역', (r) => r.answers.wish],
@@ -151,6 +153,12 @@
 
   /* ── 내 공간 오른쪽: "내 조건 요약"에는 조건만, 계정은 따로, 리포트는 진단 카드로, 내 집 기준은 집 찾기 쪽으로 ── */
   function tidyDashAside() {
+    // "다음으로 해볼 일"(공고 둘러보기·대출·자금·이웃 경험)은 상단 메뉴와 같은 곳으로 가는 바로가기라 뺀다
+    [...document.querySelectorAll('#app .dash-grid .section-head h2')].filter((h) => h.textContent.trim() === '다음으로 해볼 일').forEach((h) => {
+      const head = h.closest('.section-head'); const grid = head?.nextElementSibling;
+      if (grid?.classList.contains('grid2')) grid.remove();
+      head?.remove();
+    });
     const panel = $('#app .dash-aside .panel');
     if (!panel || panel.dataset.tidy) return;
     panel.dataset.tidy = '1';

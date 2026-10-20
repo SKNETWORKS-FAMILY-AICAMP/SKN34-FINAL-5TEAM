@@ -208,6 +208,10 @@ async function ensureUnits(id) {
 /* ───────── 4. 내 정보·추천·대출 ───────── */
 
 // 진단 답변 → 백엔드 UserProfileIn. 진단은 연령대·통장 가입 기간만 받으므로 아래 값은 추정이다.
+// 진단의 연 소득 구간 → 대표값(원, 구간 가운데쯤). 정책대출 금리·한도 계산에만 쓴다
+const INCOME_WON = { '3천만 원 이하': 25000000, '3천~5천만 원': 40000000, '5천~7천만 원': 60000000, '7천만~1억 원': 85000000, '1억 원 초과': 120000000 };
+const incomeBand = (won) => (won == null ? '입력 안 함' : Object.entries(INCOME_WON).reduce((best, [k, v]) => (Math.abs(v - won) < Math.abs(INCOME_WON[best] - won) ? k : best), '3천만 원 이하'));
+
 function profilePayload(email) {
   const a = state.diagnosis;
   const base = { email, ...(state.user?.member ? { nickname: state.user.name } : {}) };
@@ -221,13 +225,14 @@ function profilePayload(email) {
     is_married: a.marriage !== '미혼',
     is_newlywed: a.marriage === '신혼',
     is_householder: a.head === '세대주',
-    is_first_time_buyer: a.ownership === '무주택',
+    is_first_time_buyer: a.ownership === '무주택' && a.firstHome !== '있어요',      // 세대원 포함 주택 소유 이력이 없어야 생애최초
     no_house_period_months: a.ownership === '무주택' ? Math.round((Number(a.years) || 0) * 12) : 0,
     dependents_count: Number(a.family) || 0,
     subscription_account_type: '주택청약종합저축',
     subscription_joined_at: joined.toISOString().slice(0, 10),
     subscription_payment_count: Number(a.payments) || 0,
     available_assets: (Number(a.assets) || 0) * 10000,                              // 만원 → 원
+    annual_income: INCOME_WON[a.income] ?? null,                                    // 소득 구간의 대표값(원). 입력 안 함이면 null
     desired_region_code: REGION_CODE[a.wish] || null,
   };
 }
@@ -265,6 +270,8 @@ function diagnosisFromProfile(p) {
     head: p.is_householder ? '세대주' : '세대원',
     marriage: p.is_newlywed ? '신혼' : p.is_married ? '기혼' : '미혼',
     ownership: months > 0 || p.is_first_time_buyer ? '무주택' : '주택 보유',
+    firstHome: p.is_first_time_buyer ? '없어요' : '있어요',
+    income: incomeBand(p.annual_income == null ? null : Number(p.annual_income)),
     years: Math.round(months / 12),
     family: Number(p.dependents_count) || 0,
     account: joinedYears,
