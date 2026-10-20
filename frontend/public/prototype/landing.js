@@ -255,6 +255,7 @@
     const b = e.target.closest('[data-action]');
     if (!b) return;
     const act = b.dataset.action;
+    if (act === 'next' && state.step === 5) window.dispatchEvent(new CustomEvent('cy:diagnosis-done'));   // 진단 기록 저장용 신호 (diagnosis-history.js)
     if (act === 'landing-open') { e.preventDefault(); openPanel(); return; }
     if (act === 'landing-close') { e.preventDefault(); closePanel(); return; }
     if (act === 'redo-diagnosis') { e.preventDefault(); state.step = 0; if (state.diagnosis) state.answers = { ...state.answers, ...state.diagnosis }; go('diagnosis'); window.scrollTo(0, 0); return; }
