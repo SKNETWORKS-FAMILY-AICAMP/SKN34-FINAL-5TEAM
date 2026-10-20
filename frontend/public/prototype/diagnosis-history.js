@@ -3,7 +3,8 @@
    · 내 공간: 맨 위에 최근 진단 카드(눈에 띄게) — 결과 보기 / 기록 비교로 바로 이동
    index.html 에서 landing.js 다음에 불러온다 (render 를 한 번 더 감싼다). */
 (function () {
-  const hist = { records: null, loadingFor: 0, pending: false, posting: false, selected: new Set(), scrollTo: false };
+  const hist = { records: null, loadingFor: 0, pending: false, posting: false, selected: new Set(), scrollTo: false, showAll: false };
+  const LIST_PAGE = 5;   // 기록이 많아도 처음엔 최근 5건만 (아래 추천 공고가 너무 밀리지 않게)
 
   // 비교 기준: key → [이름, 값 꺼내기, 숫자 비교 여부]
   const CRITERIA = {
@@ -41,7 +42,12 @@
   async function postRecord() {
     hist.posting = true;
     try {
-      const rec = await api(`/users/${state.user.id}/diagnoses`, { method: 'POST', body: { answers: state.diagnosis } });
+      // 기록의 추천·자격 숫자는 진단 결과 화면 목록과 같은 기준(관심 유형으로 거른 내 추천 공고)으로 남긴다
+      if (live.recs === null || live.recsLoading) await loadRecs();
+      const mine = myRecs();
+      const rec = await api(`/users/${state.user.id}/diagnoses`, { method: 'POST', body: {
+        answers: state.diagnosis, recommend_count: mine.length, eligible_count: mine.filter((r) => r.eligible).length,
+      } });
       hist.records = [rec, ...(hist.records || [])];
       hist.pending = false;
     } catch (error) { toast(`진단 기록을 저장하지 못했어요: ${error.message}`); hist.pending = false; }
@@ -49,7 +55,7 @@
   }
 
   // 진단을 마치면 신호가 온다 → 프로필 저장이 끝난(사용자 번호가 있는) 다음 render 에서 기록을 남긴다
-  window.addEventListener('cy:diagnosis-done', () => { hist.pending = true; });
+  window.addEventListener('cy:diagnosis-done', () => { hist.pending = true; live.recsEligibleOnly = false; live.recsShowAll = false; });   // 새 진단이면 결과 목록 보기 방식도 처음으로
 
   function sync() {
     const uid = state.user?.id || 0;
@@ -66,7 +72,8 @@
     const recs = hist.records;
     if (!state.user?.id || recs === null) return '<section class="section" id="lp-history"><div class="section-head"><div><h2>날짜별 진단 기록</h2><p>기록을 불러오는 중이에요…</p></div></div></section>';
     const latestId = recs[0]?.id;
-    const rows = recs.map((r) => `<label class="hist-row${hist.selected.has(r.id) ? ' on' : ''}">
+    const shown = hist.showAll ? recs : recs.filter((r, i) => i < LIST_PAGE || hist.selected.has(r.id));
+    const rows = shown.map((r) => `<label class="hist-row${hist.selected.has(r.id) ? ' on' : ''}">
         <input type="checkbox" data-hist-pick="${r.id}" ${hist.selected.has(r.id) ? 'checked' : ''} ${!hist.selected.has(r.id) && hist.selected.size >= 4 ? 'disabled' : ''}>
         <span class="hist-date">${when(r.created_at, true)}${r.id === latestId ? ' <em>최근</em>' : ''}</span>
         <span class="hist-score"><b>${r.score}</b>점</span>
@@ -102,7 +109,7 @@
       </div>` : '';
     const guest = !state.user?.member ? '<p class="hist-note">지금은 이 브라우저에서만 이어 볼 수 있어요. 로그인하면 이메일 기준으로 다른 기기에서도 기록을 볼 수 있어요.</p>' : '';
     return `<section class="section" id="lp-history"><div class="section-head"><div><div class="eyebrow">MY DIAGNOSIS HISTORY</div><h2>날짜별 진단 기록 <small>${recs.length}건</small></h2><p>진단을 마칠 때마다 그날의 조건과 가점·추천 결과가 저장돼요.</p></div><button type="button" class="btn secondary small" data-action="redo-diagnosis">새로 진단하기</button></div>
-      ${recs.length ? `<div class="hist-list">${rows}</div>${compare}` : '<div class="empty"><h3>아직 저장된 기록이 없어요</h3><p>진단을 마치면 이곳에 날짜별로 쌓여요.</p></div>'}${guest}</section>`;
+      ${recs.length ? `<div class="hist-list">${rows}</div>${recs.length > LIST_PAGE ? `<button type="button" class="hist-more" data-action="hist-more">${hist.showAll ? '최근 5건만 보기' : `기록 ${recs.length}건 모두 보기`}</button>` : ''}${compare}` : '<div class="empty"><h3>아직 저장된 기록이 없어요</h3><p>진단을 마치면 이곳에 날짜별로 쌓여요.</p></div>'}${guest}</section>`;
   }
 
   /* ── 내 공간: 최근 진단 카드 ── */
@@ -150,6 +157,8 @@
       const k = b.dataset.value;
       if (criteria.has(k)) criteria.delete(k); else criteria.add(k);
       save('history-criteria', [...criteria]); render();
+    } else if (act === 'hist-more') {
+      hist.showAll = !hist.showAll; render();
     } else if (act === 'hist-clear') {
       hist.selected.clear(); render();
     } else if (act === 'hist-open') {

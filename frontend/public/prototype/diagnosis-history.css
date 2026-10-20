@@ -51,3 +51,4 @@
 .dash-diag-actions{display:flex;flex-wrap:wrap;gap:10px}
 .dash-diag-actions .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,.45);color:#fff}
 .dash-diag-actions .btn.secondary:hover{background:rgba(255,255,255,.12)}
+.hist-more{display:block;margin:10px auto 0;background:none;border:0;font:inherit;font-size:13px;font-weight:700;color:var(--green,#163f33);text-decoration:underline;text-underline-offset:4px;cursor:pointer}

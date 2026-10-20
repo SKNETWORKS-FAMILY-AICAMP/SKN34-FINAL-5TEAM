@@ -114,9 +114,10 @@
   // 히어로 요약: 진단한 사람에게는 일반 소개 문구 대신 "내 현황" 숫자 3개를 보여 준다 (한눈에 읽히도록)
   function heroSummary() {
     const body = $('#app .hero-body');
-    if (!body || !state.diagnosis || !live.recs || !live.recs.length) return;
-    const houses = live.recs.map((r) => r.house).filter(Boolean);
-    const eligible = live.recs.filter((r) => r.eligible).length;
+    if (!body || !state.diagnosis || !live.recs) return;
+    const mine = myRecs();                                       // 진단 결과 목록과 같은 기준 (관심 유형·비주택 제외)
+    const houses = mine.map((r) => r.house);
+    const eligible = mine.filter((r) => r.eligible).length;
     const soon = houses.filter((h) => { const d = daysLeft(h); return d != null && d >= 0 && d <= 7; }).length;
     const who = isMember() ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황';
     const eyebrow = body.querySelector('.eyebrow'); if (eyebrow) { eyebrow.innerHTML = `<span class="dot"></span> ${who}`; eyebrow.classList.add('lp-eyebrow-ko'); }
@@ -144,11 +145,11 @@
       return;
     }
     if (state.user?.id && live.recs === null && !live.recsLoading) loadRecs();
-    const recs = [...(live.recs || [])].sort((x, y) => (y.eligible ? 1 : 0) - (x.eligible ? 1 : 0)).map((r) => r.house).filter(Boolean);   // 신청 자격 충족 공고를 앞에
+    const recs = [...myRecs()].sort((x, y) => (y.eligible ? 1 : 0) - (x.eligible ? 1 : 0)).map((r) => r.house).filter(Boolean);   // 신청 자격 충족 공고를 앞에
     const seen = new Set(recs.map((h) => h.id));
-    const eligibleIds = new Set((live.recs || []).filter((r) => r.eligible).map((r) => r.house?.id));
+    const eligibleIds = new Set(myRecs().filter((r) => r.eligible).map((r) => r.house.id));
     const dd = (h) => { const d = daysLeft(h); return d == null || d < 0 ? 9999 : d; };
-    const houses = [...recs, ...featuredHouses().filter((h) => !seen.has(h.id))].slice(0, 12)
+    const houses = (recs.length ? recs : featuredHouses().filter((h) => !seen.has(h.id))).slice(0, 12)   // 추천이 있으면 추천만 (접수 중 공고를 섞지 않는다)
       .sort((x, y) => dd(x) - dd(y) || (eligibleIds.has(y.id) ? 1 : 0) - (eligibleIds.has(x.id) ? 1 : 0));   // 마감이 가까운 순서(D-day 오름차순)
     if (head) head.textContent = (recs.length ? '내 진단 조건으로 고른 공고예요.' : '지금 접수 중인 공고예요.') + ' 접수 마감이 가까운 순서로 흘러가요. 마우스를 올리면 잠시 멈춰요.';
     grid.closest('.section')?.setAttribute('id', 'lp-reco');

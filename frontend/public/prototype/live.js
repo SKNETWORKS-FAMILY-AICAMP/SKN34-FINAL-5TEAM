@@ -72,10 +72,19 @@ const PALETTE = ['#bfcfbf', '#d8d0b9', '#c6d1da', '#bcc8b4', '#b7cfd0', '#d2c8b7
 const SOURCE_LABEL = { sh: 'SH', lh: 'LH', applyhome: '청약홈' };
 
 // 진단의 "관심 주거 유형"과 비교하려고 공급유형을 세 갈래로 묶는다
+// 공고 유형 → 진단의 "관심 주거 유형" 묶음
+// (청약홈: 국민=공공분양 / 민영·오피스텔·도시형=민간분양 / 공공지원민간임대·민간임대=민간임대,
+//  LH·SH: 임대 계열=공공임대 / 분양주택·공공분양(신혼희망)=공공분양, 가정어린이집 같은 비주택은 추천에서 뺀다)
+// 순서가 중요하다: '민간임대 오피스텔'처럼 여러 단어가 섞인 이름이 있어서 구체적인 것부터 본다.
 function supplyGroup(type = '') {
-  if (/임대|행복주택/.test(type)) return '공공임대';
-  if (/민영|민간|오피스텔|무순위|임의/.test(type)) return '민간분양';
-  return '공공분양';
+  if (/가정어린이집/.test(type)) return '비주택';
+  if (/공공지원민간임대|민간임대 민간임대/.test(type)) return '민간임대';
+  if (/오피스텔|도시형|생활숙박/.test(type)) return '민간분양';
+  if (/임대|행복주택|전세/.test(type)) return '공공임대';
+  if (/민영|민간/.test(type)) return '민간분양';
+  if (/국민|분양주택|공공분양|신혼희망/.test(type)) return '공공분양';
+  if (/무순위|임의|재공급/.test(type)) return '민간분양';   // 청약홈 무순위·임의공급·재공급은 대부분 민영 단지 잔여분
+  return '기타';
 }
 
 // 백엔드 ListingOut → 화면이 쓰는 house 모양
@@ -284,7 +293,8 @@ async function loadRecs() {
   if (!state.user?.id) return;
   live.recsLoading = true; live.recsError = null;
   try {
-    const data = await api(`/recommendations/${state.user.id}`);
+    const type = state.diagnosis?.type;   // 관심 주거 유형은 서버에서 먼저 걸러야 개수 제한(50) 안에서 0건이 되지 않는다
+    const data = await api(`/recommendations/${state.user.id}`, { params: { group: type && type !== '전체' ? type : null } });
     live.recs = data.items.map((item) => ({
       house: upsertHouse(toHouse(item.listing)),
       eligible: item.eligible, score: item.score, band: item.percentile_band,
@@ -292,6 +302,13 @@ async function loadRecs() {
   } catch (error) { live.recsError = error.message; live.recs = []; }
   finally { live.recsLoading = false; }
   render();
+}
+
+// 내 추천 공고 = 서버 추천 중 비주택을 빼고, 진단의 "관심 주거 유형"으로 거른 것.
+// 메인 숫자·흐르는 카드·진단 결과 목록·진단 기록 숫자가 모두 이 목록 하나를 기준으로 맞춰진다.
+function myRecs() {
+  const type = state.diagnosis?.type;
+  return (live.recs || []).filter((r) => r.house && r.house.group !== '비주택' && (!type || type === '전체' || r.house.group === type));
 }
 
 async function loadLoans(houseId) {
@@ -533,14 +550,17 @@ function result() {
   const a = state.diagnosis;
   const recs = live.recs;
   const score = recs?.length ? recs[0].score : null;
-  const wanted = (recs || []).filter((r) => a.type === '전체' || r.house.group === a.type);
+  const mine = myRecs();
+  const eligibleN = mine.filter((r) => r.eligible).length;
+  const wanted = live.recsEligibleOnly ? mine.filter((r) => r.eligible) : mine;
+  const PAGE = 9;
   let recBody;
   if (live.userError) recBody = `<div class="callout">내 조건을 서버에 저장하지 못했어요: ${esc(live.userError)} <button class="btn soft small" data-action="retry-user" style="margin-left:12px">다시 시도</button></div>`;
   else if (!state.user?.id || live.recsLoading || recs === null) recBody = '<div class="empty"><h3>추천 공고를 계산하는 중이에요…</h3></div>';
   else if (live.recsError) recBody = noteBox(`추천을 불러오지 못했어요: ${live.recsError}`);
   else if (!wanted.length) recBody = '<div class="callout">지금 접수 중·예정인 공고 중 희망 조건과 맞는 공고가 없어요. 희망 지역이나 유형을 바꾸거나 전체 공고를 둘러보세요.</div>';
-  else recBody = `<div class="grid3">${wanted.slice(0, 6).map((r) => `<div>${houseCard(r.house)}<div class="tags" style="margin-top:10px"><span class="badge ${r.eligible ? '' : 'gray'}">${r.eligible ? '신청 조건 충족' : '조건 미충족'}</span><span class="badge gray">당첨 가능 구간 ${esc(r.band)}</span></div></div>`).join('')}</div>`;
-  return `<div class="wrap page reveal"><div class="breadcrumbs">청약 진단 / 결과</div><div class="result-banner"><div><div class="eyebrow" style="color:#c1d6c3">YOUR FIRST STEP</div><h2>내 조건이 정리됐어요.</h2><p>${esc(a.age)} · ${esc(a.marriage)} · ${esc(a.ownership)} · ${esc(a.region)} 거주<br>희망 조건: ${esc(a.wish)} · ${esc(a.type)}</p></div><div><small style="color:#c5d7c5">내 청약 가점</small><div class="score">${score ?? '–'}<span> / 84</span></div></div></div><div class="grid2"><section class="panel"><h3>가점은 이렇게 계산돼요</h3><p>무주택 기간, 부양가족 수, 청약통장 가입 기간과 납입 횟수를 서버(백엔드)가 계산한 값이에요.</p><p class="demo-note">연령별 산정·세대원 인정 등 예외 조건을 모두 반영한 실제 자격 판정은 아닙니다.</p><a href="#diagnosis" class="text-link" style="display:block;margin-top:20px">입력 정보 수정 ↗</a></section><section class="panel"><h3>신청 전에 확인할 항목</h3><div class="kv"><span>공고일 기준 세대 정보</span><span class="badge gray">직접 확인</span></div><div class="kv"><span>소득·자산 산정 기준</span><span class="badge gray">직접 확인</span></div><div class="kv"><span>공고별 거주·통장 요건</span><span class="badge gray">원문 확인</span></div></section></div><section class="section"><div class="section-head"><div><h2>내게 맞는 공고</h2><p>접수 중·예정 공고 중 희망 지역 기준으로 서버가 고른 결과예요.</p></div><a href="#homes" class="text-link">전체 공고 보기 ↗</a></div>${recBody}</section>${state.user?.member ? '<div class="join-box"><h2>로그인돼 있어요.</h2><p>자금 계획과 대출 계산, 청약 준비 리포트를 확인해 보세요.</p><a class="btn" href="#finance">대출·자금 계산 →</a></div>' : '<div class="join-box"><h2>내 조건을 저장하고, 다음 단계로.</h2><p>로그인하면 내 정보가 이메일 기준으로 서버에 저장돼요.</p><button class="btn" data-action="signup">결과 저장하고 시작하기 →</button><p style="margin-bottom:0">비밀번호·본인 인증은 아직 없어요. 이메일로 내 정보를 구분합니다.</p></div>'}</div>`;
+  else recBody = `<div class="grid3">${wanted.slice(0, live.recsShowAll ? wanted.length : PAGE).map((r) => `<div>${houseCard(r.house)}<div class="tags" style="margin-top:10px"><span class="badge ${r.eligible ? '' : 'gray'}">${r.eligible ? '신청 조건 충족' : '조건 미충족'}</span><span class="badge gray">당첨 가능 구간 ${esc(r.band)}</span></div></div>`).join('')}</div>${wanted.length > PAGE ? `<div style="text-align:center;margin-top:24px"><button class="btn secondary" data-action="recs-more">${live.recsShowAll ? '접기' : `추천 공고 ${wanted.length}건 모두 보기`}</button></div>` : ''}`;
+  return `<div class="wrap page reveal"><div class="breadcrumbs">청약 진단 / 결과</div><div class="result-banner"><div><div class="eyebrow" style="color:#c1d6c3">YOUR FIRST STEP</div><h2>내 조건이 정리됐어요.</h2><p>${esc(a.age)} · ${esc(a.marriage)} · ${esc(a.ownership)} · ${esc(a.region)} 거주<br>희망 조건: ${esc(a.wish)} · ${esc(a.type)}</p></div><div><small style="color:#c5d7c5">내 청약 가점</small><div class="score">${score ?? '–'}<span> / 84</span></div></div></div><div class="grid2"><section class="panel"><h3>가점은 이렇게 계산돼요</h3><p>무주택 기간, 부양가족 수, 청약통장 가입 기간과 납입 횟수를 서버(백엔드)가 계산한 값이에요.</p><p class="demo-note">연령별 산정·세대원 인정 등 예외 조건을 모두 반영한 실제 자격 판정은 아닙니다.</p><a href="#diagnosis" class="text-link" style="display:block;margin-top:20px">입력 정보 수정 ↗</a></section><section class="panel"><h3>신청 전에 확인할 항목</h3><div class="kv"><span>공고일 기준 세대 정보</span><span class="badge gray">직접 확인</span></div><div class="kv"><span>소득·자산 산정 기준</span><span class="badge gray">직접 확인</span></div><div class="kv"><span>공고별 거주·통장 요건</span><span class="badge gray">원문 확인</span></div></section></div><section class="section"><div class="section-head"><div><h2>내게 맞는 공고 <small style="font-size:15px;color:#748079">${mine.length}건 · 신청 자격 충족 ${eligibleN}건</small></h2><p>접수 중·예정 공고 중 희망 지역${a.type && a.type !== '전체' ? `·관심 유형(${esc(a.type)})` : ''} 기준으로 서버가 고른 결과예요.</p></div>${mine.length ? `<div class="hist-chips" role="group" aria-label="추천 공고 보기"><button type="button" class="hist-chip${live.recsEligibleOnly ? '' : ' on'}" data-action="recs-filter" data-value="all">전체 ${mine.length}</button><button type="button" class="hist-chip${live.recsEligibleOnly ? ' on' : ''}" data-action="recs-filter" data-value="eligible">신청 자격 충족 ${eligibleN}</button></div>` : ''}</div>${recBody}</section>${state.user?.member ? '<div class="join-box"><h2>로그인돼 있어요.</h2><p>자금 계획과 대출 계산, 청약 준비 리포트를 확인해 보세요.</p><a class="btn" href="#finance">대출·자금 계산 →</a></div>' : '<div class="join-box"><h2>내 조건을 저장하고, 다음 단계로.</h2><p>로그인하면 내 정보가 이메일 기준으로 서버에 저장돼요.</p><button class="btn" data-action="signup">결과 저장하고 시작하기 →</button><p style="margin-bottom:0">비밀번호·본인 인증은 아직 없어요. 이메일로 내 정보를 구분합니다.</p></div>'}</div>`;
 }
 
 // 내 공간: 내 진단 요약과 다음에 할 일 (진단을 마쳐야 볼 수 있다)
@@ -725,6 +745,10 @@ document.addEventListener('click', async (e) => {
     state.diagnosis = null; save('diagnosis', null);
     state.user = null; save('user', null); live.recs = null; live.userTried = false; live.loan = { houseId: null, loading: false, error: null, items: null, key: '' };
     render(); toast('로그아웃했어요.');
+  } else if (act === 'recs-more') {                            // 진단 결과: 추천 공고 모두 보기 / 접기
+    live.recsShowAll = !live.recsShowAll; render();
+  } else if (act === 'recs-filter') {                          // 진단 결과: 전체 / 신청 자격 충족만
+    live.recsEligibleOnly = b.dataset.value === 'eligible'; live.recsShowAll = false; render();
   } else if (act === 'retry-user') {                            // 내 조건 저장 재시도
     live.userTried = false; live.userError = null; render();
   } else if (act === 'route-alt') {                               // 교통: 추천/다른 경로 바꾸기
