@@ -645,7 +645,7 @@ document.addEventListener('submit', async (e) => {
       await saveProfile($('#email').value.trim(), $('#nickname').value.trim() || '새싹');
       closeModal();
       const next = afterLogin; afterLogin = null;                 // 로그인이 필요해서 열렸다면 하려던 일을 이어서 한다 (restored.js)
-      if (next) { render(); next(); } else if (location.hash === '#result') render(); else go('dashboard');
+      if (next) { render(); next(); } else if (location.hash === '#result') render(); else go('home');   // 로그인 뒤 첫 화면은 메인(그림 있는 화면)
       toast('저장했어요. 다음부터 이 이메일·닉네임으로 로그인할 수 있어요.');
     } catch (error) {
       err.textContent = error.message; button.disabled = false; button.textContent = '다시 시도';
@@ -692,7 +692,7 @@ document.addEventListener('click', async (e) => {
       catch { await saveProfile(TEST_ACCOUNT.email, TEST_ACCOUNT.nickname); await loginWith(TEST_ACCOUNT.email, TEST_ACCOUNT.nickname); }
       closeModal();
       const next = afterLogin; afterLogin = null;
-      if (next) { render(); next(); } else go('result');
+      if (next) { render(); next(); } else go('home');
       toast(`${state.user.name} 테스트 계정으로 로그인했어요.`);
     } catch (error) {
       err.textContent = error.message; b.disabled = false; b.textContent = '🔑 관리자 테스트 계정으로 바로 로그인';
@@ -706,7 +706,7 @@ document.addEventListener('click', async (e) => {
       await loginWith($('#email').value, $('#nickname').value);
       closeModal();
       const next = afterLogin; afterLogin = null;
-      if (next) { render(); next(); } else go('result');
+      if (next) { render(); next(); } else go('home');
       toast(`${state.user.name}님, 다시 만나 반가워요.`);
     } catch (error) {
       err.textContent = error.message; b.disabled = false; b.textContent = '로그인';
