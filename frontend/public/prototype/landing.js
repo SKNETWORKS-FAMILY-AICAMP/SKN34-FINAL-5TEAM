@@ -96,6 +96,9 @@
     }
     if (isMember()) $('.hero-help')?.remove();
     heroSummary();
+    // 사진 아래쪽을 페이지 배경으로 녹이는 층 (추천 줄이 사진에 걸쳐 이어지게)
+    const heroEl = $('#app .hero');
+    if (heroEl && !heroEl.querySelector('.lp-hero-fade')) heroEl.insertAdjacentHTML('beforeend', '<div class="lp-hero-fade" aria-hidden="true"></div>');
     homeListings();
   }
 

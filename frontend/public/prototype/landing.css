@@ -95,10 +95,16 @@ body.landing-active footer{display:none}
 .lp-reco-empty p{margin:6px 0 0;font-size:13px;color:#748079}
 
 /* 메인(스크롤형): 첫 화면은 히어로(내 현황 + 버튼 1개)만, 바닥에 추천 공고 윗부분이 살짝 보이게 */
-body.lp-home .hero{min-height:clamp(340px,calc(100vh - 140px - 300px),620px);display:flex;align-items:center}
-body.lp-home .hero .hero-body{width:100%;box-sizing:border-box;padding-top:clamp(28px,5vh,68px);padding-bottom:clamp(28px,5vh,65px)}
+body.lp-home .hero{min-height:clamp(520px,calc(100vh - 140px - 120px),820px);display:flex;align-items:center}
+body.lp-home .hero .hero-body{width:100%;box-sizing:border-box;padding-top:clamp(28px,5vh,68px);padding-bottom:calc(clamp(28px,5vh,65px) + 230px)}
+body.lp-home .hero-label{display:none}
+/* 사진 아래쪽 → 페이지 배경색으로 서서히 */
+.lp-hero-fade{position:absolute;left:0;right:0;bottom:0;height:320px;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(247,248,244,0) 0%,rgba(247,248,244,.72) 28%,rgba(247,248,244,.96) 46%,var(--paper,#f7f8f4) 62%)}
+/* 추천 공고 줄을 사진 아래쪽에 걸쳐 올림 */
+body.lp-home #app .section:first-of-type{position:relative;z-index:3;margin-top:-200px}
 body.lp-home .hero h1{font-size:clamp(38px,5.4vh,55px)}
-body.lp-home #app .section:first-of-type{padding-top:40px}
+body.lp-home #app .section:first-of-type{padding-top:0}
 body.lp-home #app .section:first-of-type .section-head{margin-bottom:22px}
 
 /* 히어로 "내 현황" 숫자 */
