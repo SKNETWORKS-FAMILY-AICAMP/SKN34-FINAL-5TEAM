@@ -73,11 +73,8 @@ body.landing-active footer{display:none}
 }
 @media (prefers-reduced-motion:reduce){.landing-panel,.landing-side,.landing-diag{transition:none}}
 
-/* 메인: 청약 진단 바로가기 카드를 뺀 3칸 */
-.quick-bar.quick-3{grid-template-columns:repeat(3,1fr)}
 @media (max-width:860px){
   .landing-intro{padding-bottom:28px !important}
   .landing-sources{position:static;margin-top:40px}
-  .quick-bar.quick-3{grid-template-columns:1fr}
 }
 .lp-guide-link{display:inline-block;margin-top:17px;font-size:12px;background:none;border:0;padding:0;font-family:inherit;font-weight:700;color:inherit;text-decoration:underline;text-underline-offset:4px;cursor:pointer}

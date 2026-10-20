@@ -73,20 +73,18 @@
     if (brand) brand.setAttribute('href', isMember() ? '#home' : '#start');
   };
 
-  // 메인(#home): 상단 "청약 진단" 메뉴와 겹치는 진단 시작 버튼·바로가기 카드를 정리한다
+  // 메인(#home): 상단 카테고리 메뉴(청약 진단·집 찾기·금융 정보·커뮤니티)와 같은 곳으로 가는 버튼은 정리한다
   function tidyHome() {
-    const card = $('.quick-bar a.quick[href="#diagnosis"]');
-    if (card) { card.remove(); $('.quick-bar')?.classList.add('quick-3'); }
+    $('.quick-bar')?.remove();                                   // 집 찾기·금융 정보·우리 이야기 바로가기 카드 = 상단 메뉴와 같음
+    $('.hero-actions .hero-link')?.remove();                     // "공고 둘러보기" = 집 찾기
+    document.querySelectorAll('#app .section-head a[href="#homes"], #app .section-head a[href="#community"], #app a.text-link[href="#homes"], #app a.text-link[href="#community"]').forEach((a) => a.remove());   // "공고 전체 보기"·"커뮤니티 둘러보기" = 상단 메뉴
     const cta = $('.hero-actions a.btn[href="#diagnosis"]');
     if (cta) {
-      if (state.diagnosis) {
+      if (state.diagnosis) {                                     // 진단 결과는 상단 메뉴에 없는 곳이라 남긴다
         cta.setAttribute('href', '#result');
         cta.innerHTML = '내 진단 결과 보기 <span>↗</span>';
-        const link = $('.hero-actions .hero-link'); if (link) link.textContent = '공고 둘러보기';
       } else {
-        cta.setAttribute('href', '#homes');
-        cta.innerHTML = '공고 둘러보기 <span>↗</span>';
-        $('.hero-actions .hero-link')?.remove();
+        $('.hero-actions')?.remove();                            // 진단 시작 = 상단 "청약 진단"
       }
     }
     // 아래 "시작 가이드" 칸의 진단 링크도 겹치므로 이용 흐름 안내로 바꾼다
