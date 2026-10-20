@@ -3,7 +3,7 @@
    · 내 공간: 맨 위에 최근 진단 카드(눈에 띄게) — 결과 보기 / 기록 비교로 바로 이동
    index.html 에서 landing.js 다음에 불러온다 (render 를 한 번 더 감싼다). */
 (function () {
-  const hist = { records: null, loadingFor: 0, pending: false, posting: false, selected: new Set(), scrollTo: false, showAll: false };
+  const hist = { records: null, loadingFor: 0, pending: false, posting: false, selected: new Set(), scrollTo: false, showAll: false, viewId: null };
   const LIST_PAGE = 5;   // 기록이 많아도 처음엔 최근 5건만 (아래 추천 공고가 너무 밀리지 않게)
 
   // 비교 기준: key → [이름, 값 꺼내기, 숫자 비교 여부]
@@ -55,7 +55,7 @@
   }
 
   // 진단을 마치면 신호가 온다 → 프로필 저장이 끝난(사용자 번호가 있는) 다음 render 에서 기록을 남긴다
-  window.addEventListener('cy:diagnosis-done', () => { hist.pending = true; live.recsEligibleOnly = false; live.recsShowAll = false; live.recsKind = null; });   // 새 진단이면 결과 목록 보기 방식도 처음으로
+  window.addEventListener('cy:diagnosis-done', () => { hist.pending = true; live.recsEligibleOnly = false; live.recsShowAll = false; live.recsKind = null; hist.viewId = null; });   // 새 진단이면 결과 목록 보기 방식도 처음으로
 
   function sync() {
     const uid = state.user?.id || 0;
@@ -126,11 +126,34 @@
     </section>`;
   }
 
+
+  /* ── 진단 결과 맨 위 박스: 어느 진단 기록 기준으로 볼지 고르기 ── */
+  function bannerPicker() {
+    const banner = $('#app .result-banner');
+    const recs = hist.records || [];
+    if (!banner || recs.length < 2 || banner.querySelector('.rb-pick')) return;
+    if (hist.viewId && !recs.some((r) => r.id === hist.viewId)) hist.viewId = null;
+    const view = recs.find((r) => r.id === hist.viewId) || recs[0];
+    const latest = view.id === recs[0].id;
+    const left = banner.firstElementChild, right = banner.lastElementChild;
+    if (!latest) {   // 고른 기록의 조건·가점으로 바꿔 보여 준다
+      const a = view.answers || {};
+      left.querySelector('h2').textContent = '선택한 진단 기록이에요.';
+      const p = left.querySelector('p');
+      if (p) p.innerHTML = `${esc(a.age || '')} · ${esc(a.marriage || '')} · ${esc(a.ownership || '')} · ${esc(a.region || '')} 거주<br>희망 조건: ${esc(a.wish || '전체')} · ${esc(typeLabel(a.type))}`;
+      const score = right.querySelector('.score'); if (score) score.innerHTML = `${view.score}<span> / 84</span>`;
+    }
+    const options = recs.map((r, i) => `<option value="${r.id}" ${r.id === view.id ? 'selected' : ''}>${when(r.created_at, true)} · ${r.score}점${i === 0 ? ' (최근)' : ''}</option>`).join('');
+    right.insertAdjacentHTML('afterbegin', `<label class="rb-pick"><span>기준 진단</span><select data-hist-view aria-label="맨 위 박스에 보여 줄 진단 기록">${options}</select></label>`);
+    if (!latest) left.insertAdjacentHTML('beforeend', '<p class="rb-note">이 박스는 고른 기록 기준이에요. 아래 추천 공고는 최근 진단 기준이에요.</p>');
+  }
+
   const prevRender = render;
   render = function () {
     prevRender();
     sync();
     const route = routeNow();
+    if (route === 'result' && state.diagnosis) bannerPicker();
     if (route === 'result' && state.diagnosis) {
       const anchor = $('#app .grid2');
       if (anchor && !$('#lp-history')) anchor.insertAdjacentHTML('afterend', historySection());
@@ -143,6 +166,7 @@
   };
 
   document.addEventListener('change', (e) => {
+    if (e.target.matches?.('[data-hist-view]')) { hist.viewId = Number(e.target.value) || null; render(); return; }
     const id = Number(e.target.dataset?.histPick);
     if (!id) return;
     if (e.target.checked) { if (hist.selected.size < 4) hist.selected.add(id); } else hist.selected.delete(id);

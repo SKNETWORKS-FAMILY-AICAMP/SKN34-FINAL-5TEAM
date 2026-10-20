@@ -60,3 +60,10 @@
 .type-all{display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;font-weight:700;cursor:pointer}
 .type-all input{width:18px;height:18px;accent-color:var(--green,#163f33);margin:0}
 .type-desc{display:block;margin-top:10px;font-size:11.5px;line-height:1.7;color:#748079}
+
+/* 진단 결과 맨 위 박스: 기준 진단 고르기 */
+.rb-pick{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.rb-pick span{font-size:11.5px;color:#c4d6c5}
+.rb-pick select{width:auto;min-width:220px;padding:8px 34px 8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background-color:rgba(255,255,255,.1);color:#fff;font-size:13px;font-weight:700}
+.rb-pick select option{color:#172a24;background:#fff}
+.rb-note{margin-top:10px !important;font-size:11.5px !important;color:#f6c9a4 !important}
