@@ -75,6 +75,7 @@
 
   // 메인(#home): 상단 카테고리 메뉴(청약 진단·집 찾기·금융 정보·커뮤니티)와 같은 곳으로 가는 버튼은 정리한다
   function tidyHome() {
+    $('#app .community-preview')?.remove();                         // 커뮤니티 미리보기 = 상단 "커뮤니티" 카테고리와 겹침 (메인에는 메인에서만 쓰는 기능만)
     $('.quick-bar')?.remove();                                   // 집 찾기·금융 정보·우리 이야기 바로가기 카드 = 상단 메뉴와 같음
     document.querySelectorAll('#app .section-head a[href="#homes"], #app .section-head a[href="#community"], #app a.text-link[href="#homes"], #app a.text-link[href="#community"]').forEach((a) => a.remove());   // "공고 전체 보기"·"커뮤니티 둘러보기" = 상단 메뉴
     // 히어로 버튼: 진단 안 한 사람 → "진단 하러 가기", 진단한 사람 → "내 진단 결과 보기" + "진단 다시 하기"
