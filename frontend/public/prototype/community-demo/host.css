@@ -1,0 +1,5 @@
+/* Keep the real service banner/header/modal visible; isolate only the demo content. */
+body.community-demo-active { margin: 0; overflow: hidden; }
+.community-demo-active > footer { display: none; }
+.community-demo-active > #app { margin: 0; padding: 0; max-width: none; }
+.community-demo-frame { display: block; width: 100%; height: calc(100vh - var(--community-shell-height, 116px)); height: calc(100dvh - var(--community-shell-height, 116px)); border: 0; background: var(--paper); }

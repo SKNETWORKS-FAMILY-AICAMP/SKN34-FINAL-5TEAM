@@ -68,18 +68,12 @@ dashboard = function () {
 };
 
 // 4) 집 찾기 필터 아래에 내 집 기준 설정 링크
-// 5) 로그인 상태가 바뀌면 관심 공고(내 것)와 커뮤니티 글(내 공감 표시)을 서버에서 다시 받는다
-const sync = { saved: null, community: null };
+// 5) 로그인 상태가 바뀌면 관심 공고만 서버에서 다시 받는다.
+// 커뮤니티는 community-demo/의 가짜 데이터와 전용 브라우저 저장소만 사용한다.
+const sync = { saved: null };
 async function loadSaved(userId) {
   // 로그인 직후 하트를 눌러 이미 저장한 것이 있을 수 있어서, 덮어쓰지 않고 합친다
   try { state.saved = [...new Set([...state.saved, ...(await api(`/users/${userId}/saved`)).listing_ids])]; } catch { /* 못 받으면 지금 목록 그대로 */ }
-  render();
-}
-async function communityLoad() {
-  try {
-    const { items } = await api('/community/posts', { params: { user_id: state.user?.member ? state.user.id : null } });
-    state.posts.splice(0, state.posts.length, ...items);
-  } catch { /* 못 받으면 빈 게시판으로 둔다 */ }
   render();
 }
 const livePrefsRender = render;
@@ -87,7 +81,6 @@ render = function () {
   livePrefsRender();
   const member = state.user?.member ? state.user.id : 0;
   if (sync.saved !== member) { sync.saved = member; if (member) loadSaved(member); else state.saved = []; }
-  if (sync.community !== member) { sync.community = member; communityLoad(); }
   const route = (location.hash.slice(1) || 'home').split('/')[0];
   const panel = route === 'homes' && $('.filter-panel');
   if (panel && !panel.querySelector('[href="#preferences"]')) panel.insertAdjacentHTML('beforeend', '<a href="#preferences" class="text-link" style="display:block;margin-top:20px">내 집 기준 설정 ↗</a>');
