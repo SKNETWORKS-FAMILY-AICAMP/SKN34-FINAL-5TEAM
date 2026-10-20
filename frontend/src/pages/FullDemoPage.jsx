@@ -6,28 +6,19 @@ const SCREENS = new Set(["start", "home", "diagnosis", "result", "homes", "detai
 
 function normalizeRoute(value) {
   const route = value.replace(/^[/#]+/, "");
-  return SCREENS.has(route.split("/")[0]) ? route : "home";
-}
-
-// 진단 기록이 없는 첫 방문은 첫 페이지(#start: 기능 소개 + 진단 시작)로 연다. 진단을 마친 뒤에는 기존 메인(#home).
-function hasDiagnosis() {
-  try {
-    const saved = window.localStorage.getItem("cydemo-diagnosis");
-    return Boolean(saved && saved !== "null");
-  } catch {
-    return false;
-  }
+  return SCREENS.has(route.split("/")[0]) ? route : "start";
 }
 
 function screenFromLocation(pathname, hash) {
   if (hash) return normalizeRoute(hash);
-  if (pathname === "/" && !hasDiagnosis()) return "start";
+  // localhost:3000 (/) 은 항상 첫 페이지(start: 기능 소개 + 진단 시작). 기존 메인은 /home
+  if (pathname === "/") return "start";
   if (pathname.startsWith("/community/posts/")) return normalizeRoute(pathname.replace("/community/posts/", "post/"));
   return normalizeRoute(pathname);
 }
 
 function pathFromScreen(screen) {
-  if (screen === "home") return "/";
+  if (screen === "start") return "/";
   if (screen.startsWith("post/")) return `/community/posts/${screen.slice(5)}`;
   return `/${screen}`;
 }

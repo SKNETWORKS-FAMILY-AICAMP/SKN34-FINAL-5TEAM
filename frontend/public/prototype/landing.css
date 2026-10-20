@@ -1,7 +1,7 @@
 /* 첫 페이지(#start): 왼쪽 소개 + 오른쪽 진단 사이드바. 버튼을 누르면 사이드바가 화면 전체로 펼쳐지며 팀 진단 화면이 그 안에 열린다. */
 body.landing-active footer{display:none}
 .landing{position:relative;display:flex;overflow:hidden;min-height:calc(100vh - 112px);min-height:max(640px,calc(100vh - 112px));background:#f7f8f4}
-.landing-intro{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px calc(34% + 40px) 28px 40px;text-align:center;
+.landing-intro{flex:none;width:66%;box-sizing:border-box;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 48px;text-align:center;
   background-image:radial-gradient(circle,#dde3da 1px,transparent 1.2px);background-size:22px 22px}
 .landing-chip{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.4px;color:#163f33;background:#e9f3ec;border:1px solid #d3e3d8;padding:6px 12px;border-radius:6px}
 .landing-chip::before{content:"";width:6px;height:6px;border-radius:50%;background:#ef783e}
@@ -13,7 +13,7 @@ body.landing-active footer{display:none}
 .landing-cta .lp-main span{color:#f6c9a4}
 .landing-cta .lp-sub{display:inline-flex;align-items:center;min-height:54px;padding:0 24px;border-radius:12px;border:1px solid #d7ded5;background:#fff;color:#163f33;font-size:15px;font-weight:700;text-decoration:none}
 .landing-note{margin-top:14px;font-size:12px;color:#7a857d}
-.landing-sources{margin-top:auto;padding-top:40px}
+.landing-sources{margin-top:56px}
 .landing-sources small{display:block;font-size:10.5px;font-weight:700;letter-spacing:1.6px;color:#8a948c}
 .landing-sources div{margin-top:12px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px 34px;font-size:15px;font-weight:800;color:#a3ada5;letter-spacing:-.3px}
 
@@ -51,7 +51,7 @@ body.landing-active footer{display:none}
 
 @media (max-width:860px){
   .landing{flex-direction:column;min-height:0}
-  .landing-intro{padding:44px 18px 28px}
+  .landing-intro{width:100%;padding:44px 18px 28px}
   .landing-panel{position:relative;width:100%;min-height:520px}
   .landing.open .landing-intro{display:none}
   .landing.open .landing-panel{min-height:calc(100vh - 112px)}

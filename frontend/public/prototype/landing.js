@@ -1,6 +1,6 @@
 /* 첫 페이지(#start) — 기능 소개 + 진단 시작 버튼
-   · 진단 기록이 없는 첫 방문은 #start 로 연다. 진단을 마친 뒤에는 기존 메인(#home)이 첫 화면이다.
-   · 오른쪽 사이드바의 버튼(또는 왼쪽 "1분 청약 진단 시작하기")을 누르면 사이드바가 화면 전체로 펼쳐지고,
+   · 주소에 화면 지정이 없으면 항상 #start 로 연다. 진단을 마치면 기존 메인(#home)으로 간다.
+   · 왼쪽 "1분 청약 진단 시작하기"를 누르면 오른쪽 사이드바가 사이드바가 화면 전체로 펼쳐지고,
      그 안에서 팀의 6단계 진단 화면(app.js diagnosis())을 그대로 쓴다. 답변·단계 이동은 기존 버튼 처리를 그대로 탄다.
    · 펼친 진단에서 마지막 "진단 결과 보기"를 누르면 답변을 저장하고(로그인했으면 서버에도) 메인(#home)으로 돌아간다.
    이 파일은 index.html 에서 가장 마지막에 불러와야 한다(앞선 render 감싸기들을 다시 감싼다). */
@@ -36,7 +36,6 @@
         <div class="l">계약금 10% 기준 가능한 분양가 · <b style="color:#fff">5억 원 이하</b></div>
       </div>
       <div class="lp-side-title"><b>여기서 바로 진단해요</b><span>6단계 버튼만 누르면 가점과<br>가능한 공고가 정리돼요</span></div>
-      <button type="button" class="lp-open" data-action="landing-open" ${landing.open ? 'tabindex="-1"' : ''}>진단 펼쳐서 시작하기 <span aria-hidden="true">⤢</span></button>
     </div>
     <div class="landing-diag" ${landing.open ? '' : 'aria-hidden="true"'}>
       <div class="landing-diag-top">
@@ -113,7 +112,7 @@
 
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && landing.open && !$('#modal-root').innerHTML.trim()) closePanel(); });
 
-  // 첫 방문(주소에 화면 지정 없음 + 진단 기록 없음)은 첫 페이지로 연다
-  if (!location.hash && !state.diagnosis) history.replaceState(null, '', '#start');
+  // 주소에 화면 지정이 없으면 항상 첫 페이지로 연다 (메인은 #home)
+  if (!location.hash) history.replaceState(null, '', '#start');
   render();
 })();
