@@ -93,10 +93,31 @@
       guideLink.replaceWith(btn);
     }
     if (isMember()) $('.hero-help')?.remove();
+    heroSummary();
     // 아래쪽 기능 박스(자금 계획·시작 가이드)를 그림 오른쪽으로 올려 첫 화면에서 바로 보이게
     const strip = $('#app .feature-strip'), hero = $('#app .hero');
     if (strip && hero) { strip.classList.add('lp-hero-cards'); hero.appendChild(strip); hero.classList.add('lp-hero-with-cards'); }
     homeListings();
+  }
+
+  // 히어로 요약: 진단한 사람에게는 일반 소개 문구 대신 "내 현황" 숫자 3개를 보여 준다 (한눈에 읽히도록)
+  function heroSummary() {
+    const body = $('#app .hero-body');
+    if (!body || !state.diagnosis || !live.recs || !live.recs.length) return;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const daysLeft = (h) => { const e = h?.raw?.receipt_end; if (!e) return null; return Math.round((new Date(e) - today) / 86400000); };
+    const houses = live.recs.map((r) => r.house).filter(Boolean);
+    const eligible = live.recs.filter((r) => r.eligible).length;
+    const soon = houses.filter((h) => { const d = daysLeft(h); return d != null && d >= 0 && d <= 7; }).length;
+    const who = isMember() ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황';
+    const eyebrow = body.querySelector('.eyebrow'); if (eyebrow) { eyebrow.innerHTML = `<span class="dot"></span> ${who}`; eyebrow.classList.add('lp-eyebrow-ko'); }
+    const p = body.querySelector('p');
+    const stats = `<div class="lp-stats" aria-label="내 청약 현황">
+      <a href="#result"><b>${houses.length}<small>건</small></b><span>내 조건 추천 공고</span></a>
+      <a href="#result"><b>${eligible}<small>건</small></b><span>신청 자격 충족</span></a>
+      <a href="#result"><b>${soon}<small>건</small></b><span>7일 안에 접수 마감</span></a>
+    </div>`;
+    if (p) p.outerHTML = stats; else body.querySelector('.hero-actions')?.insertAdjacentHTML('beforebegin', stats);
   }
 
   // 메인 "다음 시작을 기다리는 집"
@@ -114,10 +135,11 @@
       return;
     }
     if (state.user?.id && live.recs === null && !live.recsLoading) loadRecs();
-    const recs = (live.recs || []).map((r) => r.house).filter(Boolean);
+    const recs = [...(live.recs || [])].sort((x, y) => (y.eligible ? 1 : 0) - (x.eligible ? 1 : 0)).map((r) => r.house).filter(Boolean);   // 신청 자격 충족 공고를 앞에
     const seen = new Set(recs.map((h) => h.id));
     const houses = [...recs, ...featuredHouses().filter((h) => !seen.has(h.id))].slice(0, 12);
     if (head) head.textContent = recs.length ? '내 진단 조건으로 고른 공고예요. 마우스를 올리면 잠시 멈춰요.' : '지금 접수 중인 공고예요. 마우스를 올리면 잠시 멈춰요.';
+    const h2 = grid.closest('.section')?.querySelector('.section-head h2'); if (h2 && recs.length) h2.textContent = '내 조건에 맞는 공고';
     if (houses.length < 4) return;                                // 공고가 적으면 원래 3칸 그대로
     grid.outerHTML = `<div class="lp-marquee" aria-label="추천 공고 (자동으로 넘어가요)"><div class="lp-track">${houses.map((h) => houseCard(h)).join('')}</div></div>`;
     if (typeof cardMedia === 'function') cardMedia();            // 카드 사진(로드뷰) 다시 붙이기
@@ -133,7 +155,7 @@
     box.addEventListener('mouseleave', () => { m.paused = false; });
     box.addEventListener('focusin', () => { m.paused = true; });
     box.addEventListener('focusout', () => { m.paused = false; });
-    const SPEED = 40;                                             // px / 초
+    const SPEED = 26;                                             // px / 초
     const step = (t) => {
       if (marquee !== m || !track.isConnected) return;
       const dt = m.last ? Math.min(64, t - m.last) / 1000 : 0; m.last = t;

@@ -147,3 +147,14 @@ body.lp-home .lp-marquee .house-body>.tags:last-child{display:none}
   body.lp-home .hero.lp-hero-with-cards{padding:28px 18px 30px}
   body.lp-home .hero .feature-strip.lp-hero-cards{flex-direction:column}
 }
+
+/* 히어로 "내 현황" 숫자 */
+.lp-stats{display:flex;gap:10px;margin:clamp(12px,2vh,22px) 0 clamp(14px,2.4vh,28px);flex-wrap:wrap}
+.lp-stats a{display:flex;flex-direction:column;gap:2px;min-width:132px;padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;text-decoration:none;transition:background .2s}
+.lp-stats a:hover{background:rgba(255,255,255,.18);color:#fff}
+.lp-stats b{font-size:clamp(22px,3.2vh,30px);font-weight:800;letter-spacing:-1px;line-height:1.1}
+.lp-stats b small{font-size:13px;font-weight:700;margin-left:2px;color:#e8f0e9}
+.lp-stats span{font-size:11.5px;color:#d5e0d7}
+.lp-stats a:first-child b{color:#f6c9a4}
+@media (max-width:760px){.lp-stats a{min-width:0;flex:1}}
+.hero .eyebrow.lp-eyebrow-ko{letter-spacing:.2px;font-size:13px}
