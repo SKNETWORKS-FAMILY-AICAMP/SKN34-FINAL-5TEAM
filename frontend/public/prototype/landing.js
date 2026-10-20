@@ -96,19 +96,6 @@
     }
     if (isMember()) $('.hero-help')?.remove();
     heroSummary();
-    // 히어로: 낮은 초록 카드 한 장 — 글은 단색 초록 위(또렷하게), 사진은 오른쪽 좁은 띠로만(분위기), 높이를 줄여 추천 공고가 첫 화면에 보이게
-    const heroEl = $('#app .hero');
-    if (heroEl) {
-      const h1 = heroEl.querySelector('h1');
-      if (h1) h1.querySelectorAll('br').forEach((br) => br.replaceWith(' '));   // 제목을 한 줄로
-      const body = heroEl.querySelector('.hero-body');
-      const stats = body?.querySelector('.lp-stats'), acts = body?.querySelector('.hero-actions');
-      if (stats && acts && !body.querySelector('.lp-hero-row')) {        // 숫자 + 버튼을 한 줄에
-        const row = document.createElement('div'); row.className = 'lp-hero-row';
-        stats.before(row); row.append(stats, acts);
-      }
-      if (!heroEl.querySelector('.lp-hero-photo')) heroEl.insertAdjacentHTML('beforeend', '<div class="lp-hero-photo" aria-hidden="true"></div>');
-    }
     homeListings();
   }
 

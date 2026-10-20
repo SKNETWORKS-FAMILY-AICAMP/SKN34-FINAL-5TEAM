@@ -94,26 +94,12 @@ body.landing-active footer{display:none}
 .lp-reco-empty b{display:block;font-size:17px;color:var(--ink,#172a24)}
 .lp-reco-empty p{margin:6px 0 0;font-size:13px;color:#748079}
 
-/* 메인(스크롤형): 낮은 초록 카드 히어로 — [글·숫자·버튼 | 사진 띠], 아래 추천 공고가 첫 화면에 보이게 */
-body.lp-home .hero{display:grid;grid-template-columns:minmax(0,1fr) 28%;align-items:stretch;max-width:1200px;box-sizing:border-box;
-  margin:clamp(16px,3vh,28px) auto 0;min-height:0;border-radius:24px;overflow:hidden;background:var(--green,#163f33);color:#fff}
-body.lp-home .hero:after,body.lp-home .hero .hero-image,body.lp-home .hero-label{display:none}
-body.lp-home .hero .hero-body{max-width:none;margin:0;padding:clamp(26px,4vh,40px) clamp(28px,3.4vw,48px)}
-body.lp-home .hero .eyebrow{color:#cfe0d3}
-body.lp-home .hero h1{font-size:clamp(28px,3.6vh,40px);line-height:1.3;max-width:none;letter-spacing:-1.6px;margin:10px 0 0}
-body.lp-home .hero h1 em{color:#f6c9a4}
-body.lp-home .hero p{margin:12px 0 18px;color:#dbe5dd}
-body.lp-home .lp-hero-row{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px;margin-top:clamp(16px,2.6vh,24px)}
-body.lp-home .lp-hero-row .lp-stats{margin:0}
-body.lp-home .lp-hero-row .hero-actions{flex-wrap:wrap;gap:14px 18px}
-body.lp-home .hero .lp-stats>div{min-width:118px;padding:9px 14px}
-body.lp-home .hero .lp-stats b{font-size:24px}
-.lp-hero-photo{min-height:100%;background:#2b4a3e url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=80') 62% 55%/cover}
-body.lp-home #app .section:first-of-type{padding-top:clamp(26px,4vh,48px)}
-body.lp-home #app .section:first-of-type .section-head{margin-bottom:20px}
-@media (max-width:1240px){body.lp-home .hero{margin-left:24px;margin-right:24px}}
-@media (max-width:900px){body.lp-home .hero{grid-template-columns:1fr}.lp-hero-photo{display:none}}
-@media (max-width:760px){body.lp-home .hero{margin:14px 18px 0;border-radius:18px}body.lp-home .hero .hero-body{padding:24px 20px}body.lp-home .lp-hero-row .lp-stats{flex-wrap:nowrap;width:100%;gap:8px}body.lp-home .hero .lp-stats>div{min-width:0;flex:1;padding:8px 10px}body.lp-home .hero .lp-stats b{font-size:20px}body.lp-home .hero .lp-stats span{font-size:10.5px}}
+/* 메인(스크롤형): 첫 화면은 히어로(내 현황 + 버튼 1개)만, 바닥에 추천 공고 윗부분이 살짝 보이게 */
+body.lp-home .hero{min-height:clamp(340px,calc(100vh - 140px - 300px),620px);display:flex;align-items:center}
+body.lp-home .hero .hero-body{width:100%;box-sizing:border-box;padding-top:clamp(28px,5vh,68px);padding-bottom:clamp(28px,5vh,65px)}
+body.lp-home .hero h1{font-size:clamp(38px,5.4vh,55px)}
+body.lp-home #app .section:first-of-type{padding-top:40px}
+body.lp-home #app .section:first-of-type .section-head{margin-bottom:22px}
 
 /* 히어로 "내 현황" 숫자 */
 .lp-stats{display:flex;gap:10px;margin:clamp(12px,2vh,22px) 0 clamp(14px,2.4vh,28px);flex-wrap:wrap}
