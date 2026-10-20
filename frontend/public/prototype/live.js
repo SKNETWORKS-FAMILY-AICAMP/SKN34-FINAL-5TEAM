@@ -266,6 +266,9 @@ function diagnosisFromProfile(p) {
   };
 }
 
+// 시연·테스트용 관리자 계정 (비밀번호가 없는 이메일·닉네임 로그인 방식이라 실제 권한 차이는 없다)
+const TEST_ACCOUNT = { email: 'admin@cheongyakdwae.com', nickname: '관리자' };
+
 // 로그인: 이메일 + 닉네임이 서버에 저장된 것과 맞으면, 그 사람의 진단 정보를 불러와 이어서 쓴다
 async function loginWith(email, nickname) {
   const p = await api('/users/login', { method: 'POST', body: { email: email.trim().toLowerCase(), nickname: nickname.trim() } });
@@ -610,7 +613,7 @@ function guide() {
 // 로그인 창: 처음이면 "결과 저장하고 시작"(이메일·닉네임으로 서버에 저장),
 // 이미 저장했다면 "로그인"(이메일·닉네임이 맞으면 서버에 저장된 내 정보를 불러온다). 비밀번호는 없다.
 function login() {
-  modal(`<div class="eyebrow">SAVE YOUR NEXT STEP</div><h2>내 집 찾기를 이어가요</h2><p>처음이면 <b>결과 저장하고 시작</b>, 이미 저장했다면 같은 이메일·닉네임으로 <b>로그인</b>하세요.<br>비밀번호·본인 인증은 아직 없어요.</p><form id="login-form"><div class="field"><label for="email">이메일</label><input id="email" type="email" placeholder="example@email.com" required value="${esc(state.user?.member ? state.user.email : '')}"></div><div class="field"><label for="nickname">닉네임</label><input id="nickname" placeholder="예: 새싹" value="${esc(state.user?.member ? state.user.name : '')}" maxlength="12" required></div><div style="display:flex;gap:8px"><button class="btn" type="submit" style="flex:1">결과 저장하고 시작 →</button><button class="btn secondary" type="button" data-action="login-submit" style="flex:1">로그인</button></div></form><p id="login-error" style="margin:14px 0 0;color:#b3402b"></p><p style="margin-top:12px;margin-bottom:0">내 정보는 이메일 기준으로 서버(DB)에 저장돼요.</p>`);
+  modal(`<div class="eyebrow">SAVE YOUR NEXT STEP</div><h2>내 집 찾기를 이어가요</h2><p>처음이면 <b>결과 저장하고 시작</b>, 이미 저장했다면 같은 이메일·닉네임으로 <b>로그인</b>하세요.<br>비밀번호·본인 인증은 아직 없어요.</p><form id="login-form"><div class="field"><label for="email">이메일</label><input id="email" type="email" placeholder="example@email.com" required value="${esc(state.user?.member ? state.user.email : '')}"></div><div class="field"><label for="nickname">닉네임</label><input id="nickname" placeholder="예: 새싹" value="${esc(state.user?.member ? state.user.name : '')}" maxlength="12" required></div><div style="display:flex;gap:8px"><button class="btn" type="submit" style="flex:1">결과 저장하고 시작 →</button><button class="btn secondary" type="button" data-action="login-submit" style="flex:1">로그인</button></div></form><button class="btn soft" type="button" data-action="login-test" style="width:100%;margin-top:8px">🔑 관리자 테스트 계정으로 바로 로그인</button><p id="login-error" style="margin:14px 0 0;color:#b3402b"></p><p style="margin-top:12px;margin-bottom:0">내 정보는 이메일 기준으로 서버(DB)에 저장돼요.</p>`);
 }
 
 /* ───────── 6. 이벤트 연결 (app.js보다 먼저 받도록 capture 단계에서 가로챈다) ───────── */
@@ -680,6 +683,20 @@ document.addEventListener('click', async (e) => {
     else finish();                                                                                              // 없으면 결과 화면에서 자동으로 만든다
   } else if (act === 'signup') {                                // 로그인 창 열기 (app.js 처리보다 먼저)
     e.stopImmediatePropagation(); login();
+  } else if (act === 'login-test') {                            // 시연·테스트용: 정해진 관리자 테스트 계정으로 바로 로그인 (없으면 지금 진단 답변으로 만든 뒤 로그인)
+    e.stopImmediatePropagation();
+    const err = $('#login-error');
+    b.disabled = true; b.textContent = '테스트 계정으로 로그인하는 중…'; err.textContent = '';
+    try {
+      try { await loginWith(TEST_ACCOUNT.email, TEST_ACCOUNT.nickname); }
+      catch { await saveProfile(TEST_ACCOUNT.email, TEST_ACCOUNT.nickname); await loginWith(TEST_ACCOUNT.email, TEST_ACCOUNT.nickname); }
+      closeModal();
+      const next = afterLogin; afterLogin = null;
+      if (next) { render(); next(); } else go('result');
+      toast(`${state.user.name} 테스트 계정으로 로그인했어요.`);
+    } catch (error) {
+      err.textContent = error.message; b.disabled = false; b.textContent = '🔑 관리자 테스트 계정으로 바로 로그인';
+    }
   } else if (act === 'login-submit') {                          // 이메일·닉네임이 맞으면 로그인
     e.stopImmediatePropagation();
     const form = $('#login-form'), err = $('#login-error');
