@@ -133,8 +133,13 @@
     const score = live.recs?.[0]?.score ?? r?.score;
     const fact = (label, value, unit) => `<div><small>${label}</small><b>${value ?? '–'}<span>${unit}</span></b></div>`;
     const facts = `<div class="dash-diag-facts">${fact('청약 가점', score, '/84')}${fact('1순위 가능', mine ? mine.filter((x) => x.fp === '1순위 가능').length : null, '건')}${fact('추천 공고', mine ? mine.length : r?.recommend_count, '건')}${fact('자금 충족', mine ? mine.filter((x) => x.eligible).length : r?.eligible_count, '건')}</div>`;
+    // 자금: 보유 현금과 계약금 10% 기준 분양가 상한 + 대출·자금 계산 바로가기 (계산기 자체는 금융 정보 화면)
+    const assets = Number(a.assets) || 0;
+    const eok = (man) => (man >= 10000 ? `${(man / 10000).toFixed(man % 10000 ? 1 : 0)}억 원` : `${man.toLocaleString('ko-KR')}만 원`);
+    const moneyRow = `<div class="dash-money"><div><small>주거에 쓸 수 있는 현금</small><b>${assets ? eok(assets) : '아직 입력 전'}</b></div><div><small>계약금 10% 기준 분양가</small><b>${assets ? `${eok(assets * 10)} 이하` : '–'}</b></div>
+      <div class="dash-money-actions"><button type="button" data-action="finance-tab" data-value="대출">내 대출 한도·금리 보기 →</button><button type="button" data-action="finance-tab" data-value="자금 계산">자금 계획 계산하기 →</button></div></div>`;
     return `<section class="dash-diag" aria-label="내 진단 결과">
-      <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><p class="dash-diag-sub">${r ? `최근 진단 ${when(r.created_at, true)}` : '최근 진단'} · ${esc(a.age)} · ${esc(a.marriage)} · 희망 ${esc(a.wish)} · ${esc(typeLabel(a.type))}</p>${facts}</div>
+      <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><p class="dash-diag-sub">${r ? `최근 진단 ${when(r.created_at, true)}` : '최근 진단'} · ${esc(a.age)} · ${esc(a.marriage)} · 희망 ${esc(a.wish)} · ${esc(typeLabel(a.type))}</p>${facts}${moneyRow}</div>
       <div class="dash-diag-actions"><a class="btn orange" href="#result">가점 근거·전체 결과 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 · PDF 저장 ↗</a></div>
     </section>`;
   }
