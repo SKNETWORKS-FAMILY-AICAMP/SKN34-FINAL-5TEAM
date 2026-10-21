@@ -156,3 +156,26 @@
 .dash-fold-badge.green{background:#163f33}
 .dash-mini-chips{align-items:center}
 .dash-mini-note{margin-left:auto;font-size:11.5px;color:#8a938d}
+
+/* 카드 안: 내 조건 전체 보기 */
+.dash-cond-toggle{margin-left:6px;padding:0;background:none;border:0;font:inherit;font-size:12.5px;font-weight:700;color:#f6c9a4;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.dash-cond-toggle span{display:inline-block;width:6px;height:6px;margin-left:6px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:translateY(-2px) rotate(45deg)}
+.dash-cond-toggle[aria-expanded="true"] span{transform:translateY(1px) rotate(-135deg)}
+.dash-cond{margin-top:14px;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16)}
+.dash-cond dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 18px;margin:0}
+.dash-cond dl div{min-width:0}
+.dash-cond dt{font-size:11px;color:#cfe0d3}
+.dash-cond dd{margin:1px 0 0;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-cond-edit{margin-top:12px;padding:0;background:none;border:0;font:inherit;font-size:12.5px;font-weight:800;color:#f6c9a4;cursor:pointer}
+.dash-cond-edit:hover{color:#fff}
+.dash-grid.dash-grid-one{grid-template-columns:1fr}
+/* 상단 톱니바퀴 → 계정 설정 */
+.nav-gear{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--line,#e2dccf);background:#fff;color:#163f33}
+.nav-gear svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.nav-gear:hover,.nav-gear.active{background:#163f33;color:#fff;border-color:#163f33}
+/* 계정 설정 화면 */
+.settings-page .panel{max-width:760px;margin-bottom:18px}
+.settings-page .panel h3{margin-bottom:8px}
+.settings-note{font-size:12.5px;color:#5f6b64;margin:4px 0 0}
+.settings-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.settings-actions:empty{display:none}

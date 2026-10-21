@@ -124,6 +124,21 @@
       ${recs.length ? `<div class="hist-list">${rows}</div>${recs.length > LIST_PAGE ? `<button type="button" class="hist-more" data-action="hist-more">${hist.showAll ? '최근 5건만 보기' : `기록 ${recs.length}건 모두 보기`}</button>` : ''}${compare}` : '<div class="empty"><h3>아직 저장된 기록이 없어요</h3><p>진단을 마치면 이곳에 날짜별로 쌓여요.</p></div>'}${guest}</section>`;
   }
 
+  /* ── 내 공간 카드 안: 진단 때 입력한 조건 전체 (예전 '내 조건 요약' 박스를 카드로 옮김) ── */
+  function condGrid(a) {
+    const yr = (v) => (v === '' || v == null ? '–' : `${v}년`);
+    const man = (v) => (v === '' || v == null ? '입력 안 함' : Number(v) >= 10000 ? `${(Number(v) / 10000).toFixed(Number(v) % 10000 ? 1 : 0)}억 원` : `${Number(v).toLocaleString('ko-KR')}만 원`);
+    const rows = [
+      ['현재 거주', a.region], ['세대주', a.head], ['주택 소유', a.ownership + (a.ownership === '무주택' ? ` · 과거 소유 ${a.firstHome}` : '')],
+      ['무주택 기간', yr(a.years)], ['부양가족', `${a.family ?? 0}명`], ['미성년 자녀', a.children],
+      ['통장 가입', yr(a.account)], ['납입 회차', `${a.payments ?? 0}회`], ['예치금', man(a.deposit)],
+      ['5년 내 당첨', a.won5], ['연 소득', a.income], ['보유 현금', Number(a.assets) ? man(a.assets) : '입력 안 함'],
+      ['희망 지역', a.wish], ['관심 유형', typeLabel(a.type)],
+    ];
+    return `<div class="dash-cond"><dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v ?? '–')}</dd></div>`).join('')}</dl>
+      <button type="button" class="dash-cond-edit" data-action="redo-diagnosis">조건 수정하기 (다시 진단) →</button></div>`;
+  }
+
   /* ── 내 공간: 최근 진단 카드 ── */
   function dashboardCard() {
     const r = hist.records?.[0];
@@ -140,7 +155,7 @@
       <div class="dash-money-actions"><button type="button" data-action="finance-tab" data-value="대출">내 대출 한도·금리 보기 →</button><button type="button" data-action="finance-tab" data-value="자금 계산">자금 계획 계산하기 →</button></div></div>`;
     return `<section class="dash-diag" aria-label="내 진단 결과">
       <div class="dash-diag-left">
-        <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><p class="dash-diag-sub">${r ? `최근 진단 ${when(r.created_at, true)}` : '최근 진단'} · ${esc(a.age)} · ${esc(a.marriage)} · 희망 ${esc(a.wish)} · ${esc(typeLabel(a.type))}</p>${facts}${moneyRow}</div>
+        <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><p class="dash-diag-sub">${r ? `최근 진단 ${when(r.created_at, true)}` : '최근 진단'} · ${esc(a.age)} · ${esc(a.marriage)} · 희망 ${esc(a.wish)} · ${esc(typeLabel(a.type))} <button type="button" class="dash-cond-toggle" data-action="dash-cond" aria-expanded="${!!hist.condOpen}">${hist.condOpen ? '조건 접기' : '내 조건 전체 보기'}<span aria-hidden="true"></span></button></p>${hist.condOpen ? condGrid(a) : ''}${facts}${moneyRow}</div>
         <div class="dash-diag-actions"><a class="btn orange" href="#result">가점 근거·전체 결과 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 · PDF 저장 ↗</a></div>
       </div>
       ${dashSoon()}
@@ -232,16 +247,36 @@
       if (grid?.classList.contains('grid2')) grid.remove();
       head?.remove();
     });
-    const panel = $('#app .dash-aside .panel');
-    if (!panel || panel.dataset.tidy) return;
-    panel.dataset.tidy = '1';
-    panel.querySelectorAll('a.dash-action[href="#profile"], a.dash-action[href="#report"], a.dash-action[href="#preferences"]').forEach((a) => a.remove());
-    panel.insertAdjacentHTML('beforeend', '<button type="button" class="dash-action dash-edit" data-action="redo-diagnosis">조건 수정하기 (다시 진단) <span>→</span></button>');
-    const account = state.user?.member
-      ? `<section class="panel"><h3>내 계정</h3><div class="kv"><span>닉네임</span><strong>${esc(state.user.name)}</strong></div><div class="kv"><span>이메일</span><strong>${esc(state.user.email)}</strong></div><a href="#profile" class="dash-action">내 정보 관리 <span>→</span></a></section>`
-      : '<section class="panel"><h3>내 계정</h3><p style="font-size:12.5px;color:#5f6b64;margin:6px 0 14px">로그인하면 진단 기록과 관심 공고를 다른 기기에서도 이어 볼 수 있어요.</p><button class="btn soft small" data-action="signup">로그인</button></section>';
-    panel.insertAdjacentHTML('afterend', account);
+    // 오른쪽 '내 조건 요약'은 청약 현황 카드 안(내 조건 전체 보기)으로, '내 계정'은 상단 톱니바퀴(계정 설정)로 옮겼다
+    $('#app .dash-aside')?.remove();
+    $('#app .dash-grid')?.classList.add('dash-grid-one');
   }
+
+  /* ── 계정 설정 (#profile): 상단 이름 버튼 옆 톱니바퀴로 들어온다 ── */
+  function settingsPage() {
+    const u = state.user;
+    const a = state.diagnosis;
+    const n = hist.records?.length || 0;
+    const last = hist.records?.[0];
+    const row = (k, v) => `<div class="kv"><span>${k}</span><strong>${v}</strong></div>`;
+    return `<div class="wrap page reveal settings-page"><div class="page-title"><h1>계정 설정</h1><p>계정 정보와 저장된 진단 정보를 관리해요. 청약 현황은 <a href="#dashboard" class="text-link">마이페이지</a>에서 볼 수 있어요.</p></div>
+      <section class="panel"><h3>계정</h3>${u?.member ? row('닉네임', esc(u.name)) + row('이메일', esc(u.email)) : '<p class="settings-note">로그인하면 진단 기록과 관심 공고를 다른 기기에서도 이어 볼 수 있어요.</p>'}
+        <div class="settings-actions">${u?.member ? '<button type="button" class="btn secondary small" data-action="logout">로그아웃</button>' : '<button type="button" class="btn small" data-action="signup">로그인</button>'}</div></section>
+      <section class="panel"><h3>진단 정보</h3>${row('진단 상태', a ? '완료' : '아직 없음')}${last ? row('최근 진단', when(last.created_at, true)) : ''}${row('저장된 진단 기록', `${n}건`)}
+        <div class="settings-actions">${a ? '<button type="button" class="btn small" data-action="redo-diagnosis">진단 정보 수정 (다시 진단)</button>' : '<a class="btn small" href="#diagnosis">진단 시작하기</a>'}${n ? '<button type="button" class="btn secondary small" data-action="hist-open">진단 기록 보기 · 비교</button>' : ''}</div></section>
+      <section class="panel"><h3>이 브라우저의 데이터</h3><p class="settings-note">진단 정보는 추천 계산을 위해 서버(DB)에 저장돼요. 아래 버튼은 이 브라우저에 남은 진단 정보만 지워요. 서버에 저장된 정보를 지우는 기능은 아직 없어요.</p>
+        <div class="settings-actions">${a ? '<button type="button" class="btn secondary small" data-action="delete-diagnosis">이 브라우저의 진단 정보 삭제</button>' : ''}</div></section>
+    </div>`;
+  }
+
+  // 상단: 이름(마이페이지) 버튼 옆에 톱니바퀴 → 계정 설정
+  const GEAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+  const prevHeader = header;
+  header = function (route) {
+    prevHeader(route);
+    const pill = $('#header .nav-account a.pill');
+    if (pill && !$('#header .nav-gear')) pill.insertAdjacentHTML('afterend', `<a class="nav-gear${route === 'profile' ? ' active' : ''}" href="#profile" aria-label="계정 설정" title="계정 설정">${GEAR}</a>`);
+  };
 
   const prevRender = render;
   render = function () {
@@ -255,6 +290,7 @@
       if (hist.scrollToRecs) { hist.scrollToRecs = false; requestAnimationFrame(() => [...document.querySelectorAll('#app .section')].find((x) => x.querySelector('.grid3'))?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }
       if (hist.scrollTo && $('#lp-history')) { hist.scrollTo = false; requestAnimationFrame(() => $('#lp-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }
     }
+    if (route === 'profile') { const app = $('#app'); if (app) app.innerHTML = settingsPage(); }
     if (route === 'dashboard' && state.diagnosis) {
       const welcome = $('#app .welcome');
       if (welcome && !$('.dash-diag')) welcome.outerHTML = dashboardCard();   // 인사 박스 → 청약 현황 카드(오른쪽에 마감 임박·내 기준 공고)
@@ -281,6 +317,8 @@
       save('history-criteria', [...criteria]); render();
     } else if (act === 'hist-more') {
       hist.showAll = !hist.showAll; render();
+    } else if (act === 'dash-cond') {
+      hist.condOpen = !hist.condOpen; render();
     } else if (act === 'dash-fold') {
       const k = b.dataset.value; const other = k === 'soon' ? 'recs' : 'soon';   // 항상 하나만 펼침: 누른 상자를 열고 다른 상자는 닫음, 열린 상자를 누르면 서로 바뀜
       const openK = fold[k] === false ? k : other; fold.soon = openK === 'soon'; fold.recs = openK === 'recs'; render();
