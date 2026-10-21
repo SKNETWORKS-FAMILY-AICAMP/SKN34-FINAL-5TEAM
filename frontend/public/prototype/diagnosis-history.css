@@ -322,3 +322,33 @@
 .ds-hint{margin:auto 0 0;padding-top:8px;font-size:11.5px;color:#cfe0d3}
 .ds-cond button b{font-size:14px;word-break:keep-all}
 .ds-view{min-height:228px}
+/* 넘김 영역: 가점 구성 (막대) */
+.sc-total{display:flex;align-items:baseline;gap:6px;margin-bottom:6px}
+.sc-total b{font-size:30px;font-weight:800;color:#f6c9a4;letter-spacing:-1px}
+.sc-total span{font-size:13px;color:#cfe0d3}
+.sc-list{display:flex;flex-direction:column}
+.sc-row{display:grid;grid-template-columns:150px minmax(0,1fr) 84px;align-items:center;gap:14px;padding:9px 4px;border:0;border-top:1px solid rgba(255,255,255,.12);background:none;color:#fff;font:inherit;text-align:left;cursor:pointer;border-radius:6px}
+.sc-row:first-child{border-top:0}
+.sc-row:hover{background:rgba(255,255,255,.06)}
+.sc-label{display:flex;flex-direction:column}
+.sc-label b{font-size:13.5px}
+.sc-label small{font-size:11.5px;color:#cfe0d3}
+.sc-bar{height:8px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+.sc-bar i{display:block;height:100%;border-radius:99px;background:#f6c9a4}
+.sc-pt{text-align:right;font-size:12px;color:#cfe0d3;white-space:nowrap}
+.sc-pt b{font-size:17px;color:#fff}
+/* 넘김 영역: 내 조건 (2단 목록) */
+.cl{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+.cl dl{margin:0}
+.cl dl div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:5px 2px;border-bottom:1px solid rgba(255,255,255,.1);cursor:pointer;border-radius:4px}
+.cl dl div:hover{background:rgba(255,255,255,.06)}
+.cl dt{font-size:12px;color:#cfe0d3;white-space:nowrap}
+.cl dd{margin:0;font-size:13.5px;font-weight:700;color:#fff;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-head{align-items:center}
+.ds-total{font-style:normal;margin-left:6px;font-size:18px;font-weight:800;color:#fff}
+.ds-total small{font-size:11.5px;color:#cfe0d3;font-weight:600}
+.ds-note{margin-left:auto;font-size:11px;color:#cfe0d3}
+.sc-row{padding:7px 4px}
+.cl dl div{padding:3px 2px}
+.cl dd{font-size:13px}
+.ds-view{min-height:236px}

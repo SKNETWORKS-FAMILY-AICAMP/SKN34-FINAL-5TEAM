@@ -172,30 +172,51 @@
   }
 
   /* ── 내 공간 카드 안: 진단 때 입력한 조건 전체 (예전 '내 조건 요약' 박스를 카드로 옮김) ── */
-  // 내 조건을 두 쪽으로: 항목마다 진단 몇 단계에서 고치는지(step) 같이 둔다
-  function condPages(a) {
-    const yr = (v) => (v === '' || v == null ? '–' : `${v}년`);
+  // 내 조건 목록 (가점에 들어가는 무주택 기간·부양가족·통장 가입 기간은 '가점 구성' 쪽에서 보여 준다)
+  function condRows(a) {
     const man = (v) => (v === '' || v == null || !Number(v) ? '입력 안 함' : Number(v) >= 10000 ? `${(Number(v) / 10000).toFixed(Number(v) % 10000 ? 1 : 0)}억 원` : `${Number(v).toLocaleString('ko-KR')}만 원`);
     return [
-      ['나와 우리 집', [['연령대', a.age, 0], ['혼인', a.marriage, 0], ['세대주', a.head, 0], ['현재 거주', a.region, 0],
-        ['주택 소유', a.ownership === '무주택' ? (a.firstHome === '있어요' ? '무주택 (과거 소유)' : '무주택 (첫 집)') : a.ownership, 1], ['무주택 기간', yr(a.years), 1], ['부양가족', `${a.family ?? 0}명`, 2], ['미성년 자녀', a.children, 2]]],
-      ['통장 · 자금 · 희망', [['통장 가입', yr(a.account), 3], ['납입 회차', `${a.payments ?? 0}회`, 3], ['예치금', man(a.deposit), 3], ['5년 내 당첨', a.won5 === '잘 모르겠어요' ? '모름' : a.won5, 3],
-        ['연 소득', String(a.income || '').replace(/ 원$/, ''), 4], ['보유 현금', man(a.assets), 4], ['희망 지역', a.wish, 5], ['관심 유형', typeLabel(a.type), 5]]],
+      ['연령대', a.age, 0], ['혼인', a.marriage, 0], ['세대주', a.head, 0], ['현재 거주', a.region, 0],
+      ['주택 소유', a.ownership === '무주택' ? (a.firstHome === '있어요' ? '무주택 (과거 소유)' : '무주택 (첫 집)') : a.ownership, 1],
+      ['미성년 자녀', a.children, 2], ['납입 회차', `${a.payments ?? 0}회`, 3],
+      ['예치금', man(a.deposit), 3], ['5년 내 당첨', a.won5 === '잘 모르겠어요' ? '모름' : a.won5, 3], ['연 소득', String(a.income || '').replace(/ 원$/, ''), 4],
+      ['보유 현금', man(a.assets), 4], ['희망 지역', a.wish, 5], ['관심 유형', typeLabel(a.type), 5],
     ];
   }
+  // 가점 구성 (서버 계산: 무주택 32 + 부양가족 35 + 통장 17)
+  function scorePage() {
+    const sb = hist.score;
+    if (!sb) return '<p class="ds-hint">가점 구성을 불러오는 중이에요…</p>';
+    const STEP = { no_house: 1, dependents: 2, account: 3 };
+    return `<div class="sc-list">${sb.items.map((it) => `<button type="button" class="sc-row" data-action="cond-edit" data-value="${STEP[it.key] ?? 0}" title="${it.label} 수정하기">
+        <span class="sc-label"><b>${it.label}</b><small>${esc(it.basis)}</small></span>
+        <span class="sc-bar"><i style="width:${Math.round((it.score / it.max) * 100)}%"></i></span>
+        <span class="sc-pt"><b>${it.score}</b> / ${it.max}점</span></button>`).join('')}</div>
+      <p class="ds-hint">납입 회차·예치금은 가점이 아니라 1순위 조건에 쓰여요.</p>`;
+  }
+  async function loadScore() {
+    if (!state.user?.id || hist.scoreFor === live.recs) return;
+    hist.scoreFor = live.recs;   // 추천을 새로 받으면(조건이 바뀌면) 가점 구성도 다시
+    try { hist.score = await api(`/users/${state.user.id}/score`); } catch { hist.score = null; }
+    render();
+  }
 
-  // 카드 왼쪽 넘김 영역: 1쪽 = 청약 현황·자금, 2~7쪽 = 진단 6단계 묶음별 내 조건 (‹ › 로 넘김)
+  // 카드 왼쪽 넘김 영역: 1쪽 청약 현황·자금, 2쪽 청약 가점 구성, 3쪽 내 조건 (‹ › 로 넘김)
   function slider(a, statusHtml) {
-    const conds = condPages(a);
-    const pages = [['내 청약 현황', statusHtml], ...conds.map(([t, rows]) => [`내 조건 · ${t}`,
-      `<div class="ds-cond">${rows.map(([k, v, step]) => `<button type="button" data-action="cond-edit" data-value="${step}" title="${k} 수정하기 (진단 ${step + 1}단계)"><span>${k}</span><b>${esc(v ?? '–')}</b></button>`).join('')}</div>
-       <p class="ds-hint">항목을 누르면 그 단계부터 진단을 고칠 수 있어요.</p>`])];
+    const rows = condRows(a);
+    const half = Math.ceil(rows.length / 2);
+    const col = (list) => `<dl>${list.map(([k, v, step]) => `<div role="button" tabindex="0" data-action="cond-edit" data-value="${step}" title="${k} 수정하기"><dt>${k}</dt><dd>${esc(v ?? '–')}</dd></div>`).join('')}</dl>`;
+    const pages = [
+      ['내 청약 현황', statusHtml],
+      [`청약 가점 구성${hist.score ? ` <em class="ds-total">${hist.score.total}<small> / ${hist.score.max}점</small></em>` : ''}`, scorePage(), '항목을 누르면 수정'],
+      ['내 조건', `<div class="cl">${col(rows.slice(0, half))}${col(rows.slice(half))}</div>`, '항목을 누르면 수정'],
+    ];
     const i = Math.min(Math.max(hist.slide || 0, 0), pages.length - 1);
     return `<div class="ds" aria-roledescription="carousel">
       <button type="button" class="ds-nav" data-action="ds-go" data-value="${i - 1}" ${i === 0 ? 'disabled' : ''} aria-label="이전">‹</button>
-      <div class="ds-view" aria-live="polite"><div class="ds-head"><b>${pages[i][0]}</b><span>${i + 1} / ${pages.length}</span></div>${pages[i][1]}</div>
+      <div class="ds-view" aria-live="polite"><div class="ds-head"><b>${pages[i][0]}</b><span>${i + 1} / ${pages.length}</span>${pages[i][2] ? `<small class="ds-note">${pages[i][2]}</small>` : ''}</div>${pages[i][1]}</div>
       <button type="button" class="ds-nav" data-action="ds-go" data-value="${i + 1}" ${i === pages.length - 1 ? 'disabled' : ''} aria-label="다음">›</button>
-      <div class="ds-dots">${pages.map(([t], k) => `<button type="button" class="${k === i ? 'on' : ''}" data-action="ds-go" data-value="${k}" aria-label="${t}" title="${t}"></button>`).join('')}</div>
+      <div class="ds-dots">${pages.map(([t], k) => { const plain = esc(t.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()); return `<button type="button" class="${k === i ? 'on' : ''}" data-action="ds-go" data-value="${k}" aria-label="${plain}" title="${plain}"></button>`; }).join('')}</div>
     </div>`;
   }
 
@@ -465,6 +486,7 @@
       if (welcome && !$('.dash-diag')) welcome.outerHTML = dashboardCard();   // 인사 박스 → 청약 현황 카드(오른쪽에 마감 임박·내 기준 공고)
       tidyDashAside();
       if (state.user?.id && live.recs === null && !live.recsLoading) loadRecs();
+      if (live.recs && hist.slide === 1) loadScore();
     }
   };
 
@@ -512,7 +534,7 @@
     } else if (act === 'dash-retry') {
       live.recsError = null; live.recs = null; hist.loadingFor = 0; render(); loadRecs();
     } else if (act === 'ds-go') {
-      hist.slide = Number(b.dataset.value) || 0; render();
+      hist.slide = Number(b.dataset.value) || 0; render(); if (hist.slide === 1) loadScore();
     } else if (act === 'cond-edit') {
       hist.editStep = Number(b.dataset.value) || 0; go('diagnosis'); window.scrollTo(0, 0);
     } else if (act === 'rp-del') {
