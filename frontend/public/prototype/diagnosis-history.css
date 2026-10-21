@@ -352,3 +352,9 @@
 .cl dl div{padding:3px 2px}
 .cl dd{font-size:13px}
 .ds-view{min-height:236px}
+/* 넘김 영역 아래: 쪽 이름 탭 + 쪽 번호 */
+.ds-dots{align-items:center;gap:4px;margin-top:4px}
+.ds-dots button{width:auto;height:auto;padding:4px 10px;border-radius:999px;background:transparent;border:1px solid rgba(255,255,255,.2);color:#cfe0d3;font:inherit;font-size:11.5px;font-weight:700}
+.ds-dots button:hover{background:rgba(255,255,255,.1)}
+.ds-dots button.on{width:auto;background:#f6c9a4;border-color:#f6c9a4;color:#163f33}
+.ds-count{margin-left:8px;font-size:12px;font-weight:800;color:#fff;letter-spacing:.5px}
