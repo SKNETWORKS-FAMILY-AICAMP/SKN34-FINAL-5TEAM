@@ -40,22 +40,21 @@
   const COND_KEYS = ['age', 'marriage', 'head', 'region', 'ownership', 'firstHome', 'years', 'family', 'children', 'account', 'payments', 'deposit', 'won5', 'income', 'assets', 'wish', 'type'];
   // 기록에 있는 항목만 비교한다 (예전 기록에는 나중에 생긴 질문이 없을 수 있어서)
   const sameCond = (rec, cur) => COND_KEYS.filter((k) => rec && k in rec).every((k) => String(rec[k] ?? '') === String(cur?.[k] ?? ''));
-  // 사용 중 기록: 직접 고른 기록(이 브라우저에 기억) → 없으면 지금 조건과 같은 가장 최근 기록
+  // 사용 중 기록: 서버가 알려 준 기록(active). 서버 값이 없으면(예전 서버) 지금 조건과 같은 가장 최근 기록
   const appliedRecord = () => {
     const recs = hist.records || [];
-    const picked = read('applied-record', null);
-    const mine = picked && picked.uid === state.user?.id && recs.find((r) => r.id === picked.id);
-    if (mine && sameCond(mine.answers, state.diagnosis)) return mine;
-    return recs.find((r) => sameCond(r.answers, state.diagnosis)) || null;
+    return recs.find((r) => r.active) || recs.find((r) => sameCond(r.answers, state.diagnosis)) || null;
   };
-  // 기록 하나를 '사용 중'으로: 진단 조건·진단 입력값을 그 기록으로 바꾸고 서버 프로필도 갱신 → 가점·추천 공고 다시 계산
+  // 기록 하나를 '사용 중'으로: 서버에 고른 기록을 저장하고, 진단 조건·서버 프로필도 그 기록으로 바꿔 가점·추천 공고를 다시 계산
   async function applyRecord(id) {
     const r = (hist.records || []).find((x) => x.id === id);
-    if (!r || hist.applying) return;
-    state.diagnosis = { ...state.diagnosis, ...r.answers }; save('diagnosis', state.diagnosis);
-    state.answers = { ...state.answers, ...state.diagnosis }; state.step = 0;
-    save('applied-record', { uid: state.user?.id, id }); hist.applying = id; render();
+    if (!r || hist.applying || r.active) return;
+    hist.applying = id; hist.pickOpen = false; render();
     try {
+      await api(`/users/${state.user.id}/diagnoses/${id}/active`, { method: 'PUT' });
+      hist.records = hist.records.map((x) => ({ ...x, active: x.id === id }));
+      state.diagnosis = { ...state.diagnosis, ...r.answers }; save('diagnosis', state.diagnosis);
+      state.answers = { ...state.answers, ...state.diagnosis }; state.step = 0;
       await saveProfile();
       await loadRecs();
       toast(`${when(r.created_at, true)} 진단을 사용해요. 가점·추천 공고가 이 조건으로 바뀌었어요.`);
@@ -84,7 +83,7 @@
       const rec = await api(`/users/${state.user.id}/diagnoses`, { method: 'POST', body: {
         answers: state.diagnosis, recommend_count: mine.length, eligible_count: mine.filter((r) => r.eligible).length,
       } });
-      hist.records = [rec, ...(hist.records || [])];
+      hist.records = [rec, ...(hist.records || []).map((x) => ({ ...x, active: false }))];   // 새 기록이 사용 중
       hist.pending = false;
     } catch (error) { toast(`진단 기록을 저장하지 못했어요: ${error.message}`); hist.pending = false; }
     finally { hist.posting = false; render(); }
@@ -95,7 +94,7 @@
   const liveSaveProfile = saveProfile;
   saveProfile = function (...args) { const p = liveSaveProfile(...args); hist.saving = p; p.finally(() => { if (hist.saving === p) hist.saving = null; }); return p; };
 
-  window.addEventListener('cy:diagnosis-done', () => { hist.pending = true; live.recsEligibleOnly = false; live.recsShowAll = false; live.recsKind = null; hist.viewId = null; save('applied-record', null);   // 새로 진단하면 그 진단이 사용 중
+  window.addEventListener('cy:diagnosis-done', () => { hist.pending = true; live.recsEligibleOnly = false; live.recsShowAll = false; live.recsKind = null; hist.viewId = null;
     if (state.user?.member && routeNow() === 'diagnosis') hist.toMyPage = true;   // 로그인한 사람은 진단을 마치면 마이페이지(청약 현황)로
   });   // 새 진단이면 결과 목록 보기 방식도 처음으로
 
@@ -156,6 +155,19 @@
       ${recs.length ? `<div class="hist-list">${rows}</div>${recs.length > LIST_PAGE ? `<button type="button" class="hist-more" data-action="hist-more">${hist.showAll ? '최근 5건만 보기' : `기록 ${recs.length}건 모두 보기`}</button>` : ''}${compare}` : '<div class="empty"><h3>아직 저장된 기록이 없어요</h3><p>진단을 마치면 이곳에 날짜별로 쌓여요.</p></div>'}${guest}</section>`;
   }
 
+  /* ── 내 공간 카드 안: 사용할 진단 기록 고르기 (아래로 펼치는 목록, 화면 이동 없이) ── */
+  const PICK_ROWS = 8;
+  function recordPicker(used) {
+    const recs = hist.records || [];
+    const items = recs.slice(0, PICK_ROWS).map((r, i) => { const a = r.answers || {}; const on = used && r.id === used.id; return `<button type="button" role="menuitemradio" aria-checked="${on}" class="rp-item${on ? ' on' : ''}" data-action="hist-apply" data-id="${r.id}" ${hist.applying ? 'disabled' : ''}>
+        <span class="rp-check" aria-hidden="true"></span>
+        <span class="rp-main"><b>${when(r.created_at, true)}${i === 0 ? ' <em>최근</em>' : ''}</b><small>${esc(a.marriage || '')} · 무주택 ${esc(a.years ?? 0)}년 · 통장 ${esc(a.account ?? 0)}년 · 희망 ${esc(a.wish || '전체')} · ${esc(typeLabel(a.type))}</small></span>
+        <span class="rp-score">${r.score}<small>점</small></span>${on ? '<span class="rp-tag">사용 중</span>' : ''}</button>`; }).join('');
+    return `<div class="rp"><button type="button" class="rp-btn" data-action="rp-toggle" aria-haspopup="menu" aria-expanded="${!!hist.pickOpen}">${hist.applying ? '바꾸는 중…' : `다른 진단 기록 사용 (${recs.length}건)`}<span aria-hidden="true"></span></button>
+      ${hist.pickOpen ? `<div class="rp-menu" role="menu"><div class="rp-head">사용할 진단을 고르면 가점·추천 공고·진단 입력값이 그 기록으로 바뀌어요.</div>${items}
+        <button type="button" class="rp-all" data-action="hist-open">${recs.length > PICK_ROWS ? `기록 ${recs.length}건 모두 보기 · 비교 →` : '기록 비교하기 →'}</button></div>` : ''}</div>`;
+  }
+
   /* ── 내 공간 카드 안: 진단 때 입력한 조건 전체 (예전 '내 조건 요약' 박스를 카드로 옮김) ── */
   function condGrid(a) {
     const yr = (v) => (v === '' || v == null ? '–' : `${v}년`);
@@ -188,7 +200,7 @@
       <div class="dash-money-actions"><button type="button" data-action="finance-tab" data-value="대출">내 대출 한도·금리 보기 →</button><button type="button" data-action="finance-tab" data-value="자금 계산">자금 계획 계산하기 →</button></div></div>`;
     return `<section class="dash-diag" aria-label="내 진단 결과">
       <div class="dash-diag-left">
-        <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><p class="dash-diag-sub">${used ? `사용 중인 진단 · ${when(used.created_at, true)}${used.id === r?.id ? ' (최근)' : ''}` : r ? `최근 진단 · ${when(r.created_at, true)}` : '내 진단'}${n > 1 ? ' <button type="button" class="dash-sub-link" data-action="hist-open">다른 기록 사용 →</button>' : ''}</p>
+        <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><div class="dash-sub-row"><p class="dash-diag-sub">${used ? `사용 중인 진단 · ${when(used.created_at, true)}${used.id === r?.id ? ' (최근)' : ''}` : r ? `최근 진단 · ${when(r.created_at, true)}` : '내 진단'}</p>${n > 1 ? recordPicker(used) : ''}</div>
           <div class="dash-cond-bar"><span class="dash-cond-sum">${[a.age, a.marriage, `${a.region} 거주`, a.ownership, `희망 ${a.wish}`, typeLabel(a.type)].map((x) => `<i>${esc(x)}</i>`).join('')}</span><button type="button" class="dash-cond-btn" data-action="dash-cond" aria-expanded="${!!hist.condOpen}">${hist.condOpen ? '조건 접기' : '내 조건 전체 보기'}<span aria-hidden="true"></span></button></div>${hist.condOpen ? condGrid(a) : ''}${facts}${moneyRow}</div>
         <div class="dash-diag-actions"><a class="btn orange" href="#result">가점 근거·전체 결과 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 · PDF 저장 ↗</a></div>
       </div>
@@ -397,7 +409,10 @@
     if (!e.target.closest('.acct-menu')) acctMenu(false);
     else if (e.target.closest('a[role="menuitem"]')) acctMenu(false);
   }, true);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') acctMenu(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { acctMenu(false); if (hist.pickOpen) { hist.pickOpen = false; render(); } } });
+  document.addEventListener('click', (e) => {   // 진단 기록 고르기 목록: 바깥을 누르면 닫힘
+    if (hist.pickOpen && !e.target.closest('.rp')) { hist.pickOpen = false; render(); }
+  }, true);
 
   const prevRender = render;
   render = function () {
@@ -475,6 +490,8 @@
       hist.selected.clear(); render();
     } else if (act === 'hist-open') {
       hist.scrollTo = true; go('result');
+    } else if (act === 'rp-toggle') {
+      hist.pickOpen = !hist.pickOpen; render();
     } else if (act === 'hist-apply') {
       e.preventDefault(); applyRecord(Number(b.dataset.id));
     } else if (act === 'hist-del') {

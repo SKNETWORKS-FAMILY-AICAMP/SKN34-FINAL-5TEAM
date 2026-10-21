@@ -232,3 +232,29 @@
 .dash-cond-btn[aria-expanded="true"] span{transform:translateY(1px) rotate(-135deg)}
 .dash-cond{margin-top:8px}
 .hist-use{min-width:96px;text-align:center}
+
+/* 마이페이지 카드: 사용할 진단 기록 고르기 */
+.dash-diag-sub{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px}
+.rp{position:relative;display:inline-block;margin-top:8px}
+.rp-btn{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.rp-btn:hover,.rp-btn[aria-expanded="true"]{background:rgba(255,255,255,.12)}
+.rp-btn span{width:6px;height:6px;border-right:1.8px solid currentColor;border-bottom:1.8px solid currentColor;transform:translateY(-2px) rotate(45deg)}
+.rp-btn[aria-expanded="true"] span{transform:translateY(1px) rotate(-135deg)}
+.rp-menu{position:absolute;left:0;top:calc(100% + 8px);z-index:40;width:min(520px,82vw);padding:8px;background:#fff;color:#1d2a24;border-radius:16px;box-shadow:0 18px 44px #0c241c55}
+.rp-head{padding:8px 10px 10px;font-size:12px;color:#5f6b64;border-bottom:1px solid #ece6da;margin-bottom:4px}
+.rp-item{display:grid;grid-template-columns:18px minmax(0,1fr) auto auto;align-items:center;gap:12px;width:100%;padding:10px;border-radius:10px;border:0;background:none;text-align:left;font:inherit;cursor:pointer;color:inherit}
+.rp-item:hover:not(:disabled){background:#eef3ef}
+.rp-item:disabled{cursor:wait;opacity:.6}
+.rp-item.on{background:#eef3ef;cursor:default}
+.rp-check{width:16px;height:16px;border-radius:50%;border:2px solid #b9c6bd}
+.rp-item.on .rp-check{border:5px solid #163f33}
+.rp-main{display:flex;flex-direction:column;min-width:0}
+.rp-main b{font-size:13.5px}
+.rp-main b em{font-style:normal;font-size:10.5px;font-weight:800;color:#fff;background:#ef783e;border-radius:6px;padding:1px 6px;margin-left:4px}
+.rp-main small{font-size:11.5px;color:#748079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp-score{font-size:18px;font-weight:800;color:#163f33}
+.rp-score small{font-size:11px;color:#748079;margin-left:1px}
+.rp-tag{font-size:11px;font-weight:800;color:#fff;background:#163f33;border-radius:999px;padding:3px 9px}
+.rp-all{display:block;width:100%;margin-top:4px;padding:10px;border:0;border-top:1px solid #ece6da;background:none;font:inherit;font-size:12.5px;font-weight:800;color:#ef783e;text-align:right;cursor:pointer}
+.dash-sub-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px}
+.dash-sub-row .rp{margin-top:0}
