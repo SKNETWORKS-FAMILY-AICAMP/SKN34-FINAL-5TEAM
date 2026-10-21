@@ -148,7 +148,7 @@
   }
 
   /* ── 내 공간 카드 오른쪽: 접고 펼 수 있는 두 상자 (마감 임박 · 내 기준에 맞는 공고) ── */
-  const fold = read('dash-fold', { soon: true, recs: true });   // true = 펼침
+  const fold = { soon: false, recs: true };   // true = 펼침. 마이페이지에 처음 들어오면 '내 기준에 맞는 공고'만 펼친다(새로고침하면 초기화)
   function ddayOf(h) {
     const e = h.raw?.receipt_end; if (!e) return null;
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -162,10 +162,10 @@
     return [...m.values()];
   }
   const FP_CLASS = { '1순위 가능': 'fp-ok', '1순위 아님': 'fp-no', '확인 필요': 'fp-check' };
-  function foldBox(key, title, sub, body, more) {
+  function foldBox(key, title, sub, body, more, badge) {
     const open = fold[key] !== false;
     return `<section class="dash-fold${open ? ' open' : ''}" aria-label="${title}">
-      <button type="button" class="dash-fold-head" data-action="dash-fold" data-value="${key}" aria-expanded="${open}"><h4>${title}</h4>${sub ? `<small>${sub}</small>` : ''}<span class="dash-fold-icon" aria-hidden="true"></span></button>
+      <button type="button" class="dash-fold-head" data-action="dash-fold" data-value="${key}" aria-expanded="${open}"><h4>${title}</h4>${sub && (open || badge == null) ? `<small>${sub}</small>` : ''}${!open && badge != null ? `<em class="dash-fold-badge">${badge}</em>` : ''}<span class="dash-fold-icon" aria-hidden="true"></span></button>
       ${open ? `<div class="dash-fold-body">${body}${more || ''}</div>` : ''}</section>`;
   }
   function dashSoon() {
@@ -181,7 +181,8 @@
         <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''}${r.fp === '1순위 가능' ? ' · 1순위 가능' : ''}</small></span></a>`).join('');
       soonBox = foldBox('soon', '마감 임박한 내 추천 공고', `7일 안에 마감 ${open.filter((x) => x.d <= 7).length}건`,
         rows ? `<div class="dash-soon-list">${rows}</div>` : '<p class="dash-soon-empty">지금 접수 마감이 다가오는 추천 공고가 없어요.</p>',
-        open.length ? `<button type="button" class="dash-soon-more" data-action="dash-soon-all">${open.length}건 마감순으로 보기 →</button>` : '');
+        open.length ? `<button type="button" class="dash-soon-more" data-action="dash-soon-all">${open.length}건 마감순으로 보기 →</button>` : '',
+        `7일 안에 마감 ${open.filter((x) => x.d <= 7).length}건`);
     }
     let recsBox;
     if (loading) recsBox = foldBox('recs', '내 기준에 맞는 공고', '', '<p class="dash-soon-empty">추천 공고를 불러오는 중이에요…</p>');
@@ -281,7 +282,7 @@
     } else if (act === 'hist-more') {
       hist.showAll = !hist.showAll; render();
     } else if (act === 'dash-fold') {
-      const k = b.dataset.value; fold[k] = fold[k] === false; save('dash-fold', fold); render();
+      const k = b.dataset.value; fold[k] = fold[k] === false; render();
     } else if (act === 'dash-filter') {
       hist.dashFilter = b.dataset.value; render();
     } else if (act === 'dash-soon-all') {
