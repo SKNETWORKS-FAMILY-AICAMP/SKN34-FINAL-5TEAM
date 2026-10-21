@@ -153,3 +153,226 @@
 @media (max-width:900px){.dash-diag{grid-template-columns:1fr}}
 .dash-fold-badge{margin-left:auto;align-self:center;flex:none;padding:4px 10px;border-radius:999px;background:#ef783e;color:#fff;font-style:normal;font-size:12px;font-weight:800}
 .dash-fold-badge+.dash-fold-icon{margin-left:6px}
+.dash-fold-badge.green{background:#163f33}
+.dash-mini-chips{align-items:center}
+.dash-mini-note{margin-left:auto;font-size:11.5px;color:#8a938d}
+
+/* 카드 안: 내 조건 전체 보기 */
+.dash-cond-toggle{margin-left:6px;padding:0;background:none;border:0;font:inherit;font-size:12.5px;font-weight:700;color:#f6c9a4;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.dash-cond-toggle span{display:inline-block;width:6px;height:6px;margin-left:6px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:translateY(-2px) rotate(45deg)}
+.dash-cond-toggle[aria-expanded="true"] span{transform:translateY(1px) rotate(-135deg)}
+.dash-cond{margin-top:14px;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16)}
+.dash-cond dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 18px;margin:0}
+.dash-cond dl div{min-width:0}
+.dash-cond dt{font-size:11px;color:#cfe0d3}
+.dash-cond dd{margin:1px 0 0;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-cond-edit{margin-top:12px;padding:0;background:none;border:0;font:inherit;font-size:12.5px;font-weight:800;color:#f6c9a4;cursor:pointer}
+.dash-cond-edit:hover{color:#fff}
+.dash-grid.dash-grid-one{grid-template-columns:1fr}
+/* 상단 계정 메뉴 (이름 버튼 → 마이페이지 · 계정 설정 · 로그아웃) */
+.acct{position:relative}
+.acct-btn{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;font-size:14px}
+.acct-caret{width:7px;height:7px;border-right:1.8px solid currentColor;border-bottom:1.8px solid currentColor;transform:translateY(-2px) rotate(45deg);transition:transform .15s}
+.acct-btn[aria-expanded="true"] .acct-caret{transform:translateY(1px) rotate(-135deg)}
+.acct-menu{position:absolute;right:0;top:calc(100% + 10px);z-index:60;min-width:230px;padding:8px;background:#fff;border:1px solid var(--line,#e2dccf);border-radius:16px;box-shadow:0 16px 40px #163f3322}
+.acct-menu[hidden]{display:none}
+.acct-who{display:flex;flex-direction:column;padding:8px 12px 10px;margin-bottom:4px;border-bottom:1px solid var(--line,#e2dccf)}
+.acct-who b{font-size:14px;color:#163f33}
+.acct-who small{font-size:11.5px;color:#748079}
+.acct-menu a,.acct-menu button{display:flex;flex-direction:column;align-items:flex-start;width:100%;padding:10px 12px;border-radius:10px;font-size:13.5px;font-weight:700;color:#1d2a24;text-align:left;background:none;border:0;cursor:pointer}
+.acct-menu a small{font-size:11.5px;font-weight:500;color:#748079;margin-top:2px}
+.acct-menu a:hover,.acct-menu button:hover,.acct-menu a.on{background:#eef3ef}
+.acct-menu .acct-logout{margin-top:4px;border-top:1px solid var(--line,#e2dccf);border-radius:0 0 10px 10px;color:#b3402b;font-weight:600}
+/* 계정 설정 화면 */
+.settings-page .panel{max-width:760px;margin-bottom:18px}
+.settings-page .panel h3{margin-bottom:8px}
+.settings-note{font-size:12.5px;color:#5f6b64;margin:4px 0 0}
+.settings-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.settings-actions:empty{display:none}
+.settings-danger{border-color:#f0cfc4}
+.settings-danger h3{color:#b3402b}
+.btn.danger{background:#b3402b;color:#fff;border-color:#b3402b}
+.btn.danger:disabled{opacity:.45;cursor:not-allowed}
+/* 계정 설정: 백업 */
+.bk-block{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;padding:16px 0;border-top:1px solid var(--line,#e2dccf)}
+.bk-block:first-of-type{border-top:0;padding-top:6px}
+.bk-block>div:first-child{flex:1 1 360px}
+.bk-block b{font-size:14px;color:#163f33}
+.bk-pick{flex-direction:column;align-items:stretch}
+.bk-list{border:1px solid var(--line,#e2dccf);border-radius:12px;overflow:hidden}
+.bk-rows{max-height:248px;overflow-y:auto}
+.bk-row{display:grid;grid-template-columns:20px 150px 56px 1fr auto;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid #efe9de;font-size:12.5px;cursor:pointer}
+.bk-rows .bk-row:first-child{border-top:0}
+.bk-row.on{background:#eef3ef}
+.bk-row input{margin:0}
+.bk-head{grid-template-columns:20px 1fr auto;background:#f6f2ea;border-top:0;font-weight:700}
+.bk-head small{color:#748079;font-weight:600}
+.bk-date{font-weight:700}
+.bk-date em{font-style:normal;font-size:10.5px;font-weight:800;color:#fff;background:#ef783e;border-radius:6px;padding:1px 6px;margin-left:4px}
+.bk-score{font-weight:800;color:#163f33}
+.bk-meta,.bk-cond{color:#5f6b64;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-pick .settings-actions{margin-top:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.bk-pick>div:first-child{flex:none}
+
+/* 진단 기록: 이 조건 사용 */
+.hist-row{grid-template-columns:22px 170px 90px minmax(0,1fr) minmax(0,1fr) auto auto}
+.hist-use{padding:6px 12px;border-radius:999px;border:1px solid #163f33;background:#fff;color:#163f33;font:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.hist-use:hover:not(:disabled){background:#163f33;color:#fff}
+.hist-use:disabled{opacity:.5;cursor:wait}
+.hist-use.on{background:#163f33;color:#fff;cursor:default}
+/* 마이페이지 카드: 사용 중인 진단 + 조건 요약 줄 */
+.dash-sub-link{margin-left:8px;padding:0;background:none;border:0;font:inherit;font-size:12.5px;font-weight:700;color:#f6c9a4;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.dash-cond-bar{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16)}
+.dash-cond-sum{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 auto;min-width:0}
+.dash-cond-sum i{font-style:normal;font-size:12px;font-weight:700;color:#fff;background:rgba(255,255,255,.12);border-radius:999px;padding:4px 10px}
+.dash-cond-btn{flex:none;display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;border:0;background:#f6c9a4;color:#163f33;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+.dash-cond-btn:hover{background:#fff}
+.dash-cond-btn span{width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-2px) rotate(45deg)}
+.dash-cond-btn[aria-expanded="true"] span{transform:translateY(1px) rotate(-135deg)}
+.dash-cond{margin-top:8px}
+.hist-use{min-width:96px;text-align:center}
+
+/* 마이페이지 카드: 사용할 진단 기록 고르기 (버튼 너비의 작은 목록, 스크롤) */
+.dash-diag-sub{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px}
+.rp{position:relative;display:inline-block}
+.rp-btn{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.rp-btn:hover,.rp-btn[aria-expanded="true"]{background:rgba(255,255,255,.12)}
+.rp-btn span{width:6px;height:6px;border-right:1.8px solid currentColor;border-bottom:1.8px solid currentColor;transform:translateY(-2px) rotate(45deg)}
+.rp-btn[aria-expanded="true"] span{transform:translateY(1px) rotate(-135deg)}
+.rp-menu{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:40;min-width:220px;padding:6px;background:#fff;color:#1d2a24;border-radius:14px;box-shadow:0 14px 34px #0c241c55}
+.rp-list{max-height:216px;overflow-y:auto;overscroll-behavior:contain}
+.rp-row{display:flex;align-items:center;gap:4px;border-radius:9px}
+.rp-row:hover{background:#f2f6f2}
+.rp-row.on{background:#eef3ef}
+.rp-item{flex:1;display:flex;align-items:center;gap:8px;min-width:0;padding:8px;border:0;background:none;font:inherit;text-align:left;cursor:pointer;color:inherit}
+.rp-row.on .rp-item{cursor:default}
+.rp-item:disabled{cursor:wait;opacity:.6}
+.rp-check{flex:none;width:14px;height:14px;border-radius:50%;border:2px solid #b9c6bd}
+.rp-row.on .rp-check{border:4px solid #163f33}
+.rp-date{flex:1;font-size:12.5px;font-weight:700;white-space:nowrap}
+.rp-date em{font-style:normal;font-size:10px;font-weight:800;color:#fff;background:#ef783e;border-radius:5px;padding:1px 5px;margin-left:5px;vertical-align:1px}
+.rp-score{font-size:12.5px;font-weight:800;color:#163f33;white-space:nowrap}
+.rp-tag{flex:none;font-size:10.5px;font-weight:800;color:#fff;background:#163f33;border-radius:999px;padding:2px 7px;margin-right:6px}
+.rp-del{flex:none;width:24px;height:24px;margin-right:4px;border-radius:50%;border:0;background:none;color:#a5afa8;font-size:16px;line-height:1;cursor:pointer}
+.rp-del:hover{background:#fde9de;color:#b3402b}
+.rp-ask{padding:6px 8px;gap:6px;background:#fdf0e8}
+.rp-ask span{flex:1;font-size:12px;font-weight:700;color:#8a3a1d}
+.rp-yes,.rp-no{border:0;border-radius:8px;padding:5px 9px;font:inherit;font-size:11.5px;font-weight:800;cursor:pointer}
+.rp-yes{background:#b3402b;color:#fff}
+.rp-no{background:#fff;color:#5f6b64;border:1px solid #e2dccf}
+.rp-all{display:block;width:100%;margin-top:4px;padding:8px;border:0;border-top:1px solid #ece6da;background:none;font:inherit;font-size:12px;font-weight:800;color:#ef783e;text-align:right;cursor:pointer}
+.dash-sub-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px}
+.dash-sub-row .rp{margin-top:0}
+/* 내 조건: 진단 단계별로 한 쪽씩 넘겨 보기 */
+.dash-cond-bar.cp{flex-wrap:nowrap;align-items:stretch;gap:8px;padding:10px}
+.cp-nav{flex:none;width:30px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:#fff;font-size:20px;line-height:1;cursor:pointer}
+.cp-nav:hover:not(:disabled){background:rgba(255,255,255,.16)}
+.cp-nav:disabled{opacity:.3;cursor:default}
+.cp-body{flex:1;min-width:0}
+.cp-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.cp-head b{font-size:13px;color:#f6c9a4}
+.cp-head span{font-size:11px;color:#cfe0d3}
+.cp-edit{margin-left:auto;padding:0;border:0;background:none;font:inherit;font-size:11.5px;font-weight:800;color:#f6c9a4;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.cp-body dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 14px;margin:0}
+.cp-body dt{font-size:10.5px;color:#cfe0d3}
+.cp-body dd{margin:0;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cp-close{flex:none;align-self:flex-start;width:22px;height:22px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:14px;line-height:1;cursor:pointer}
+.cp-close:hover{background:rgba(255,255,255,.25)}
+.rp-lock{display:inline-block;cursor:default}
+.rp-lock:hover{background:none}
+.rp-ask span{white-space:nowrap}
+.rp-yes,.rp-no{white-space:nowrap;flex:none}
+.rp-ask span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+/* 카드 왼쪽 넘김 영역 (청약 현황 ↔ 내 조건) */
+.dash-cond-sum button{font:inherit;font-size:12px;font-weight:700;color:#fff;background:rgba(255,255,255,.12);border:0;border-radius:999px;padding:4px 10px;cursor:pointer}
+.dash-cond-sum button:hover{background:rgba(255,255,255,.24)}
+.ds{position:relative;display:grid;grid-template-columns:30px minmax(0,1fr) 30px;gap:10px;margin-top:14px}
+.ds-nav{align-self:stretch;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.05);color:#fff;font-size:22px;line-height:1;cursor:pointer}
+.ds-nav:hover:not(:disabled){background:rgba(255,255,255,.16)}
+.ds-nav:disabled{opacity:.25;cursor:default}
+.ds-view{min-width:0;min-height:236px;display:flex;flex-direction:column}
+.ds-head{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.ds-head b{font-size:13px;color:#f6c9a4}
+.ds-head span{font-size:11px;color:#cfe0d3}
+.ds-view .dash-diag-facts{margin-top:0}
+.ds-cond{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0}
+.ds-cond div{padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);min-width:0}
+.ds-cond dt{font-size:11.5px;color:#cfe0d3}
+.ds-cond dd{margin:2px 0 0;font-size:18px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-edit{align-self:flex-start;margin-top:auto;padding:8px 0 0;border:0;background:none;font:inherit;font-size:12.5px;font-weight:800;color:#f6c9a4;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.ds-dots{grid-column:2;display:flex;justify-content:center;gap:6px;margin-top:2px}
+.ds-dots button{width:7px;height:7px;padding:0;border-radius:50%;border:0;background:rgba(255,255,255,.3);cursor:pointer}
+.ds-dots button.on{width:20px;border-radius:4px;background:#f6c9a4}
+.ds-view .dash-diag-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.ds-view .dash-diag-facts>div{min-width:0;padding:10px 12px}
+.ds-view .dash-diag-facts b{font-size:24px}
+.ds-view .dash-money{margin-top:12px;padding-top:12px}
+.ds-view{min-height:218px}
+.dash-err{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:12px;background:#fdf0e8;color:#8a3a1d}
+.dash-err b{font-size:13.5px}
+.dash-err small{font-size:12px;color:#8a5a45;word-break:break-all}
+.dash-err code{font-size:11.5px;background:#fff;border-radius:5px;padding:1px 5px}
+.dash-err button{align-self:flex-start;margin-top:4px;padding:6px 12px;border-radius:8px;border:0;background:#b3402b;color:#fff;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.ds-cond{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.ds-cond button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#fff;font:inherit;text-align:left;cursor:pointer}
+.ds-cond button:hover{background:rgba(255,255,255,.16);border-color:#f6c9a4}
+.ds-cond button span{font-size:11px;color:#cfe0d3}
+.ds-cond button b{max-width:100%;font-size:14.5px;font-weight:800;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ds-hint{margin:auto 0 0;padding-top:8px;font-size:11.5px;color:#cfe0d3}
+.ds-cond button b{font-size:14px;word-break:keep-all}
+.ds-view{min-height:228px}
+/* 넘김 영역: 가점 구성 (막대) */
+.sc-total{display:flex;align-items:baseline;gap:6px;margin-bottom:6px}
+.sc-total b{font-size:30px;font-weight:800;color:#f6c9a4;letter-spacing:-1px}
+.sc-total span{font-size:13px;color:#cfe0d3}
+.sc-list{display:flex;flex-direction:column}
+.sc-row{display:grid;grid-template-columns:150px minmax(0,1fr) 84px;align-items:center;gap:14px;padding:9px 4px;border:0;border-top:1px solid rgba(255,255,255,.12);background:none;color:#fff;font:inherit;text-align:left;cursor:pointer;border-radius:6px}
+.sc-row:first-child{border-top:0}
+.sc-row:hover{background:rgba(255,255,255,.06)}
+.sc-label{display:flex;flex-direction:column}
+.sc-label b{font-size:13.5px}
+.sc-label small{font-size:11.5px;color:#cfe0d3}
+.sc-bar{height:8px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+.sc-bar i{display:block;height:100%;border-radius:99px;background:#f6c9a4}
+.sc-pt{text-align:right;font-size:12px;color:#cfe0d3;white-space:nowrap}
+.sc-pt b{font-size:17px;color:#fff}
+/* 넘김 영역: 내 조건 (2단 목록) */
+.cl{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+.cl dl{margin:0}
+.cl dl div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:5px 2px;border-bottom:1px solid rgba(255,255,255,.1);cursor:pointer;border-radius:4px}
+.cl dl div:hover{background:rgba(255,255,255,.06)}
+.cl dt{font-size:12px;color:#cfe0d3;white-space:nowrap}
+.cl dd{margin:0;font-size:13.5px;font-weight:700;color:#fff;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-head{align-items:center}
+.ds-total{font-style:normal;margin-left:6px;font-size:18px;font-weight:800;color:#fff}
+.ds-total small{font-size:11.5px;color:#cfe0d3;font-weight:600}
+.ds-note{margin-left:auto;font-size:11px;color:#cfe0d3}
+.sc-row{padding:7px 4px}
+.cl dl div{padding:3px 2px}
+.cl dd{font-size:13px}
+.ds-view{min-height:236px}
+/* 넘김 영역 아래: 점 + 쪽 번호 */
+.ds-dots{align-items:center}
+.ds-count{margin-left:8px;font-size:12px;font-weight:800;color:#fff;letter-spacing:.5px}
+/* 쪽 번호는 점 바로 아래 가운데 */
+.ds-dots{flex-wrap:wrap;row-gap:4px}
+.ds-count{flex-basis:100%;margin:0;text-align:center;font-size:11.5px;font-weight:700;color:#cfe0d3;letter-spacing:1px}
+.rp-btn{background:rgba(255,255,255,.08)}
+.rp-static{font-size:12.5px;font-weight:700;color:#fff}
+/* 가점 항목 '?' 계산 방법 */
+.sc-label b{display:inline-flex;align-items:center;gap:6px}
+.sc-q{position:relative;display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;border:1.5px solid #f6c9a4;color:#f6c9a4;font-size:11px;font-weight:800;line-height:1;cursor:help}
+.sc-q:hover,.sc-q:focus,.sc-q.open{background:#f6c9a4;color:#163f33;outline:none}
+.sc-tip{display:none;position:absolute;left:calc(100% + 10px);top:-10px;z-index:30;width:290px;padding:12px 14px;border-radius:12px;background:#fff;color:#1d2a24;font-size:12px;font-weight:500;line-height:1.6;text-align:left;box-shadow:0 12px 30px #0c241c55;white-space:normal;cursor:default}
+.sc-tip strong{display:block;margin-bottom:4px;font-size:12.5px;color:#163f33}
+.sc-tip em{display:block;margin-top:6px;padding-top:6px;border-top:1px solid #ece6da;font-style:normal;font-weight:700;color:#d65a1f}
+.sc-q:hover .sc-tip,.sc-q:focus .sc-tip,.sc-q.open .sc-tip{display:block}
+.sc-row:last-child .sc-tip{top:auto;bottom:-10px}
+.sc-tip{pointer-events:none}
+/* 카드 왼쪽 정렬: 제목 가운데, 사용 중인 진단 오른쪽, 아래 버튼·리포트 가운데 */
+.dash-diag-main h3{text-align:center}
+.dash-sub-row{justify-content:flex-end}
+.dash-diag-left .dash-diag-actions{justify-content:center}
+.dash-diag-left .dash-diag-report{flex-basis:100%;text-align:center}
+.rp-menu{left:auto;right:0}
