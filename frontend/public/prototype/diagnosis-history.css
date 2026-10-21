@@ -214,3 +214,21 @@
 .bk-pick .settings-actions{margin-top:12px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .bk-pick>div:first-child{flex:none}
+
+/* 진단 기록: 이 조건 사용 */
+.hist-row{grid-template-columns:22px 170px 90px minmax(0,1fr) minmax(0,1fr) auto auto}
+.hist-use{padding:6px 12px;border-radius:999px;border:1px solid #163f33;background:#fff;color:#163f33;font:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.hist-use:hover:not(:disabled){background:#163f33;color:#fff}
+.hist-use:disabled{opacity:.5;cursor:wait}
+.hist-use.on{background:#163f33;color:#fff;cursor:default}
+/* 마이페이지 카드: 사용 중인 진단 + 조건 요약 줄 */
+.dash-sub-link{margin-left:8px;padding:0;background:none;border:0;font:inherit;font-size:12.5px;font-weight:700;color:#f6c9a4;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.dash-cond-bar{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16)}
+.dash-cond-sum{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 auto;min-width:0}
+.dash-cond-sum i{font-style:normal;font-size:12px;font-weight:700;color:#fff;background:rgba(255,255,255,.12);border-radius:999px;padding:4px 10px}
+.dash-cond-btn{flex:none;display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;border:0;background:#f6c9a4;color:#163f33;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+.dash-cond-btn:hover{background:#fff}
+.dash-cond-btn span{width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-2px) rotate(45deg)}
+.dash-cond-btn[aria-expanded="true"] span{transform:translateY(1px) rotate(-135deg)}
+.dash-cond{margin-top:8px}
+.hist-use{min-width:96px;text-align:center}
