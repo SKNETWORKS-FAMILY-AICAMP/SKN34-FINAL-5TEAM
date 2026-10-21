@@ -147,51 +147,58 @@
     </section>`;
   }
 
-  /* ── 내 공간 카드 오른쪽: 마감이 가까운 내 추천 공고 ── */
-  const SOON_ROWS = 4;
+  /* ── 내 공간 카드 오른쪽: 접고 펼 수 있는 두 상자 (마감 임박 · 내 기준에 맞는 공고) ── */
+  const fold = read('dash-fold', { soon: true, recs: true });   // true = 펼침
   function ddayOf(h) {
     const e = h.raw?.receipt_end; if (!e) return null;
     const today = new Date(); today.setHours(0, 0, 0, 0);
     return Math.round((new Date(e).setHours(0, 0, 0, 0) - today) / 86400000);
   }
   const ddayText = (d) => (d == null ? '' : d < 0 ? '마감' : d === 0 ? '오늘 마감' : `D-${d}`);
-  function dashSoon() {
-    const head = (cnt) => `<div class="dash-soon-head"><h4>마감 임박한 내 추천 공고</h4>${cnt != null ? `<small>7일 안에 마감 ${cnt}건</small>` : ''}</div>`;
-    if (!state.user?.id || !live.recs) return `<aside class="dash-soon">${head()}<p class="dash-soon-empty">추천 공고를 불러오는 중이에요…</p></aside>`;
-    const open = myRecs().map((r) => ({ r, d: ddayOf(r.house) })).filter((x) => x.d != null && x.d >= 0).sort((x, y) => x.d - y.d);
-    if (!open.length) return `<aside class="dash-soon">${head(0)}<p class="dash-soon-empty">지금 접수 마감이 다가오는 추천 공고가 없어요.</p></aside>`;
-    const rows = open.slice(0, SOON_ROWS).map(({ r, d }) => `<a class="dash-soon-row" href="#detail/${r.house.id}">
-        <span class="dash-soon-dday${d <= 3 ? ' hot' : ''}">${ddayText(d)}</span>
-        <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${r.fp === '1순위 가능' ? ' · 1순위 가능' : ''}</small></span>
-      </a>`).join('');
-    return `<aside class="dash-soon" aria-label="마감 임박한 내 추천 공고">${head(open.filter((x) => x.d <= 7).length)}<div class="dash-soon-list">${rows}</div>
-      <button type="button" class="dash-soon-more" data-action="dash-soon-all">${open.length > SOON_ROWS ? `${open.length}건 마감순으로 더 보기 →` : '진단 결과에서 마감순으로 보기 →'}</button></aside>`;
+  // 이름이 같은 공고(주택형만 다른 공고)는 한 줄로 묶는다
+  function groupByName(list) {
+    const m = new Map();
+    list.forEach((x) => { const k = x.r.house.name; if (m.has(k)) m.get(k).n += 1; else m.set(k, { ...x, n: 1 }); });
+    return [...m.values()];
   }
-
-  /* ── 내 공간: 내 기준에 맞는 공고를 바로 (진단 결과와 같은 순서) ── */
-  const DASH_ROWS = 6;
-  function dashRecs() {
-    if (!state.user?.id) return '';
-    if (!live.recs) return '<section class="dash-recs"><div class="dash-recs-head"><h2>내 기준에 맞는 공고</h2></div><div class="empty"><h3>추천 공고를 불러오는 중이에요…</h3></div></section>';
-    const all = rankedRecs();
-    const filters = [['all', '전체', all.length], ['first', '1순위 가능', all.filter((r) => r.fp === '1순위 가능').length], ['eligible', '자금 충족', all.filter((r) => r.eligible).length]];
-    const f = hist.dashFilter || 'all';
-    const list = all.filter((r) => f === 'all' || (f === 'first' ? r.fp === '1순위 가능' : r.eligible));
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const dday = (h) => { const e = h.raw?.receipt_end; if (!e) return ''; const d = Math.round((new Date(e).setHours(0, 0, 0, 0) - today) / 86400000); return d < 0 ? '마감' : d === 0 ? '오늘 마감' : `D-${d}`; };
-    const FP_CLASS = { '1순위 가능': 'fp-ok', '1순위 아님': 'fp-no', '확인 필요': 'fp-check' };
-    const rows = list.slice(0, DASH_ROWS).map((r) => `<a class="dash-rec" href="#detail/${r.house.id}">
-        <span class="badge fp ${FP_CLASS[r.fp] || 'fp-etc'}">${esc(r.fp)}</span>
-        <span class="dash-rec-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)} · ${esc(r.house.date)}${r.fpNotes?.length && r.fp !== '1순위 가능' ? ` · ${esc(r.fpNotes[0])}` : ''}</small></span>
-        <span class="dash-rec-price"><small>${esc(r.house.priceLabel)}</small>${r.house.price != null ? money(r.house.price) : '공고문 참고'}</span>
-        <span class="dash-rec-meta">${r.eligible ? `<em class="ok">자금 충족</em>` : '<em>자금 확인</em>'}<span>${dday(r.house)}</span></span>
-      </a>`).join('');
-    return `<section class="dash-recs" aria-label="내 기준에 맞는 공고">
-      <div class="dash-recs-head"><div><h2>내 기준에 맞는 공고 <small>${all.length}건</small></h2><p>자금 충족 → 1순위 가능 → 당첨 가능 구간 순서예요.</p></div>
-        <div class="hist-chips" role="group" aria-label="공고 보기">${filters.map(([k, label, cnt]) => `<button type="button" class="hist-chip${f === k ? ' on' : ''}" data-action="dash-filter" data-value="${k}">${label} ${cnt}</button>`).join('')}</div></div>
-      ${rows ? `<div class="dash-rec-list">${rows}</div>` : '<div class="empty"><h3>조건에 맞는 공고가 없어요</h3><p>다른 보기로 바꾸거나 진단 조건을 바꿔 보세요.</p></div>'}
-      ${list.length > DASH_ROWS ? `<button type="button" class="hist-more" data-action="dash-all">${list.length}건 모두 보기 →</button>` : ''}
-    </section>`;
+  const FP_CLASS = { '1순위 가능': 'fp-ok', '1순위 아님': 'fp-no', '확인 필요': 'fp-check' };
+  function foldBox(key, title, sub, body, more) {
+    const open = fold[key] !== false;
+    return `<section class="dash-fold${open ? ' open' : ''}" aria-label="${title}">
+      <button type="button" class="dash-fold-head" data-action="dash-fold" data-value="${key}" aria-expanded="${open}"><h4>${title}</h4>${sub ? `<small>${sub}</small>` : ''}<span class="dash-fold-icon" aria-hidden="true"></span></button>
+      ${open ? `<div class="dash-fold-body">${body}${more || ''}</div>` : ''}</section>`;
+  }
+  function dashSoon() {
+    const both = fold.soon !== false && fold.recs !== false;
+    const ROWS = both ? 2 : 5;   // 둘 다 펼치면 2줄씩, 하나만 펼치면 5줄 (왼쪽 높이와 맞춤)
+    const loading = !state.user?.id || !live.recs;
+    let soonBox;
+    if (loading) soonBox = foldBox('soon', '마감 임박한 내 추천 공고', '', '<p class="dash-soon-empty">추천 공고를 불러오는 중이에요…</p>');
+    else {
+      const open = myRecs().map((r) => ({ r, d: ddayOf(r.house) })).filter((x) => x.d != null && x.d >= 0).sort((x, y) => x.d - y.d);
+      const rows = groupByName(open).slice(0, ROWS).map(({ r, d, n }) => `<a class="dash-soon-row" href="#detail/${r.house.id}">
+        <span class="dash-soon-dday${d <= 3 ? ' hot' : ''}">${ddayText(d)}</span>
+        <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''}${r.fp === '1순위 가능' ? ' · 1순위 가능' : ''}</small></span></a>`).join('');
+      soonBox = foldBox('soon', '마감 임박한 내 추천 공고', `7일 안에 마감 ${open.filter((x) => x.d <= 7).length}건`,
+        rows ? `<div class="dash-soon-list">${rows}</div>` : '<p class="dash-soon-empty">지금 접수 마감이 다가오는 추천 공고가 없어요.</p>',
+        open.length ? `<button type="button" class="dash-soon-more" data-action="dash-soon-all">${open.length}건 마감순으로 보기 →</button>` : '');
+    }
+    let recsBox;
+    if (loading) recsBox = foldBox('recs', '내 기준에 맞는 공고', '', '<p class="dash-soon-empty">추천 공고를 불러오는 중이에요…</p>');
+    else {
+      const all = rankedRecs();
+      const f = hist.dashFilter || 'all';
+      const filters = [['all', '전체', all.length], ['first', '1순위 가능', all.filter((r) => r.fp === '1순위 가능').length], ['eligible', '자금 충족', all.filter((r) => r.eligible).length]];
+      const list = all.filter((r) => f === 'all' || (f === 'first' ? r.fp === '1순위 가능' : r.eligible));
+      const chips = `<div class="dash-mini-chips" role="group" aria-label="공고 보기">${filters.map(([k, label, cnt]) => `<button type="button" class="${f === k ? 'on' : ''}" data-action="dash-filter" data-value="${k}">${label} ${cnt}</button>`).join('')}</div>`;
+      const rows = groupByName(list.map((r) => ({ r, d: ddayOf(r.house) }))).slice(0, ROWS).map(({ r, d, n }) => `<a class="dash-soon-row" href="#detail/${r.house.id}">
+        <span class="dash-soon-dday fp ${FP_CLASS[r.fp] || 'fp-etc'}">${esc(r.fp)}</span>
+        <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''} · ${r.eligible ? '자금 충족' : '자금 확인'}${d != null && d >= 0 ? ` · ${ddayText(d)}` : ''}</small></span></a>`).join('');
+      recsBox = foldBox('recs', '내 기준에 맞는 공고', '자금 충족 → 1순위 가능 → 당첨 가능 구간 순',
+        chips + (rows ? `<div class="dash-soon-list">${rows}</div>` : '<p class="dash-soon-empty">조건에 맞는 공고가 없어요.</p>'),
+        list.length ? `<button type="button" class="dash-soon-more" data-action="dash-all">${list.length}건 모두 보기 →</button>` : '');
+    }
+    return `<div class="dash-soon">${soonBox}${recsBox}</div>`;
   }
 
   /* ── 진단 결과 맨 위 박스: 어느 진단 기록 기준으로 볼지 고르기 ── */
@@ -249,7 +256,7 @@
     }
     if (route === 'dashboard' && state.diagnosis) {
       const welcome = $('#app .welcome');
-      if (welcome && !$('.dash-diag')) welcome.outerHTML = dashboardCard() + dashRecs();   // 인사 박스 → 청약 현황 카드 + 내 기준 공고
+      if (welcome && !$('.dash-diag')) welcome.outerHTML = dashboardCard();   // 인사 박스 → 청약 현황 카드(오른쪽에 마감 임박·내 기준 공고)
       tidyDashAside();
       if (state.user?.id && live.recs === null && !live.recsLoading) loadRecs();
     }
@@ -273,6 +280,8 @@
       save('history-criteria', [...criteria]); render();
     } else if (act === 'hist-more') {
       hist.showAll = !hist.showAll; render();
+    } else if (act === 'dash-fold') {
+      const k = b.dataset.value; fold[k] = fold[k] === false; save('dash-fold', fold); render();
     } else if (act === 'dash-filter') {
       hist.dashFilter = b.dataset.value; render();
     } else if (act === 'dash-soon-all') {
