@@ -165,7 +165,7 @@
   function foldBox(key, title, sub, body, more, badge) {
     const open = fold[key] !== false;
     return `<section class="dash-fold${open ? ' open' : ''}" aria-label="${title}">
-      <button type="button" class="dash-fold-head" data-action="dash-fold" data-value="${key}" aria-expanded="${open}"><h4>${title}</h4>${sub && badge == null ? `<small>${sub}</small>` : ''}${badge != null ? `<em class="dash-fold-badge">${badge}</em>` : ''}<span class="dash-fold-icon" aria-hidden="true"></span></button>
+      <button type="button" class="dash-fold-head" data-action="dash-fold" data-value="${key}" aria-expanded="${open}"><h4>${title}</h4>${sub ? `<small>${sub}</small>` : ''}${badge != null ? `<em class="dash-fold-badge${key === 'recs' ? ' green' : ''}">${badge}</em>` : ''}<span class="dash-fold-icon" aria-hidden="true"></span></button>
       ${open ? `<div class="dash-fold-body">${body}${more || ''}</div>` : ''}</section>`;
   }
   function dashSoon() {
@@ -190,13 +190,14 @@
       const f = hist.dashFilter || 'all';
       const filters = [['all', '전체', all.length], ['first', '1순위 가능', all.filter((r) => r.fp === '1순위 가능').length], ['eligible', '자금 충족', all.filter((r) => r.eligible).length]];
       const list = all.filter((r) => f === 'all' || (f === 'first' ? r.fp === '1순위 가능' : r.eligible));
-      const chips = `<div class="dash-mini-chips" role="group" aria-label="공고 보기">${filters.map(([k, label, cnt]) => `<button type="button" class="${f === k ? 'on' : ''}" data-action="dash-filter" data-value="${k}">${label} ${cnt}</button>`).join('')}</div>`;
+      const chips = `<div class="dash-mini-chips" role="group" aria-label="공고 보기">${filters.map(([k, label, cnt]) => `<button type="button" class="${f === k ? 'on' : ''}" data-action="dash-filter" data-value="${k}">${label} ${cnt}</button>`).join('')}<span class="dash-mini-note">자금 → 1순위 → 당첨 구간 순</span></div>`;
       const rows = groupByName(list.map((r) => ({ r, d: ddayOf(r.house) }))).slice(0, ROWS).map(({ r, d, n }) => `<a class="dash-soon-row" href="#detail/${r.house.id}">
         <span class="dash-soon-dday fp ${FP_CLASS[r.fp] || 'fp-etc'}">${esc(r.fp)}</span>
         <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''} · ${r.eligible ? '자금 충족' : '자금 확인'}${d != null && d >= 0 ? ` · ${ddayText(d)}` : ''}</small></span></a>`).join('');
-      recsBox = foldBox('recs', '내 기준에 맞는 공고', '자금 충족 → 1순위 가능 → 당첨 가능 구간 순',
+      recsBox = foldBox('recs', '내 기준에 맞는 공고', '',
         chips + (rows ? `<div class="dash-soon-list">${rows}</div>` : '<p class="dash-soon-empty">조건에 맞는 공고가 없어요.</p>'),
-        list.length ? `<button type="button" class="dash-soon-more" data-action="dash-all">${list.length}건 모두 보기 →</button>` : '');
+        list.length ? `<button type="button" class="dash-soon-more" data-action="dash-all">${list.length}건 모두 보기 →</button>` : '',
+        `${all.length}건`);
     }
     return `<div class="dash-soon">${soonBox}${recsBox}</div>`;
   }

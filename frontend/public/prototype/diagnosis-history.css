@@ -153,3 +153,6 @@
 @media (max-width:900px){.dash-diag{grid-template-columns:1fr}}
 .dash-fold-badge{margin-left:auto;align-self:center;flex:none;padding:4px 10px;border-radius:999px;background:#ef783e;color:#fff;font-style:normal;font-size:12px;font-weight:800}
 .dash-fold-badge+.dash-fold-icon{margin-left:6px}
+.dash-fold-badge.green{background:#163f33}
+.dash-mini-chips{align-items:center}
+.dash-mini-note{margin-left:auto;font-size:11.5px;color:#8a938d}
