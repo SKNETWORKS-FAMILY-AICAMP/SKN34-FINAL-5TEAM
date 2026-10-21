@@ -22,6 +22,8 @@
     ownership: ['주택 소유', (r) => r.answers.ownership],
     firstHome: ['과거 주택 소유', (r) => r.answers.firstHome],
     income: ['연 소득 구간', (r) => r.answers.income],
+    deposit: ['청약통장 잔액', (r) => r.answers.deposit, true, (v) => money(v)],
+    won5: ['5년 내 당첨 이력', (r) => r.answers.won5],
     children: ['미성년 자녀', (r) => r.answers.children],
     region: ['현재 거주', (r) => r.answers.region],
     wish: ['희망 지역', (r) => r.answers.wish],
@@ -45,7 +47,11 @@
     hist.posting = true;
     try {
       // 기록의 추천·자격 숫자는 진단 결과 화면 목록과 같은 기준(관심 유형으로 거른 내 추천 공고)으로 남긴다
-      if (live.recs === null || live.recsLoading) await loadRecs();
+      // 진단 마지막 버튼에서 시작된 내 조건 저장이 끝난 뒤에 추천을 새로 받아야 새 답(1순위 항목 등)이 반영된다
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      if (hist.saving) await hist.saving.catch(() => {});
+      live.recs = null;
+      await loadRecs();
       const mine = myRecs();
       const rec = await api(`/users/${state.user.id}/diagnoses`, { method: 'POST', body: {
         answers: state.diagnosis, recommend_count: mine.length, eligible_count: mine.filter((r) => r.eligible).length,
@@ -57,6 +63,10 @@
   }
 
   // 진단을 마치면 신호가 온다 → 프로필 저장이 끝난(사용자 번호가 있는) 다음 render 에서 기록을 남긴다
+  // 내 조건 저장(saveProfile)이 진행 중인지 기억해 둔다 (기록·추천은 저장이 끝난 뒤에)
+  const liveSaveProfile = saveProfile;
+  saveProfile = function (...args) { const p = liveSaveProfile(...args); hist.saving = p; p.finally(() => { if (hist.saving === p) hist.saving = null; }); return p; };
+
   window.addEventListener('cy:diagnosis-done', () => { hist.pending = true; live.recsEligibleOnly = false; live.recsShowAll = false; live.recsKind = null; hist.viewId = null; });   // 새 진단이면 결과 목록 보기 방식도 처음으로
 
   function sync() {
