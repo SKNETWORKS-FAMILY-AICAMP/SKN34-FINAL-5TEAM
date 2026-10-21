@@ -260,11 +260,44 @@
     return `<div class="wrap page reveal settings-page"><div class="page-title"><h1>계정 설정</h1><p>계정 정보와 내 데이터를 관리해요. 진단 조건 수정·진단 기록은 <a href="#dashboard" class="text-link">마이페이지</a>에서 할 수 있어요.</p></div>
       <section class="panel"><h3>계정 정보</h3>${row('닉네임', esc(u.name))}${row('이메일', esc(u.email))}
         <p class="settings-note">로그인은 이메일과 닉네임으로 해요. 비밀번호·본인 인증은 아직 없어요.</p></section>
-      <section class="panel"><h3>내 데이터 백업</h3><p class="settings-note">서버에 저장된 내 프로필, 날짜별 진단 기록(조건·가점·추천 수), 관심 공고, 내가 쓴 글과 댓글을 파일로 내려받아요.</p>
-        <div class="settings-actions"><button type="button" class="btn small" data-action="acct-export" data-value="json">전체 데이터 내려받기 (JSON)</button><button type="button" class="btn secondary small" data-action="acct-export" data-value="csv">진단 기록만 내려받기 (CSV · 엑셀)</button></div></section>
+      <section class="panel"><h3>내 데이터 백업</h3>
+        <div class="bk-block"><div><b>전체 백업</b><p class="settings-note">서버에 저장된 내 프로필, 모든 진단 기록, 관심 공고, 내가 쓴 글과 댓글을 한 파일(JSON)로 보관해요.</p></div>
+          <button type="button" class="btn small" data-action="acct-export" data-value="json">전체 데이터 내려받기 (JSON)</button></div>
+        <div class="bk-block bk-pick"><div><b>진단 기록 골라 내려받기</b><p class="settings-note">필요한 날짜의 기록만 골라 엑셀에서 열 수 있는 CSV로 받아요. 조건·가점·추천 수가 함께 들어가요.</p></div>${dlList()}</div>
+      </section>
       <section class="panel settings-danger"><h3>회원 탈퇴</h3><p class="settings-note">탈퇴하면 서버에 저장된 <b>프로필 · 진단 기록 · 관심 공고 · 내가 쓴 글과 댓글 · 공감</b>이 모두 지워지고 되돌릴 수 없어요. 필요하면 먼저 위에서 백업해 두세요.</p>
         <div class="settings-actions"><button type="button" class="btn small danger" data-action="acct-delete">회원 탈퇴</button></div></section>
     </div>`;
+  }
+  hist.dlSel = new Set();   // 계정 설정: 내려받을 진단 기록
+  function dlList() {
+    const recs = hist.records;
+    if (recs === null) return '<p class="settings-note">기록을 불러오는 중이에요…</p>';
+    if (!recs.length) return '<p class="settings-note">아직 저장된 진단 기록이 없어요.</p>';
+    [...hist.dlSel].forEach((id) => { if (!recs.some((r) => r.id === id)) hist.dlSel.delete(id); });
+    const n = hist.dlSel.size, all = n === recs.length;
+    const rows = recs.map((r, i) => { const a = r.answers || {}; return `<label class="bk-row${hist.dlSel.has(r.id) ? ' on' : ''}">
+        <input type="checkbox" data-dl-pick="${r.id}" ${hist.dlSel.has(r.id) ? 'checked' : ''}>
+        <span class="bk-date">${when(r.created_at, true)}${i === 0 ? ' <em>최근</em>' : ''}</span>
+        <span class="bk-score">${r.score}점</span>
+        <span class="bk-meta">추천 ${r.recommend_count}건 · 자격 충족 ${r.eligible_count}건</span>
+        <span class="bk-cond">${esc(a.wish || '전체')} · ${esc(typeLabel(a.type))}</span></label>`; }).join('');
+    return `<div class="bk-list"><label class="bk-row bk-head"><input type="checkbox" data-dl-all ${all ? 'checked' : ''}><span>전체 선택</span><small>${recs.length}건 중 ${n}건 선택</small></label><div class="bk-rows">${rows}</div></div>
+      <div class="settings-actions"><button type="button" class="btn secondary small" data-action="acct-csv" ${n ? '' : 'disabled'}>${n ? `선택한 ${n}건 내려받기 (CSV · 엑셀)` : '내려받을 기록을 골라 주세요'}</button></div>`;
+  }
+  function csvOf(records) {
+    const cols = [['age', '연령대'], ['marriage', '혼인'], ['head', '세대주'], ['region', '현재 거주'], ['ownership', '주택 소유'], ['firstHome', '과거 주택 소유'], ['years', '무주택 기간(년)'], ['family', '부양가족'], ['children', '미성년 자녀'], ['account', '통장 가입(년)'], ['payments', '납입 회차'], ['deposit', '예치금(만원)'], ['won5', '5년 내 당첨'], ['income', '연 소득'], ['assets', '보유 현금(만원)'], ['wish', '희망 지역'], ['type', '관심 유형']];
+    const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const head = ['진단 일시', '청약 가점', '추천 공고 수', '자격 충족 수', ...cols.map(([, label]) => label)];
+    const body = records.map((r) => [when(r.created_at, true), r.score, r.recommend_count, r.eligible_count, ...cols.map(([k]) => (k === 'type' ? typeLabel(r.answers?.type) : r.answers?.[k]))]);
+    return '\ufeff' + [head, ...body].map((row) => row.map(q).join(',')).join('\r\n');   // BOM: 엑셀에서 한글이 깨지지 않게
+  }
+  function downloadPicked() {
+    const recs = (hist.records || []).filter((r) => hist.dlSel.has(r.id)).sort((x, y) => new Date(x.created_at) - new Date(y.created_at));
+    if (!recs.length) return;
+    const day = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    download(`청약돼_진단기록_${recs.length}건_${day}.csv`, csvOf(recs), 'text/csv;charset=utf-8');
+    toast(`진단 기록 ${recs.length}건을 내려받았어요.`);
   }
   const confirmBody = () => ({ email: state.user.email, nickname: state.user.name });
   function download(name, text, type) {
@@ -272,22 +305,12 @@
     const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
-  async function exportData(kind) {
+  async function exportData() {
     try {
       const data = await api(`/users/${state.user.id}/export`, { method: 'POST', body: confirmBody() });
       const day = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-      if (kind === 'csv') {
-        const cols = [['age', '연령대'], ['marriage', '혼인'], ['head', '세대주'], ['region', '현재 거주'], ['ownership', '주택 소유'], ['firstHome', '과거 주택 소유'], ['years', '무주택 기간(년)'], ['family', '부양가족'], ['children', '미성년 자녀'], ['account', '통장 가입(년)'], ['payments', '납입 회차'], ['deposit', '예치금(만원)'], ['won5', '5년 내 당첨'], ['income', '연 소득'], ['assets', '보유 현금(만원)'], ['wish', '희망 지역'], ['type', '관심 유형']];
-        const keys = cols.map(([k]) => k);
-        const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-        const lines = [['진단 일시', '청약 가점', '추천 공고 수', '자격 충족 수', ...cols.map(([, label]) => label)].map(q).join(',')]
-          .concat(data.diagnoses.map((r) => [r.created_at, r.score, r.recommend_count, r.eligible_count, ...keys.map((k) => r.answers?.[k])].map(q).join(',')));
-        download(`청약돼_진단기록_${day}.csv`, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');   // BOM: 엑셀에서 한글이 깨지지 않게
-        toast(`진단 기록 ${data.diagnoses.length}건을 내려받았어요.`);
-      } else {
-        download(`청약돼_내데이터_${day}.json`, JSON.stringify(data, null, 2), 'application/json');
-        toast('내 데이터를 내려받았어요.');
-      }
+      download(`청약돼_내데이터_${day}.json`, JSON.stringify(data, null, 2), 'application/json');
+      toast('내 데이터를 내려받았어요.');
     } catch (err) { toast(`내려받지 못했어요: ${err.message}`); }
   }
   function deleteDialog() {
@@ -364,6 +387,8 @@
   };
 
   document.addEventListener('change', (e) => {
+    if (e.target.matches?.('[data-dl-all]')) { hist.dlSel = e.target.checked ? new Set((hist.records || []).map((r) => r.id)) : new Set(); render(); return; }
+    if (e.target.dataset?.dlPick) { const id = Number(e.target.dataset.dlPick); if (e.target.checked) hist.dlSel.add(id); else hist.dlSel.delete(id); render(); return; }
     if (e.target.matches?.('[data-hist-view]')) { hist.viewId = Number(e.target.value) || null; render(); return; }
     const id = Number(e.target.dataset?.histPick);
     if (!id) return;
@@ -382,7 +407,9 @@
     } else if (act === 'hist-more') {
       hist.showAll = !hist.showAll; render();
     } else if (act === 'acct-export') {
-      exportData(b.dataset.value);
+      exportData();
+    } else if (act === 'acct-csv') {
+      downloadPicked();
     } else if (act === 'acct-delete') {
       deleteDialog();
     } else if (act === 'acct-delete-go') {

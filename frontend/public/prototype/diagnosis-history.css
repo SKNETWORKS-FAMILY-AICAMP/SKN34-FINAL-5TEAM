@@ -193,3 +193,24 @@
 .settings-danger h3{color:#b3402b}
 .btn.danger{background:#b3402b;color:#fff;border-color:#b3402b}
 .btn.danger:disabled{opacity:.45;cursor:not-allowed}
+/* 계정 설정: 백업 */
+.bk-block{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;padding:16px 0;border-top:1px solid var(--line,#e2dccf)}
+.bk-block:first-of-type{border-top:0;padding-top:6px}
+.bk-block>div:first-child{flex:1 1 360px}
+.bk-block b{font-size:14px;color:#163f33}
+.bk-pick{flex-direction:column;align-items:stretch}
+.bk-list{border:1px solid var(--line,#e2dccf);border-radius:12px;overflow:hidden}
+.bk-rows{max-height:248px;overflow-y:auto}
+.bk-row{display:grid;grid-template-columns:20px 150px 56px 1fr auto;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid #efe9de;font-size:12.5px;cursor:pointer}
+.bk-rows .bk-row:first-child{border-top:0}
+.bk-row.on{background:#eef3ef}
+.bk-row input{margin:0}
+.bk-head{grid-template-columns:20px 1fr auto;background:#f6f2ea;border-top:0;font-weight:700}
+.bk-head small{color:#748079;font-weight:600}
+.bk-date{font-weight:700}
+.bk-date em{font-style:normal;font-size:10.5px;font-weight:800;color:#fff;background:#ef783e;border-radius:6px;padding:1px 6px;margin-left:4px}
+.bk-score{font-weight:800;color:#163f33}
+.bk-meta,.bk-cond{color:#5f6b64;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-pick .settings-actions{margin-top:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.bk-pick>div:first-child{flex:none}
