@@ -81,3 +81,30 @@
 .badge.fp-check{background:#f9eee0;color:#8a5a20}
 .badge.fp-etc{background:#eef1ec;color:#5f6b64}
 .fp-notes{margin:8px 0 0;padding:0 0 0 16px;font-size:11.5px;line-height:1.6;color:#5f6b64}
+
+/* 내 공간: 내 기준에 맞는 공고 (첫 화면) */
+.dash-recs{margin:0 0 36px}
+.dash-recs-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 20px;margin-bottom:14px}
+.dash-recs-head h2{margin:0;font-size:22px}
+.dash-recs-head h2 small{font-size:14px;color:#748079;margin-left:4px}
+.dash-recs-head p{margin:4px 0 0;font-size:12.5px;color:#748079}
+.dash-rec-list{background:#fff;border:1px solid var(--line,#e4e9e2);border-radius:18px;overflow:hidden}
+.dash-rec{display:grid;grid-template-columns:96px minmax(0,1fr) 150px 110px;align-items:center;gap:16px;padding:14px 22px;border-top:1px solid var(--line,#e4e9e2);color:var(--ink,#172a24);text-decoration:none;transition:background .15s}
+.dash-rec:first-child{border-top:0}
+.dash-rec:hover{background:#f6f9f4}
+.dash-rec .badge{justify-self:start}
+.dash-rec-main{min-width:0;display:flex;flex-direction:column;gap:3px}
+.dash-rec-main b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-rec-main small{font-size:12px;color:#748079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-rec-price{display:flex;flex-direction:column;text-align:right;font-weight:800;font-size:14.5px}
+.dash-rec-price small{font-weight:500;font-size:11px;color:#748079}
+.dash-rec-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:12px;font-weight:800;color:var(--orange,#ef783e)}
+.dash-rec-meta em{font-style:normal;font-size:11px;font-weight:700;color:#8a6a4a;background:#f8eee1;border-radius:6px;padding:3px 7px}
+.dash-rec-meta em.ok{color:var(--green,#163f33);background:var(--mint,#e9f3ec)}
+@media (max-width:860px){
+  .dash-rec{grid-template-columns:minmax(0,1fr) auto;row-gap:6px;padding:12px 16px}
+  .dash-rec .badge{grid-column:1}
+  .dash-rec-main{grid-column:1 / -1;grid-row:2}
+  .dash-rec-price{grid-column:1;grid-row:3;text-align:left;flex-direction:row;gap:6px;align-items:baseline}
+  .dash-rec-meta{grid-column:2;grid-row:1 / span 1}
+}

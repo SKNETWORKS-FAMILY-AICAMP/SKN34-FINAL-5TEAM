@@ -329,6 +329,16 @@ function myRecs() {
   return (live.recs || []).filter((r) => r.house && r.house.group !== '비주택' && (!picked.size || picked.has(r.house.group)));
 }
 
+// 내 추천 공고를 보여 줄 순서: 자금 충족 → 1순위 가능 → 당첨 가능 구간(상·중·하) → 마감 가까운 순
+// (진단 결과 화면과 내 공간이 같은 순서를 쓴다)
+function rankedRecs() {
+  const BAND = { 상: 0, 중: 1, 하: 2, '데이터 부족': 3 };
+  const FP = { '1순위 가능': 0, '순위 없음': 1, '확인 필요': 2, '해당 없음': 3, '1순위 아님': 4 };
+  const end = (r) => (r.house.raw?.receipt_end ? new Date(r.house.raw.receipt_end).getTime() : Infinity);
+  return [...myRecs()].sort((x, y) => (x.eligible ? 0 : 1) - (y.eligible ? 0 : 1) || (FP[x.fp] ?? 2) - (FP[y.fp] ?? 2)
+    || (x.eligible ? BAND[x.band] ?? 3 : 4) - (y.eligible ? BAND[y.band] ?? 3 : 4) || end(x) - end(y));
+}
+
 async function loadLoans(houseId) {
   const key = `${state.user.id}:${houseId}`;
   live.loan = { houseId, loading: true, error: null, items: null, key };
@@ -568,12 +578,7 @@ function result() {
   const a = state.diagnosis;
   const recs = live.recs;
   const score = recs?.length ? recs[0].score : null;
-  // 당첨 가능 구간이 높은 순(상 → 중 → 하 → 데이터 부족 → 자격 미충족), 같은 구간이면 마감이 가까운 순
-  const BAND = { 상: 0, 중: 1, 하: 2, '데이터 부족': 3 };
-  const end = (r) => (r.house.raw?.receipt_end ? new Date(r.house.raw.receipt_end).getTime() : Infinity);
-  const FP = { '1순위 가능': 0, '순위 없음': 1, '확인 필요': 2, '해당 없음': 3, '1순위 아님': 4 };
-  const mine = [...myRecs()].sort((x, y) => (x.eligible ? 0 : 1) - (y.eligible ? 0 : 1) || (FP[x.fp] ?? 2) - (FP[y.fp] ?? 2)
-    || (x.eligible ? BAND[x.band] ?? 3 : 4) - (y.eligible ? BAND[y.band] ?? 3 : 4) || end(x) - end(y));
+  const mine = rankedRecs();
   const firstN = mine.filter((r) => r.fp === '1순위 가능').length;
   const eligibleN = mine.filter((r) => r.eligible).length;
   // 카드 왼쪽 위 공고 유형으로 골라 보기 (긴 이름은 짧게)

@@ -129,15 +129,41 @@
     const r = hist.records?.[0];
     const a = state.diagnosis;
     const n = hist.records?.length || 0;
-    const facts = r
-      ? `<div class="dash-diag-facts"><div><small>청약 가점</small><b>${r.score}<span>/84</span></b></div><div><small>추천 공고</small><b>${r.recommend_count}<span>건</span></b></div><div><small>신청 자격 충족</small><b>${r.eligible_count}<span>건</span></b></div></div>`
-      : `<p class="dash-diag-sub">${esc(a.age)} · ${esc(a.marriage)} · 희망 ${esc(a.wish)} · ${esc(typeLabel(a.type))}</p>`;
+    const mine = live.recs ? myRecs() : null;              // 지금 추천(관심 유형 반영)이 있으면 그 숫자, 없으면 최근 기록 숫자
+    const score = live.recs?.[0]?.score ?? r?.score;
+    const fact = (label, value, unit) => `<div><small>${label}</small><b>${value ?? '–'}<span>${unit}</span></b></div>`;
+    const facts = `<div class="dash-diag-facts">${fact('청약 가점', score, '/84')}${fact('1순위 가능', mine ? mine.filter((x) => x.fp === '1순위 가능').length : null, '건')}${fact('추천 공고', mine ? mine.length : r?.recommend_count, '건')}${fact('자금 충족', mine ? mine.filter((x) => x.eligible).length : r?.eligible_count, '건')}</div>`;
     return `<section class="dash-diag" aria-label="내 진단 결과">
-      <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 진단 결과` : '내 진단 결과'}</h3><p class="dash-diag-sub">${r ? `최근 진단 ${when(r.created_at, true)}` : '최근 진단 결과'}</p>${facts}</div>
-      <div class="dash-diag-actions"><a class="btn orange" href="#result">진단 결과 보기 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교하기</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 보기 · PDF 저장 ↗</a></div>
+      <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><p class="dash-diag-sub">${r ? `최근 진단 ${when(r.created_at, true)}` : '최근 진단'} · ${esc(a.age)} · ${esc(a.marriage)} · 희망 ${esc(a.wish)} · ${esc(typeLabel(a.type))}</p>${facts}</div>
+      <div class="dash-diag-actions"><a class="btn orange" href="#result">가점 근거·전체 결과 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 · PDF 저장 ↗</a></div>
     </section>`;
   }
 
+  /* ── 내 공간: 내 기준에 맞는 공고를 바로 (진단 결과와 같은 순서) ── */
+  const DASH_ROWS = 6;
+  function dashRecs() {
+    if (!state.user?.id) return '';
+    if (!live.recs) return '<section class="dash-recs"><div class="dash-recs-head"><h2>내 기준에 맞는 공고</h2></div><div class="empty"><h3>추천 공고를 불러오는 중이에요…</h3></div></section>';
+    const all = rankedRecs();
+    const filters = [['all', '전체', all.length], ['first', '1순위 가능', all.filter((r) => r.fp === '1순위 가능').length], ['eligible', '자금 충족', all.filter((r) => r.eligible).length]];
+    const f = hist.dashFilter || 'all';
+    const list = all.filter((r) => f === 'all' || (f === 'first' ? r.fp === '1순위 가능' : r.eligible));
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const dday = (h) => { const e = h.raw?.receipt_end; if (!e) return ''; const d = Math.round((new Date(e).setHours(0, 0, 0, 0) - today) / 86400000); return d < 0 ? '마감' : d === 0 ? '오늘 마감' : `D-${d}`; };
+    const FP_CLASS = { '1순위 가능': 'fp-ok', '1순위 아님': 'fp-no', '확인 필요': 'fp-check' };
+    const rows = list.slice(0, DASH_ROWS).map((r) => `<a class="dash-rec" href="#detail/${r.house.id}">
+        <span class="badge fp ${FP_CLASS[r.fp] || 'fp-etc'}">${esc(r.fp)}</span>
+        <span class="dash-rec-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)} · ${esc(r.house.date)}${r.fpNotes?.length && r.fp !== '1순위 가능' ? ` · ${esc(r.fpNotes[0])}` : ''}</small></span>
+        <span class="dash-rec-price"><small>${esc(r.house.priceLabel)}</small>${r.house.price != null ? money(r.house.price) : '공고문 참고'}</span>
+        <span class="dash-rec-meta">${r.eligible ? `<em class="ok">자금 충족</em>` : '<em>자금 확인</em>'}<span>${dday(r.house)}</span></span>
+      </a>`).join('');
+    return `<section class="dash-recs" aria-label="내 기준에 맞는 공고">
+      <div class="dash-recs-head"><div><h2>내 기준에 맞는 공고 <small>${all.length}건</small></h2><p>자금 충족 → 1순위 가능 → 당첨 가능 구간 순서예요.</p></div>
+        <div class="hist-chips" role="group" aria-label="공고 보기">${filters.map(([k, label, cnt]) => `<button type="button" class="hist-chip${f === k ? ' on' : ''}" data-action="dash-filter" data-value="${k}">${label} ${cnt}</button>`).join('')}</div></div>
+      ${rows ? `<div class="dash-rec-list">${rows}</div>` : '<div class="empty"><h3>조건에 맞는 공고가 없어요</h3><p>다른 보기로 바꾸거나 진단 조건을 바꿔 보세요.</p></div>'}
+      ${list.length > DASH_ROWS ? `<button type="button" class="hist-more" data-action="dash-all">${list.length}건 모두 보기 →</button>` : ''}
+    </section>`;
+  }
 
   /* ── 진단 결과 맨 위 박스: 어느 진단 기록 기준으로 볼지 고르기 ── */
   function bannerPicker() {
@@ -189,12 +215,14 @@
     if (route === 'result' && state.diagnosis) {
       const anchor = $('#app .grid2');
       if (anchor && !$('#lp-history')) anchor.insertAdjacentHTML('afterend', historySection());
+      if (hist.scrollToRecs) { hist.scrollToRecs = false; requestAnimationFrame(() => [...document.querySelectorAll('#app .section')].find((x) => x.querySelector('.grid3'))?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }
       if (hist.scrollTo && $('#lp-history')) { hist.scrollTo = false; requestAnimationFrame(() => $('#lp-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }
     }
     if (route === 'dashboard' && state.diagnosis) {
       const welcome = $('#app .welcome');
-      if (welcome && !$('.dash-diag')) welcome.outerHTML = dashboardCard();   // 인사 박스는 진단 카드로 합친다 (이름 인사는 카드 제목에)
+      if (welcome && !$('.dash-diag')) welcome.outerHTML = dashboardCard() + dashRecs();   // 인사 박스 → 청약 현황 카드 + 내 기준 공고
       tidyDashAside();
+      if (state.user?.id && live.recs === null && !live.recsLoading) loadRecs();
     }
   };
 
@@ -216,6 +244,10 @@
       save('history-criteria', [...criteria]); render();
     } else if (act === 'hist-more') {
       hist.showAll = !hist.showAll; render();
+    } else if (act === 'dash-filter') {
+      hist.dashFilter = b.dataset.value; render();
+    } else if (act === 'dash-all') {
+      live.recsEligibleOnly = hist.dashFilter && hist.dashFilter !== 'all' ? hist.dashFilter : false; live.recsShowAll = true; hist.scrollToRecs = true; go('result');
     } else if (act === 'hist-clear') {
       hist.selected.clear(); render();
     } else if (act === 'hist-open') {
