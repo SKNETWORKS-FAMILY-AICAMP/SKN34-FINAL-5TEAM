@@ -117,3 +117,25 @@
 .dash-money-actions{display:flex;flex-wrap:wrap;gap:8px}
 .dash-money-actions button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:10px;padding:9px 13px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
 .dash-money-actions button:hover{background:rgba(255,255,255,.2)}
+
+/* 내 공간 카드: 왼쪽 현황 · 오른쪽 마감 임박 공고 */
+.dash-diag{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);align-items:stretch;gap:28px}
+.dash-diag-left{display:flex;flex-direction:column;gap:20px;min-width:0}
+.dash-diag-left .dash-diag-report{text-align:left}
+.dash-soon{display:flex;flex-direction:column;min-width:0;padding:20px 22px;border-radius:16px;background:#fffdf8;color:#1d2a24}
+.dash-soon-head{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.dash-soon-head h4{margin:0;font-size:16px;font-weight:800;color:#163f33}
+.dash-soon-head small{font-size:12.5px;color:#748079;font-weight:700}
+.dash-soon-list{display:flex;flex-direction:column}
+.dash-soon-row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-top:1px solid #ece6da;color:inherit;text-decoration:none}
+.dash-soon-row:first-child{border-top:0}
+.dash-soon-row:hover b{color:#ef783e}
+.dash-soon-dday{flex:none;min-width:58px;text-align:center;padding:5px 8px;border-radius:8px;background:#eef3ef;color:#163f33;font-size:12px;font-weight:800}
+.dash-soon-dday.hot{background:#fde9de;color:#d65a1f}
+.dash-soon-main{display:flex;flex-direction:column;min-width:0}
+.dash-soon-main b{font-size:14px;font-weight:700;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dash-soon-main small{font-size:12px;color:#748079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-soon-empty{margin:auto 0;font-size:13.5px;color:#748079}
+.dash-soon-more{margin-top:auto;align-self:flex-end;padding:10px 0 0;background:none;border:0;font:inherit;font-size:13px;font-weight:800;color:#ef783e;cursor:pointer}
+.dash-soon-more:hover{text-decoration:underline;text-underline-offset:4px}
+@media (max-width:900px){.dash-diag{grid-template-columns:1fr}}

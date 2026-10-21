@@ -139,9 +139,33 @@
     const moneyRow = `<div class="dash-money"><div><small>주거에 쓸 수 있는 현금</small><b>${assets ? eok(assets) : '아직 입력 전'}</b></div><div><small>계약금 10% 기준 분양가</small><b>${assets ? `${eok(assets * 10)} 이하` : '–'}</b></div>
       <div class="dash-money-actions"><button type="button" data-action="finance-tab" data-value="대출">내 대출 한도·금리 보기 →</button><button type="button" data-action="finance-tab" data-value="자금 계산">자금 계획 계산하기 →</button></div></div>`;
     return `<section class="dash-diag" aria-label="내 진단 결과">
-      <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><p class="dash-diag-sub">${r ? `최근 진단 ${when(r.created_at, true)}` : '최근 진단'} · ${esc(a.age)} · ${esc(a.marriage)} · 희망 ${esc(a.wish)} · ${esc(typeLabel(a.type))}</p>${facts}${moneyRow}</div>
-      <div class="dash-diag-actions"><a class="btn orange" href="#result">가점 근거·전체 결과 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 · PDF 저장 ↗</a></div>
+      <div class="dash-diag-left">
+        <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><p class="dash-diag-sub">${r ? `최근 진단 ${when(r.created_at, true)}` : '최근 진단'} · ${esc(a.age)} · ${esc(a.marriage)} · 희망 ${esc(a.wish)} · ${esc(typeLabel(a.type))}</p>${facts}${moneyRow}</div>
+        <div class="dash-diag-actions"><a class="btn orange" href="#result">가점 근거·전체 결과 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 · PDF 저장 ↗</a></div>
+      </div>
+      ${dashSoon()}
     </section>`;
+  }
+
+  /* ── 내 공간 카드 오른쪽: 마감이 가까운 내 추천 공고 ── */
+  const SOON_ROWS = 4;
+  function ddayOf(h) {
+    const e = h.raw?.receipt_end; if (!e) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return Math.round((new Date(e).setHours(0, 0, 0, 0) - today) / 86400000);
+  }
+  const ddayText = (d) => (d == null ? '' : d < 0 ? '마감' : d === 0 ? '오늘 마감' : `D-${d}`);
+  function dashSoon() {
+    const head = (cnt) => `<div class="dash-soon-head"><h4>마감 임박한 내 추천 공고</h4>${cnt != null ? `<small>7일 안에 마감 ${cnt}건</small>` : ''}</div>`;
+    if (!state.user?.id || !live.recs) return `<aside class="dash-soon">${head()}<p class="dash-soon-empty">추천 공고를 불러오는 중이에요…</p></aside>`;
+    const open = myRecs().map((r) => ({ r, d: ddayOf(r.house) })).filter((x) => x.d != null && x.d >= 0).sort((x, y) => x.d - y.d);
+    if (!open.length) return `<aside class="dash-soon">${head(0)}<p class="dash-soon-empty">지금 접수 마감이 다가오는 추천 공고가 없어요.</p></aside>`;
+    const rows = open.slice(0, SOON_ROWS).map(({ r, d }) => `<a class="dash-soon-row" href="#detail/${r.house.id}">
+        <span class="dash-soon-dday${d <= 3 ? ' hot' : ''}">${ddayText(d)}</span>
+        <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${r.fp === '1순위 가능' ? ' · 1순위 가능' : ''}</small></span>
+      </a>`).join('');
+    return `<aside class="dash-soon" aria-label="마감 임박한 내 추천 공고">${head(open.filter((x) => x.d <= 7).length)}<div class="dash-soon-list">${rows}</div>
+      <button type="button" class="dash-soon-more" data-action="dash-soon-all">${open.length > SOON_ROWS ? `${open.length}건 마감순으로 더 보기 →` : '진단 결과에서 마감순으로 보기 →'}</button></aside>`;
   }
 
   /* ── 내 공간: 내 기준에 맞는 공고를 바로 (진단 결과와 같은 순서) ── */
@@ -251,8 +275,10 @@
       hist.showAll = !hist.showAll; render();
     } else if (act === 'dash-filter') {
       hist.dashFilter = b.dataset.value; render();
+    } else if (act === 'dash-soon-all') {
+      live.recsEligibleOnly = false; live.recsKind = null; live.recsSort = 'deadline'; live.recsShowAll = true; hist.scrollToRecs = true; go('result');
     } else if (act === 'dash-all') {
-      live.recsEligibleOnly = hist.dashFilter && hist.dashFilter !== 'all' ? hist.dashFilter : false; live.recsShowAll = true; hist.scrollToRecs = true; go('result');
+      live.recsSort = null; live.recsEligibleOnly = hist.dashFilter && hist.dashFilter !== 'all' ? hist.dashFilter : false; live.recsShowAll = true; hist.scrollToRecs = true; go('result');
     } else if (act === 'hist-clear') {
       hist.selected.clear(); render();
     } else if (act === 'hist-open') {
