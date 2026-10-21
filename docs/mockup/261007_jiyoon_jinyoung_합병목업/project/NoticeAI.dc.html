@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>AI 공고 분석</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700&amp;family=Jua&amp;display=swap">
+<style>
+h1{font-family:'Jua','Gothic A1',sans-serif !important;font-weight:400 !important;letter-spacing:0 !important}
+button,input,textarea{font-family:inherit}
+body{margin:0;background:#5FB8DC}
+.hero-bg{position:relative;background-color:#5FB8DC;background-image:url(/_blob/8f777b2b3a5180f98e064baf116a6003);background-size:cover;background-position:center bottom}
+.hero-bg::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,30,60,0.26) 0%,rgba(6,30,60,0.04) 28%,rgba(6,30,60,0) 60%,rgba(6,30,60,0.42) 100%);pointer-events:none}
+.glass{background:rgba(255,255,255,0.9);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2)}
+.glass-dark{background:rgba(255,255,255,0.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+a{color:#1D4FB8}a:hover{color:#0A2B5E}
+button:focus-visible,a:focus-visible{outline:3px solid #8DB2FF;outline-offset:2px}
+</style>
+</helmet>
+<div class="hero-bg" style="font-family: 'Gothic A1', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #121826; min-height: 100vh; font-size: 15px; line-height: 1.55">
+
+<header style="position: relative; z-index: 1">
+<div style="max-width: 1280px; margin: 0 auto; padding: 0 24px; min-height: 72px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #FFFFFF">
+<svg width="28" height="27" viewBox="7 9.5 20 18" fill="none" aria-hidden="true"><path d="M9 17.5 17 11l8 6.5V25a1 1 0 0 1-1 1h-4.5v-5h-5v5H10a1 1 0 0 1-1-1v-7.5Z" stroke="#FFFFFF" stroke-width="1.7" stroke-linejoin="round"></path></svg>
+<span style="font-family: 'Jua', 'Gothic A1', sans-serif; font-size: 22px; font-weight: 400; letter-spacing: 0">청약전략</span>
+</a>
+<nav aria-label="주요 메뉴" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 22px; font-size: 14px">
+<a href="Home.dc.html" style="color: #FFFFFF; text-decoration: none; font-weight: 500">청약 진단</a>
+<a href="AIChat.dc.html" style="color: #FFFFFF; text-decoration: none; font-weight: 500">AI 청약 상담</a>
+<a href="NoticeAI.dc.html" aria-current="page" style="color: #FFFFFF; text-decoration: none; font-weight: 700; border-bottom: 2px solid #FFFFFF; padding-bottom: 2px">공고 찾기</a>
+<a href="AgentReport.dc.html" style="color: #FFFFFF; text-decoration: none; font-weight: 500">전략 리포트</a>
+<a href="#" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border-radius: 999px; background: #FFFFFF; color: #0A1A33; text-decoration: none; font-weight: 700">마이페이지</a>
+</nav>
+</div>
+</header>
+
+<!-- 공고 헤더 -->
+<section style="position: relative; z-index: 1; color: #FFFFFF; text-shadow: 0 2px 16px rgba(6, 22, 48, 0.35)">
+<div style="max-width: 1280px; margin: 0 auto; padding: 28px 24px 30px; display: flex; flex-wrap: wrap; gap: 16px 32px; justify-content: space-between; align-items: flex-end">
+<div style="flex: 1 1 560px">
+<div style="font-size: 13px; color: #EAF2FF">공고 찾기 › 경기 › 신혼희망타운</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 8px">
+<span style="font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 6px; background: #FFFFFF; color: #0A2B5E">신혼희망타운</span>
+<span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.55)">국민 · 분양주택</span>
+<span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.55)">분양가상한제</span>
+</div>
+<h1 style="margin: 0; font-size: 28px; line-height: 1.35; font-weight: 700; letter-spacing: -0.02em">시흥하중지구 A-4블록 신혼희망타운(공공분양) 추가입주자모집</h1>
+<div style="font-size: 14px; color: #F1F6FF; margin-top: 6px">경기도 시흥시 하중동 일원 · 한국토지주택공사 경기남부지역본부 · 시공 한신공영(주)</div>
+</div>
+<div style="display: flex; gap: 10px; align-items: center">
+<div style="text-align: right">
+<div style="font-size: 13px; color: #EAF2FF">당첨자 발표</div>
+<div style="font-size: 22px; font-weight: 700">2026.10.08 <span style="font-size: 15px; color: #FFD08A">D-4</span></div>
+</div>
+</div>
+</div>
+</section>
+
+<main style="position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 24px 24px 48px; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+<div style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+<!-- AI 요약 -->
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 20px; box-shadow: 0 20px 50px rgba(6, 22, 48, 0.22); padding: 22px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.4 2.4M15.3 15.3l2.4 2.4M6.3 17.7l2.4-2.4M15.3 8.7l2.4-2.4" stroke="#5B3FD6" stroke-width="1.8" stroke-linecap="round"></path></svg>AI 3줄 요약</h2>
+<span style="font-size: 12px; color: #5B6576">공고문 PDF 원문 + 청약홈 API로 생성</span>
+</div>
+<ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 15px">
+<li>혼인 7년 이내 신혼부부 등 <b>무주택세대구성원</b>을 대상으로 한 공공분양 <b>추가입주자 모집</b>이에요.</li>
+<li>전용 55·56㎡ 2개 주택형, 총 <b>61세대</b> · 최고 분양가 <b>3억 6,707만 ~ 3억 9,358만원</b>.</li>
+<li>접수는 9월 28~29일 마감, <b>10월 8일 당첨자 발표</b> · 12월 말 계약 · 2028년 7월 입주 예정.</li>
+</ol>
+</section>
+
+<!-- 나에게 맞춘 판정 -->
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 20px; box-shadow: 0 20px 50px rgba(6, 22, 48, 0.22); padding: 22px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 700">내 조건과 비교</h2>
+<span style="font-size: 12.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #FFF1E0; color: #8F4300">2개 항목 확인 필요</span>
+</div>
+<p style="margin: 0 0 12px; font-size: 13px; color: #5B6576">AI가 공고문에서 뽑은 자격 기준을 내 진단 프로필과 하나씩 비교했어요.</p>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px">
+<thead>
+<tr style="background: #F6F7FA; text-align: left">
+<th scope="col" style="padding: 10px 12px; font-weight: 600; color: #3A4556; border-bottom: 1px solid #DDE3EC">자격 항목</th>
+<th scope="col" style="padding: 10px 12px; font-weight: 600; color: #3A4556; border-bottom: 1px solid #DDE3EC">공고 기준 (AI 추출)</th>
+<th scope="col" style="padding: 10px 12px; font-weight: 600; color: #3A4556; border-bottom: 1px solid #DDE3EC">내 정보</th>
+<th scope="col" style="padding: 10px 12px; font-weight: 600; color: #3A4556; border-bottom: 1px solid #DDE3EC">판정</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5; font-weight: 600">혼인 · 자녀</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5">혼인 7년 이내, 예비신혼, 6세 이하 자녀 한부모</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5">신혼 (7년 이내)</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5"><span style="font-size: 12.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #E6F4EC; color: #0B6B43">충족</span></td>
+</tr>
+<tr>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5; font-weight: 600">주택 소유</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5">무주택세대구성원</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5">세대 전원 무주택</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5"><span style="font-size: 12.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #E6F4EC; color: #0B6B43">충족</span></td>
+</tr>
+<tr>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5; font-weight: 600">월평균 소득</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5">도시근로자 월평균소득 130% 이하 (맞벌이 별도)</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5">130% 이하 · 맞벌이 여부 미입력</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5"><span style="font-size: 12.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #FFF1E0; color: #8F4300">확인</span></td>
+</tr>
+<tr>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5; font-weight: 600">총자산</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5">[공고문 추출 금액] 이하</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5">2.5억원</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5"><span style="font-size: 12.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #FFF1E0; color: #8F4300">확인</span></td>
+</tr>
+<tr>
+<td style="padding: 12px; font-weight: 600">청약통장</td>
+<td style="padding: 12px">가입 6개월 이상 · 납입 6회 이상</td>
+<td style="padding: 12px">4년 · 48회</td>
+<td style="padding: 12px"><span style="font-size: 12.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #E6F4EC; color: #0B6B43">충족</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- 추출 정보 -->
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 20px; box-shadow: 0 20px 50px rgba(6, 22, 48, 0.22); padding: 22px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 16px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 700">핵심 정보</h2>
+<div style="display: flex; gap: 10px; font-size: 12.5px; color: #3A4556; align-items: center">
+<span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #0A2B5E"></span>API 구조화 데이터</span>
+<span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #5B3FD6"></span>AI가 PDF에서 추출</span>
+</div>
+</div>
+
+<h3 style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #3A4556">일정</h3>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 20px">
+<div style="border: 1px solid #DDE3EC; border-radius: 10px; padding: 12px; border-top: 3px solid #0A2B5E"><div style="font-size: 12.5px; color: #5B6576">모집공고</div><div style="font-weight: 700">2026.09.18</div></div>
+<div style="border: 1px solid #DDE3EC; border-radius: 10px; padding: 12px; border-top: 3px solid #0A2B5E"><div style="font-size: 12.5px; color: #5B6576">청약 접수</div><div style="font-weight: 700">09.28 ~ 09.29</div></div>
+<div style="border: 1.5px solid #1D5BD8; border-radius: 10px; padding: 12px; border-top: 3px solid #1D5BD8; background: #F2F6FF"><div style="font-size: 12.5px; color: #1D4FB8; font-weight: 600">당첨자 발표 · 다음 일정</div><div style="font-weight: 700">2026.10.08</div></div>
+<div style="border: 1px solid #DDE3EC; border-radius: 10px; padding: 12px; border-top: 3px solid #0A2B5E"><div style="font-size: 12.5px; color: #5B6576">계약</div><div style="font-weight: 700">12.29 ~ 12.30</div></div>
+<div style="border: 1px solid #DDE3EC; border-radius: 10px; padding: 12px; border-top: 3px solid #0A2B5E"><div style="font-size: 12.5px; color: #5B6576">입주 예정</div><div style="font-weight: 700">2028년 7월</div></div>
+</div>
+
+<h3 style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #3A4556">주택형별 공급</h3>
+<div style="overflow-x: auto; margin-bottom: 20px">
+<table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 520px; font-variant-numeric: tabular-nums">
+<thead>
+<tr style="background: #F6F7FA; text-align: left">
+<th scope="col" style="padding: 10px 12px; font-weight: 600; color: #3A4556; border-bottom: 1px solid #DDE3EC">주택형</th>
+<th scope="col" style="padding: 10px 12px; font-weight: 600; color: #3A4556; border-bottom: 1px solid #DDE3EC">공급면적</th>
+<th scope="col" style="padding: 10px 12px; font-weight: 600; color: #3A4556; border-bottom: 1px solid #DDE3EC">공급 세대</th>
+<th scope="col" style="padding: 10px 12px; font-weight: 600; color: #3A4556; border-bottom: 1px solid #DDE3EC">최고 분양가</th>
+<th scope="col" style="padding: 10px 12px; font-weight: 600; color: #3A4556; border-bottom: 1px solid #DDE3EC">내 자산 대비 부족액</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5; font-weight: 600">055</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5">84.01㎡</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5">1세대</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5">36,707만원</td>
+<td style="padding: 12px; border-bottom: 1px solid #EEF1F5; color: #8F4300; font-weight: 600">약 1억 1,707만원</td>
+</tr>
+<tr>
+<td style="padding: 12px; font-weight: 600">056</td>
+<td style="padding: 12px">85.57㎡</td>
+<td style="padding: 12px">60세대</td>
+<td style="padding: 12px">39,358만원</td>
+<td style="padding: 12px; color: #8F4300; font-weight: 600">약 1억 4,358만원</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3 style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #3A4556">AI가 찾은 유의사항</h3>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px">
+<li style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 10px; background: #FAFAFF; border: 1px solid #E3DEFA"><span style="flex: none; font-size: 11.5px; font-weight: 700; color: #FFFFFF; background: #5B3FD6; border-radius: 5px; padding: 2px 6px; margin-top: 2px">PDF</span><span style="font-size: 14px">분양가상한제 적용 주택 — 전매제한·거주의무 기간이 있어요. 기간: [공고문 추출값]</span></li>
+<li style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 10px; background: #FAFAFF; border: 1px solid #E3DEFA"><span style="flex: none; font-size: 11.5px; font-weight: 700; color: #FFFFFF; background: #5B3FD6; border-radius: 5px; padding: 2px 6px; margin-top: 2px">PDF</span><span style="font-size: 14px">신혼희망타운 당첨자는 전용 주택담보대출(수익공유형 모기지) 이용 조건이 붙을 수 있어요. 조건: [공고문 추출값]</span></li>
+<li style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 10px; background: #F4F6FA; border: 1px solid #DDE3EC"><span style="flex: none; font-size: 11.5px; font-weight: 700; color: #FFFFFF; background: #0A2B5E; border-radius: 5px; padding: 2px 6px; margin-top: 2px">API</span><span style="font-size: 14px">공공주택지구 · 공공택지 공급 — 문의 1600-1004 · 청약 신청은 LH 청약플러스</span></li>
+</ul>
+</section>
+</div>
+
+<!-- 오른쪽 -->
+<aside aria-label="공고에 질문하기" style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 20px; box-shadow: 0 20px 50px rgba(6, 22, 48, 0.22); padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 16px; font-weight: 700">이 공고에 질문하기</h2>
+<p style="margin: 0 0 12px; font-size: 13px; color: #5B6576">이 공고문만 검색 범위로 묶어 AI가 답해요.</p>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="align-self: flex-end; max-width: 90%; background: #1D5BD8; color: #FFFFFF; border-radius: 12px 4px 12px 12px; padding: 10px 12px; font-size: 14px">예비신혼부부도 신청할 수 있어요?</div>
+<div style="background: #F6F7FA; border-radius: 4px 12px 12px 12px; padding: 12px; font-size: 14px">네, 신혼희망타운은 예비신혼부부도 신청 대상이에요. 다만 입주 전까지 혼인 사실을 증명해야 해요. <sup style="color: #4A2FC0; font-weight: 700">[신청자격]</sup></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0">
+<a href="AIChat.dc.html" style="display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #CBD3DF; font-size: 13px; color: #2A3445; text-decoration: none">맞벌이 소득 기준은?</a>
+<a href="AIChat.dc.html" style="display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #CBD3DF; font-size: 13px; color: #2A3445; text-decoration: none">필요 서류 정리해줘</a>
+<a href="AIChat.dc.html" style="display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #CBD3DF; font-size: 13px; color: #2A3445; text-decoration: none">당첨자 선정 방식은?</a>
+</div>
+<a href="AIChat.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 46px; border-radius: 8px; background: #1D5BD8; color: #FFFFFF; text-decoration: none; font-weight: 700">AI 상담에서 이어서 묻기</a>
+</section>
+
+<section class="glass" style="border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 20px; box-shadow: 0 20px 50px rgba(6, 22, 48, 0.22); padding: 20px">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 700">공고문 원문</h2>
+<a href="#" style="font-size: 13px; font-weight: 600; text-decoration: none">PDF 열기</a>
+</div>
+<div style="border: 1px solid #DDE3EC; border-radius: 8px; background: #FAFBFD; padding: 16px; display: flex; flex-direction: column; gap: 8px" aria-label="공고문 미리보기 자리">
+<div style="height: 10px; width: 70%; background: #DDE3EC; border-radius: 3px"></div>
+<div style="height: 8px; width: 92%; background: #E8ECF2; border-radius: 3px"></div>
+<div style="height: 8px; width: 86%; background: #E8ECF2; border-radius: 3px"></div>
+<div style="padding: 8px; background: #FFF8DB; border-radius: 6px; font-size: 12.5px; color: #4A3B00">AI가 인용한 구간이 노란색으로 표시돼요</div>
+<div style="height: 8px; width: 90%; background: #E8ECF2; border-radius: 3px"></div>
+<div style="height: 8px; width: 64%; background: #E8ECF2; border-radius: 3px"></div>
+</div>
+<div style="font-size: 12.5px; color: #5B6576; margin-top: 10px">처리 상태: 텍스트 추출 → 문단 분할 → 임베딩 저장 완료</div>
+</section>
+</aside>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -182,6 +182,9 @@ export default function ListingDetailPage() {
           <Link to={`/loans?listingId=${listing.id}`} className="btn">
             자금 계획 보기 →
           </Link>
+          <Link to={`/listings/${listing.id}/ai`} className="btn ghost">
+            AI 공고 분석 보기 →
+          </Link>
         </div>
 
         <div className="card">

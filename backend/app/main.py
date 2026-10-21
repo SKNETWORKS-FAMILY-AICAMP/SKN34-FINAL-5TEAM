@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, chat, commute, community, listings, loans, public_config, recommendations, savings, users
+from app.api.routes import auth, chat, commute, community, diagnoses, listings, loans, public_config, recommendations, savings, users
 from app.core.config import settings
 from app.core.errors import install_error_handling
 from app.core.logging_setup import setup_logging
@@ -54,6 +54,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(recommendations.router)
 app.include_router(users.router)
+app.include_router(diagnoses.router)
 app.include_router(listings.router)
 app.include_router(loans.router)
 app.include_router(chat.router)

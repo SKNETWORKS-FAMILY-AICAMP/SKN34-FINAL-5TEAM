@@ -1,0 +1,155 @@
+/* 진단 결과 화면: 날짜별 진단 기록 + 비교 */
+#lp-history .section-head small{font-size:14px;color:#748079;font-weight:600;margin-left:4px}
+.hist-list{background:#fff;border:1px solid var(--line,#e4e9e2);border-radius:18px;overflow:hidden}
+.hist-row{display:grid;grid-template-columns:22px 170px 90px minmax(0,1fr) minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 20px;border-top:1px solid var(--line,#e4e9e2);cursor:pointer;transition:background .15s}
+.hist-row:first-child{border-top:0}
+.hist-row:hover{background:#f6f9f4}
+.hist-row.on{background:var(--mint,#e9f3ec)}
+.hist-row input{width:18px;height:18px;accent-color:var(--green,#163f33);margin:0}
+.hist-date{font-weight:700;font-size:14px}
+.hist-date em{font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--orange,#ef783e);border-radius:5px;padding:2px 6px;margin-left:4px;vertical-align:1px}
+.hist-score{font-size:13px;color:#5f6b64}
+.hist-score b{font-size:20px;color:var(--green,#163f33);margin-right:2px}
+.hist-meta{font-size:12.5px;color:#5f6b64;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-del{background:none;border:0;color:#9aa69b;font:inherit;font-size:12px;cursor:pointer;padding:6px 4px}
+.hist-del:hover{color:#b3402b;text-decoration:underline}
+.hist-compare{margin-top:18px}
+.hist-compare-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.hist-compare-head h3{margin:0}
+.hist-compare-head span{font-size:12.5px;color:#748079}
+.hist-compare-head .text-link{margin-left:auto;background:none;border:0;font:inherit;font-size:12.5px;cursor:pointer}
+.hist-chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.hist-chip{border:1px solid var(--line,#e4e9e2);background:#fff;border-radius:999px;padding:7px 13px;font:inherit;font-size:12.5px;color:#5f6b64;cursor:pointer}
+.hist-chip.on{border-color:var(--green,#163f33);background:var(--green,#163f33);color:#fff;font-weight:700}
+.hist-table-wrap{overflow-x:auto;margin-top:16px}
+.hist-table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:420px}
+.hist-table th,.hist-table td{padding:11px 14px;border-bottom:1px solid var(--line,#e4e9e2);text-align:left;white-space:nowrap}
+.hist-table thead th{font-size:13px;color:var(--ink,#172a24);font-weight:800;background:#f6f8f4;line-height:1.4}
+.hist-table thead th small{font-size:11px;font-weight:500;color:#748079}
+.hist-table tbody th{font-weight:600;color:#5f6b64;width:150px}
+.hist-table td.chg{font-weight:800;color:var(--ink,#172a24)}
+.hist-table .up{color:#2f7d4f;font-size:11px}
+.hist-table .down{color:#b3402b;font-size:11px}
+.hist-note{margin:10px 2px 0;font-size:12px;color:#748079}
+@media (max-width:860px){
+  .hist-row{grid-template-columns:22px minmax(0,1fr) auto;row-gap:4px}
+  .hist-score,.hist-meta{grid-column:2}
+  .hist-del{grid-column:3;grid-row:1}
+}
+
+/* 내 공간: 최근 진단 카드 (눈에 띄게) */
+.dash-diag{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px 32px;margin:0 0 36px;padding:28px 32px;border-radius:20px;background:var(--green,#163f33);color:#fff}
+.dash-diag .eyebrow{color:#cfe0d3}
+.dash-diag h3{margin:6px 0 2px;font-size:24px;color:#fff}
+.dash-diag-sub{margin:0;font-size:13px;color:#cfe0d3}
+.dash-diag-facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.dash-diag-facts>div{min-width:120px;padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}
+.dash-diag-facts small{display:block;font-size:11.5px;color:#cfe0d3}
+.dash-diag-facts b{font-size:26px;font-weight:800;letter-spacing:-1px}
+.dash-diag-facts b span{font-size:13px;font-weight:600;margin-left:2px;color:#cfe0d3}
+.dash-diag-facts>div:first-child b{color:#f6c9a4}
+.dash-diag-actions{display:flex;flex-wrap:wrap;gap:10px}
+.dash-diag-actions .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,.45);color:#fff}
+.dash-diag-actions .btn.secondary:hover{background:rgba(255,255,255,.12)}
+.hist-more{display:block;margin:10px auto 0;background:none;border:0;font:inherit;font-size:13px;font-weight:700;color:var(--green,#163f33);text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.recs-kinds{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:-8px 0 22px}
+.recs-kinds>span{font-size:12.5px;font-weight:700;color:#5f6b64;margin-right:4px}
+
+/* 진단 6단계: 관심 주거 유형 여러 개 고르기 */
+.type-help{margin:0 0 10px;font-size:12.5px;color:#5f6b64}
+.type-all{display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;font-weight:700;cursor:pointer}
+.type-all input{width:18px;height:18px;accent-color:var(--green,#163f33);margin:0}
+.type-desc{display:block;margin-top:10px;font-size:11.5px;line-height:1.7;color:#748079}
+
+/* 진단 결과 맨 위 박스: 기준 진단 고르기 */
+.rb-pick{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.rb-pick span{font-size:11.5px;color:#c4d6c5}
+.rb-pick select{width:auto;min-width:220px;padding:8px 34px 8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background-color:rgba(255,255,255,.1);color:#fff;font-size:13px;font-weight:700}
+.rb-pick select option{color:#172a24;background:#fff}
+.rb-note{margin-top:10px !important;font-size:11.5px !important;color:#f6c9a4 !important}
+.type-empty{display:block;margin-top:8px;font-size:12px;font-weight:700;color:#b5501d}
+
+/* 내 공간: 리포트 링크(진단 카드 안), 조건 수정 버튼 */
+.dash-diag-report{flex-basis:100%;text-align:right;font-size:12.5px;font-weight:700;color:#cfe0d3;text-decoration:underline;text-underline-offset:4px}
+.dash-diag-report:hover{color:#fff}
+.dash-edit{width:100%;background:none;border:0;border-bottom:0 !important;font:inherit;font-size:12px;color:var(--green,#163f33);font-weight:700;cursor:pointer;text-align:left}
+.options:has(> [data-key="income"]){display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+
+/* 1순위 가능성 배지와 사유 */
+.badge.fp-ok{background:var(--green,#163f33);color:#fff}
+.badge.fp-no{background:#f6e1dc;color:#9c3a26}
+.badge.fp-check{background:#f9eee0;color:#8a5a20}
+.badge.fp-etc{background:#eef1ec;color:#5f6b64}
+.fp-notes{margin:8px 0 0;padding:0 0 0 16px;font-size:11.5px;line-height:1.6;color:#5f6b64}
+
+/* 내 공간: 내 기준에 맞는 공고 (첫 화면) */
+.dash-recs{margin:0 0 36px}
+.dash-recs-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 20px;margin-bottom:14px}
+.dash-recs-head h2{margin:0;font-size:22px}
+.dash-recs-head h2 small{font-size:14px;color:#748079;margin-left:4px}
+.dash-recs-head p{margin:4px 0 0;font-size:12.5px;color:#748079}
+.dash-rec-list{background:#fff;border:1px solid var(--line,#e4e9e2);border-radius:18px;overflow:hidden}
+.dash-rec{display:grid;grid-template-columns:96px minmax(0,1fr) 150px 110px;align-items:center;gap:16px;padding:14px 22px;border-top:1px solid var(--line,#e4e9e2);color:var(--ink,#172a24);text-decoration:none;transition:background .15s}
+.dash-rec:first-child{border-top:0}
+.dash-rec:hover{background:#f6f9f4}
+.dash-rec .badge{justify-self:start}
+.dash-rec-main{min-width:0;display:flex;flex-direction:column;gap:3px}
+.dash-rec-main b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-rec-main small{font-size:12px;color:#748079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-rec-price{display:flex;flex-direction:column;text-align:right;font-weight:800;font-size:14.5px}
+.dash-rec-price small{font-weight:500;font-size:11px;color:#748079}
+.dash-rec-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:12px;font-weight:800;color:var(--orange,#ef783e)}
+.dash-rec-meta em{font-style:normal;font-size:11px;font-weight:700;color:#8a6a4a;background:#f8eee1;border-radius:6px;padding:3px 7px}
+.dash-rec-meta em.ok{color:var(--green,#163f33);background:var(--mint,#e9f3ec)}
+@media (max-width:860px){
+  .dash-rec{grid-template-columns:minmax(0,1fr) auto;row-gap:6px;padding:12px 16px}
+  .dash-rec .badge{grid-column:1}
+  .dash-rec-main{grid-column:1 / -1;grid-row:2}
+  .dash-rec-price{grid-column:1;grid-row:3;text-align:left;flex-direction:row;gap:6px;align-items:baseline}
+  .dash-rec-meta{grid-column:2;grid-row:1 / span 1}
+}
+
+/* 내 공간 카드 안: 자금 한 줄 */
+.dash-money{display:flex;flex-wrap:wrap;align-items:center;gap:10px 26px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.16)}
+.dash-money>div:not(.dash-money-actions){display:flex;flex-direction:column}
+.dash-money small{font-size:11.5px;color:#cfe0d3}
+.dash-money b{font-size:17px;font-weight:800}
+.dash-money-actions{display:flex;flex-wrap:wrap;gap:8px}
+.dash-money-actions button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:10px;padding:9px 13px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.dash-money-actions button:hover{background:rgba(255,255,255,.2)}
+
+/* 내 공간 카드: 왼쪽 현황 · 오른쪽 마감 임박 공고 */
+.dash-diag{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);align-items:stretch;gap:28px}
+.dash-diag-left{display:flex;flex-direction:column;gap:20px;min-width:0}
+.dash-diag-left .dash-diag-report{text-align:left}
+.dash-soon{display:flex;flex-direction:column;gap:12px;min-width:0}
+.dash-fold{border-radius:16px;background:#fffdf8;color:#1d2a24;overflow:hidden}
+.dash-fold.open{flex:1 1 auto;display:flex;flex-direction:column}
+.dash-fold-head{display:flex;align-items:baseline;gap:8px;width:100%;padding:16px 20px;background:none;border:0;font:inherit;text-align:left;cursor:pointer;color:inherit}
+.dash-fold-head h4{margin:0;font-size:16px;font-weight:800;color:#163f33;white-space:nowrap}
+.dash-fold-head small{font-size:12px;color:#748079;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash-fold-icon{margin-left:auto;align-self:center;flex:none;width:9px;height:9px;border-right:2px solid #163f33;border-bottom:2px solid #163f33;transform:rotate(45deg);transition:transform .2s}
+.dash-fold.open .dash-fold-icon{transform:rotate(-135deg)}
+.dash-fold-head:hover h4{color:#ef783e}
+.dash-fold-body{display:flex;flex-direction:column;flex:1 1 auto;padding:0 20px 14px}
+.dash-soon-list{display:flex;flex-direction:column}
+.dash-soon-row{display:flex;align-items:center;gap:12px;padding:10px 2px;border-top:1px solid #ece6da;color:inherit;text-decoration:none}
+.dash-soon-row:first-child{border-top:0}
+.dash-soon-row:hover b{color:#ef783e}
+.dash-soon-dday{flex:none;min-width:70px;text-align:center;padding:5px 8px;border-radius:8px;background:#eef3ef;color:#163f33;font-size:12px;font-weight:800}
+.dash-soon-dday.hot{background:#fde9de;color:#d65a1f}
+.dash-soon-dday.fp-ok{background:#163f33;color:#fff}
+.dash-soon-dday.fp-no{background:#f1ede6;color:#8a8478}
+.dash-soon-dday.fp-check{background:#fff1d6;color:#9a6a00}
+.dash-soon-main{display:flex;flex-direction:column;min-width:0}
+.dash-soon-main b{font-size:14px;font-weight:700;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dash-soon-main small{font-size:12px;color:#748079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-soon-empty{margin:6px 0;font-size:13.5px;color:#748079}
+.dash-soon-more{margin-top:auto;align-self:flex-end;padding:8px 0 0;background:none;border:0;font:inherit;font-size:13px;font-weight:800;color:#ef783e;cursor:pointer}
+.dash-soon-more:hover{text-decoration:underline;text-underline-offset:4px}
+.dash-mini-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.dash-mini-chips button{padding:5px 11px;border-radius:999px;border:1px solid #e2dccf;background:#fff;font:inherit;font-size:12px;font-weight:700;color:#5f6b64;cursor:pointer}
+.dash-mini-chips button.on{background:#163f33;border-color:#163f33;color:#fff}
+@media (max-width:900px){.dash-diag{grid-template-columns:1fr}}
+.dash-fold-badge{margin-left:auto;align-self:center;flex:none;padding:4px 10px;border-radius:999px;background:#ef783e;color:#fff;font-style:normal;font-size:12px;font-weight:800}
+.dash-fold-badge+.dash-fold-icon{margin-left:6px}

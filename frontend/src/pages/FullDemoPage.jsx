@@ -2,21 +2,31 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/full-demo.css";
 
-const SCREENS = new Set(["home", "diagnosis", "result", "homes", "detail", "dashboard", "saved", "finance", "community", "post", "chat", "report", "profile", "preferences"]);
+const SCREENS = new Set(["start", "home", "diagnosis", "result", "homes", "detail", "dashboard", "saved", "finance", "community", "post", "chat", "report", "profile", "preferences"]);
 
 function normalizeRoute(value) {
   const route = value.replace(/^[/#]+/, "");
-  return SCREENS.has(route.split("/")[0]) ? route : "home";
+  return SCREENS.has(route.split("/")[0]) ? route : "start";
+}
+
+function isMember() {
+  try {
+    return Boolean(JSON.parse(window.localStorage.getItem("cydemo-user") || "null")?.member);
+  } catch {
+    return false;
+  }
 }
 
 function screenFromLocation(pathname, hash) {
   if (hash) return normalizeRoute(hash);
+  // localhost:3000 (/) 은 로그인 전에는 첫 페이지(start: 기능 소개 + 진단 시작), 로그인 뒤에는 메인(home)
+  if (pathname === "/") return isMember() ? "home" : "start";
   if (pathname.startsWith("/community/posts/")) return normalizeRoute(pathname.replace("/community/posts/", "post/"));
   return normalizeRoute(pathname);
 }
 
 function pathFromScreen(screen) {
-  if (screen === "home") return "/";
+  if (screen === "start") return "/";
   if (screen.startsWith("post/")) return `/community/posts/${screen.slice(5)}`;
   return `/${screen}`;
 }

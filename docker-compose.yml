@@ -27,6 +27,8 @@ services:
     build: ./frontend
     environment:
       REACT_APP_API_BASE_URL: http://localhost:8000
+      # Windows에서 코드를 저장해도 화면이 안 바뀌는 문제: 파일 변경을 주기적으로 확인하게 한다
+      WATCHPACK_POLLING: "true"
     ports:
       - "3000:3000"
     depends_on:

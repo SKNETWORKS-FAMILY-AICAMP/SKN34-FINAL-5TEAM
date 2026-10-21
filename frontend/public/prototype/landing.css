@@ -1,0 +1,135 @@
+/* 첫 페이지(#start): 왼쪽 소개 + 오른쪽 진단 사이드바. 버튼을 누르면 사이드바가 화면 전체로 펼쳐지며 팀 진단 화면이 그 안에 열린다. */
+body.landing-active footer{display:none}
+.landing{position:relative;display:flex;overflow:hidden;min-height:calc(100vh - 112px);min-height:max(640px,calc(100vh - 112px));background:#f7f8f4}
+/* 왼쪽 소개: 팀 메인 히어로와 같은 인테리어 사진 + 초록 오버레이, 글씨는 밝게 */
+.landing-intro{position:relative;padding-bottom:120px !important;flex:none;width:66%;box-sizing:border-box;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 48px;text-align:center;color:#fff;
+  background-color:#163f33;background-image:radial-gradient(ellipse at 50% 50%,rgba(12,34,26,.82) 0%,rgba(12,34,26,.72) 55%,rgba(12,34,26,.6) 100%),url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=2000&q=85');background-size:cover;background-position:center}
+.landing-chip{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.4px;color:#e8f0e9;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.24);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);padding:6px 12px;border-radius:6px}
+.landing-chip::before{content:"";width:6px;height:6px;border-radius:50%;background:#ef783e}
+.landing-intro h1{margin:26px 0 0;font-size:clamp(40px,6.2vh,64px);font-weight:800;line-height:1.16;letter-spacing:-2.8px;color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.18)}
+.landing-intro h1 .o{color:#f6c9a4}.landing-intro h1 .g{color:#d5e0d7}
+.landing-intro>p{margin:22px 0 0;max-width:520px;color:#dbe5dd;font-size:16px;line-height:1.8}
+.landing-cta{margin-top:30px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+.landing-cta .lp-main{min-height:56px;padding:0 28px;border-radius:12px;border:0;background:#ef783e;color:#fff;font-size:15.5px;font-weight:800;box-shadow:0 12px 28px rgba(239,120,62,.38);cursor:pointer;font-family:inherit;transition:background .2s,transform .2s}
+.landing-cta .lp-main:hover{background:#f28a55;transform:translateY(-1px)}
+.landing-cta .lp-main span{color:#fff2e8}
+.landing-cta .lp-sub{display:inline-flex;align-items:center;min-height:56px;padding:0 24px;border-radius:12px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.1);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;font-size:15px;font-weight:700;text-decoration:none;transition:background .2s}
+.landing-cta .lp-sub:hover{background:rgba(255,255,255,.2);color:#fff}
+.landing-cta .lp-main:focus-visible,.landing-cta .lp-sub:focus-visible{outline:3px solid #f6c9a4;outline-offset:3px}
+.landing-note{margin-top:14px;font-size:12px;color:#c9d4ca}
+.landing-sources{position:absolute;left:24px;right:24px;bottom:30px}
+.landing-sources small{display:block;font-size:10.5px;font-weight:700;letter-spacing:1.6px;color:#b9c6bc}
+.landing-sources div{margin-top:12px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px 34px;font-size:15px;font-weight:800;color:rgba(255,255,255,.62);letter-spacing:-.3px}
+
+.landing-panel{position:absolute;top:0;right:0;bottom:0;width:34%;overflow:hidden;z-index:2;transition:width .6s cubic-bezier(.2,.7,.2,1)}
+.landing.open .landing-panel{width:100%}
+/* 접힌 사이드바 = 펼쳤을 때 나오는 팀 진단 화면을 그대로 줄여 놓은 미리보기 (같은 밝은 배경·카드·색) */
+.landing-panel{background:#f6f8f4;box-shadow:-18px 0 40px rgba(8,30,22,.18)}
+.landing-side{position:absolute;inset:0;display:flex;flex-direction:column;gap:16px;align-items:center;justify-content:center;padding:32px 30px;color:var(--ink,#172a24);transition:opacity .25s ease .3s}
+.landing.open .landing-side{opacity:0;pointer-events:none}
+.landing:not(.open) .landing-side{transition-delay:.05s}
+.lp-mini{width:100%;max-width:360px;text-align:left;transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.landing.open .lp-mini{transform:scale(1.2)}
+.lp-eyebrow{text-align:center;font-size:9.5px;font-weight:700;letter-spacing:1.8px;color:var(--green,#163f33)}
+.lp-title{text-align:center;margin-top:8px;font-size:21px;font-weight:800;letter-spacing:-.8px}
+.lp-steps{list-style:none;margin:18px 0 0;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px}
+.lp-steps li{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:9px;color:#9aa69b;white-space:nowrap;letter-spacing:-.5px}
+.lp-steps li span{width:22px;height:22px;display:grid;place-items:center;border-radius:50%;background:#e8ece6;font-weight:700;font-size:10px}
+.lp-steps li.on{color:var(--green,#163f33);font-weight:700}
+.lp-steps li.on span{background:var(--green,#163f33);color:#fff}
+.lp-progress{margin:12px 0 16px;height:3px;background:#e3e9e1;border-radius:4px}
+.lp-progress div{width:16.6%;height:100%;background:var(--orange,#ef783e);border-radius:4px}
+.lp-card{background:#fff;border:1px solid var(--line,#e4e9e2);border-radius:16px;padding:18px 18px 16px;box-shadow:0 12px 30px rgba(22,63,51,.06)}
+.lp-count{font-size:9px;font-weight:700;letter-spacing:1.6px;color:var(--orange,#ef783e)}
+.lp-q{display:block;margin-top:4px;font-size:17px;letter-spacing:-.6px}
+.lp-l{margin-top:12px;font-size:11px;font-weight:600}
+.lp-opts{margin-top:7px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.lp-opts span{border:1px solid var(--line,#e4e9e2);border-radius:8px;padding:8px 0;text-align:center;font-size:11px;background:#fff}
+.lp-opts .on{border-color:var(--green,#163f33);background:var(--mint,#e9f3ec);color:var(--green,#163f33);font-weight:700}
+.lp-actions{display:flex;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid var(--line,#e4e9e2)}
+.lp-actions span{font-size:11px;font-weight:700;border-radius:9px;padding:8px 13px}
+.lp-prev{border:1px solid var(--line,#e4e9e2);color:var(--green,#163f33);opacity:.6}
+.lp-next{background:var(--green,#163f33);color:#fff}
+.lp-flow{margin-top:12px;background:#edf3e9;border-radius:14px;padding:12px 16px;font-size:10.5px}
+.lp-flow b{display:block;font-size:12px;margin-bottom:4px}
+.lp-flow div{display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid #d9e4d6}
+.lp-flow em{font-style:normal;font-weight:700}
+
+.landing-diag{position:absolute;inset:0;overflow-y:auto;background:#f6f8f4;opacity:0;transition:opacity .3s ease .5s}
+.landing:not(.open) .landing-diag{transition-delay:0s}
+.landing.open .landing-diag{opacity:1}
+.landing:not(.open) .landing-diag{pointer-events:none;visibility:hidden}
+.landing-diag-top{max-width:960px;margin:0 auto;padding:22px 30px 0;display:flex;justify-content:space-between;align-items:center}
+.lp-close{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #d7ded5;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;color:#163f33;cursor:pointer;font-family:inherit}
+.landing-diag-top small{font-size:12px;color:#7a857d}
+.landing-diag .diagnosis-wrap{padding-top:10px}
+
+@media (max-width:860px){
+  .landing{flex-direction:column;min-height:0}
+  .landing-intro{width:100%;padding:44px 18px 28px}
+  .landing-panel{position:relative;width:100%;min-height:520px}
+  .landing.open .landing-intro{display:none}
+  .landing.open .landing-panel{min-height:calc(100vh - 112px)}
+}
+@media (prefers-reduced-motion:reduce){.landing-panel,.landing-side,.landing-diag{transition:none}}
+
+@media (max-width:860px){
+  .landing-intro{padding-bottom:28px !important}
+  .landing-sources{position:static;margin-top:40px}
+}
+.lp-guide-link{display:inline-block;margin-top:17px;font-size:12px;background:none;border:0;padding:0;font-family:inherit;font-weight:700;color:inherit;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.step-actions{align-items:center;gap:10px}
+.step-actions .lp-later{margin-left:auto;background:none;border:0;padding:10px 6px;font-family:inherit;font-size:13px;font-weight:600;color:#748079;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.step-actions .lp-later:hover{color:#163f33}
+.hero-actions .lp-redo{background:none;border:0;padding:0;font-family:inherit;cursor:pointer}
+
+/* 메인 추천 공고: 전광판처럼 흐르는 줄 */
+.lp-marquee{overflow:hidden;margin:0 -8px;padding:8px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 40px,#000 calc(100% - 40px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 40px,#000 calc(100% - 40px),transparent 100%)}
+.lp-track{display:flex;gap:20px;width:max-content;will-change:transform}
+.lp-track>*{flex:none;width:340px}
+@media (prefers-reduced-motion:reduce){.lp-marquee{overflow-x:auto}}
+@media (max-width:860px){.lp-track>*{width:280px}}
+/* 진단 기록이 없을 때 */
+.lp-reco-empty{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;background:#fff;border:1px dashed #cfd9cc;border-radius:18px;padding:30px 32px}
+.lp-reco-empty b{display:block;font-size:17px;color:var(--ink,#172a24)}
+.lp-reco-empty p{margin:6px 0 0;font-size:13px;color:#748079}
+
+/* 메인(스크롤형): 첫 화면은 히어로(내 현황 + 버튼 1개)만, 바닥에 추천 공고 윗부분이 살짝 보이게 */
+body.lp-home .hero{min-height:clamp(340px,calc(100vh - 140px - 300px),620px);display:flex;align-items:center}
+body.lp-home .hero .hero-body{width:100%;box-sizing:border-box;padding-top:clamp(28px,5vh,68px);padding-bottom:clamp(28px,5vh,65px)}
+body.lp-home .hero h1{font-size:clamp(38px,5.4vh,55px)}
+body.lp-home #app .section:first-of-type{padding-top:40px}
+body.lp-home #app .section:first-of-type .section-head{margin-bottom:22px}
+
+/* 히어로 "내 현황" 숫자 */
+.lp-stats{display:flex;gap:10px;margin:clamp(12px,2vh,22px) 0 clamp(14px,2.4vh,28px);flex-wrap:wrap}
+.lp-stats>div{display:flex;flex-direction:column;gap:2px;min-width:132px;padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;text-decoration:none;transition:background .2s}
+.lp-stats b{font-size:clamp(22px,3.2vh,30px);font-weight:800;letter-spacing:-1px;line-height:1.1}
+.lp-stats b small{font-size:13px;font-weight:700;margin-left:2px;color:#e8f0e9}
+.lp-stats span{font-size:11.5px;color:#d5e0d7}
+.lp-stats>div:first-child b{color:#f6c9a4}
+@media (max-width:760px){.lp-stats>div{min-width:0;flex:1}}
+.hero .eyebrow.lp-eyebrow-ko{letter-spacing:.2px;font-size:13px}
+
+/* 추천 공고 카드의 마감 D-day */
+.lp-dday{display:inline-block;margin-left:6px;font-weight:800;font-size:11.5px;color:var(--green,#163f33);background:var(--mint,#e9f3ec);border-radius:6px;padding:4px 8px;vertical-align:middle}
+.lp-dday.hot{color:#fff;background:var(--orange,#ef783e)}
+
+/* 공고 카드 가격 자리: 원문 링크 / 가격 없음 */
+.house-card .notice-link{font-size:15px;font-weight:800;color:var(--green,#163f33);text-decoration:underline;text-underline-offset:4px}
+.house-card .notice-link:hover{color:var(--orange,#ef783e)}
+.house-card .price-na{font-size:14px;font-weight:600;color:#9aa69b}
+
+/* 오른쪽 미리보기: 누르는 화면이 아니라 '보여 주기용'임이 드러나게 — 창 틀 + 라벨 + 흐리게, 클릭 불가 */
+.lp-window{width:100%;max-width:380px;background:#fff;border:1px solid var(--line,#e4e9e2);border-radius:18px;overflow:hidden;box-shadow:0 14px 34px rgba(22,63,51,.08);pointer-events:none;user-select:none}
+.lp-window-bar{display:flex;align-items:center;gap:6px;padding:9px 14px;background:#eef2ec;border-bottom:1px solid var(--line,#e4e9e2)}
+.lp-window-bar i{width:8px;height:8px;border-radius:50%;background:#cdd6cf}
+.lp-window-bar span{margin-left:6px;font-size:11px;font-weight:700;color:#748079;letter-spacing:.2px}
+.lp-window .lp-mini{max-width:none;padding:16px 18px 18px;opacity:.72;filter:saturate(.75)}
+.lp-window .lp-card{box-shadow:none}
+.lp-window .lp-next{background:#c9d3cc;color:#fff}
+.lp-window .lp-prev{opacity:.5}
+.lp-caption{margin:0;text-align:center;font-size:12.5px;line-height:1.6;color:#748079}
+.lp-caption b{color:var(--green,#163f33)}
+/* 첫 페이지에서는 상단 카테고리 메뉴를 숨겨 '진단 시작'에 집중 (로고·로그인은 유지) */
+body.landing-active #header .nav-links{visibility:hidden}

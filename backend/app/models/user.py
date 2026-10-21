@@ -36,5 +36,11 @@ class UserProfile(Base):
     is_newlywed: Mapped[bool] = mapped_column(Boolean, default=False)  # 신혼특공 해당여부
     is_first_time_buyer: Mapped[bool] = mapped_column(Boolean, default=False)  # 생애최초 해당여부
 
+    # 청약 1순위 판정용 (진단 질문). 모르면 NULL → 화면에 '확인 필요'
+    residence_region_code: Mapped[str | None] = mapped_column(String(20), nullable=True)  # 현재 거주 시·도 코드 (해당지역·기타지역 판단)
+    house_count: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 세대 주택 수 (0=무주택, 2=2주택 이상)
+    deposit_balance: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)  # 청약통장 잔액(원, 민영주택 예치금 기준)
+    won_within_5y: Mapped[bool | None] = mapped_column(Boolean, nullable=True)  # 최근 5년 안 세대 청약 당첨 이력 (규제지역 1순위 제한)
+    minor_children: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 미성년 자녀 수 (2=2명 이상)
     workplace_address: Mapped[str] = mapped_column(String(255), nullable=True)  # 직장 주소 (출퇴근 경로)
     home_address: Mapped[str] = mapped_column(String(255), nullable=True)  # 현재 집 주소 (출퇴근 비교)
