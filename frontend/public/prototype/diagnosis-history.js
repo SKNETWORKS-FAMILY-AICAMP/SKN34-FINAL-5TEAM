@@ -369,6 +369,13 @@
 
   const prevRender = render;
   render = function () {
+    // 다른 화면에서 청약 진단으로 들어오면, 입력하다 만 값 대신 가장 최근 진단 결과로 채우고 1단계부터 보여 준다
+    const entering = routeNow();
+    if (entering === 'diagnosis' && hist.lastRoute !== 'diagnosis' && state.diagnosis) {
+      state.answers = { ...state.answers, ...(hist.records?.[0]?.answers || {}), ...state.diagnosis };   // 이 브라우저의 최근 진단이 가장 최신
+      state.step = 0;
+    }
+    hist.lastRoute = entering;
     prevRender();
     sync();
     const route = routeNow();
