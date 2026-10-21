@@ -67,7 +67,9 @@
   const liveSaveProfile = saveProfile;
   saveProfile = function (...args) { const p = liveSaveProfile(...args); hist.saving = p; p.finally(() => { if (hist.saving === p) hist.saving = null; }); return p; };
 
-  window.addEventListener('cy:diagnosis-done', () => { hist.pending = true; live.recsEligibleOnly = false; live.recsShowAll = false; live.recsKind = null; hist.viewId = null; });   // 새 진단이면 결과 목록 보기 방식도 처음으로
+  window.addEventListener('cy:diagnosis-done', () => { hist.pending = true; live.recsEligibleOnly = false; live.recsShowAll = false; live.recsKind = null; hist.viewId = null;
+    if (state.user?.member && routeNow() === 'diagnosis') hist.toMyPage = true;   // 로그인한 사람은 진단을 마치면 마이페이지(청약 현황)로
+  });   // 새 진단이면 결과 목록 보기 방식도 처음으로
 
   function sync() {
     const uid = state.user?.id || 0;
@@ -370,6 +372,12 @@
     prevRender();
     sync();
     const route = routeNow();
+    if (route === 'result' && hist.toMyPage) {
+      hist.toMyPage = false;
+      location.replace('#dashboard'); window.scrollTo(0, 0);
+      toast('진단을 저장했어요. 마이페이지에서 청약 현황을 확인하세요.');
+      return;
+    }
     if (route === 'result' && state.diagnosis) bannerPicker();
     if (route === 'result' && state.diagnosis) {
       const anchor = $('#app .grid2');
