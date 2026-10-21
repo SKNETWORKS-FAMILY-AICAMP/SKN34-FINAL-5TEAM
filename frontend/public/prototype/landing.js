@@ -87,7 +87,7 @@
     const actions = $('.hero-actions');
     if (actions) {
       actions.innerHTML = state.diagnosis
-        ? '<a class="btn orange" href="#result">내 진단 결과 보기 <span>↗</span></a><button type="button" class="hero-link lp-redo" data-action="redo-diagnosis">진단 다시 하기</button>'
+        ? `<a class="btn orange" href="${isMember() ? '#dashboard' : '#result'}">내 진단 결과 보기 <span>↗</span></a><button type="button" class="hero-link lp-redo" data-action="redo-diagnosis">진단 다시 하기</button>`
         : '<a class="btn orange" href="#diagnosis" data-action="redo-diagnosis">진단 하러 가기 <span>↗</span></a>';
     }
     // 아래 "시작 가이드" 칸의 진단 링크도 겹치므로 이용 흐름 안내로 바꾼다
