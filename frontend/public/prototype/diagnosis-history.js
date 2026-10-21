@@ -65,8 +65,8 @@
 
   async function loadRecords(userId) {
     hist.loadingFor = userId;
-    try { hist.records = await api(`/users/${userId}/diagnoses`); }
-    catch { hist.records = []; }
+    try { hist.records = await api(`/users/${userId}/diagnoses`); hist.recordsError = null; }
+    catch (error) { hist.records = []; hist.recordsError = error.message; }
     render();
   }
 
@@ -185,11 +185,6 @@
       ['희망 조건', [['희망 지역', a.wish], ['관심 유형', typeLabel(a.type)]]],
     ];
   }
-  // 조건 요약 칩: 누르면 아래 넘김 영역이 그 조건 묶음으로 넘어간다
-  function chipBar(a) {
-    const chips = [[a.age, 1], [a.marriage, 1], [`${a.region} 거주`, 1], [a.ownership, 2], [`희망 ${a.wish}`, 6], [typeLabel(a.type), 6]];
-    return `<div class="dash-cond-bar"><span class="dash-cond-sum">${chips.map(([t, i]) => `<button type="button" data-action="ds-go" data-value="${i}" title="이 조건 자세히 보기">${esc(t)}</button>`).join('')}</span></div>`;
-  }
   // 카드 왼쪽 넘김 영역: 1쪽 = 청약 현황·자금, 2~7쪽 = 진단 6단계 묶음별 내 조건 (‹ › 로 넘김)
   function slider(a, statusHtml) {
     const conds = condPages(a);
@@ -222,8 +217,8 @@
       <div class="dash-money-actions"><button type="button" data-action="finance-tab" data-value="대출">내 대출 한도·금리 보기 →</button><button type="button" data-action="finance-tab" data-value="자금 계산">자금 계획 계산하기 →</button></div></div>`;
     return `<section class="dash-diag" aria-label="내 진단 결과">
       <div class="dash-diag-left">
-        <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><div class="dash-sub-row"><p class="dash-diag-sub">${used ? `사용 중인 진단 · ${when(used.created_at, true)}${used.id === r?.id ? ' (최근)' : ''}` : r ? `최근 진단 · ${when(r.created_at, true)}` : '내 진단'}</p>${n > 1 ? recordPicker(used) : ''}</div>
-          ${chipBar(a)}${slider(a, facts + moneyRow)}</div>
+        <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><div class="dash-sub-row"><p class="dash-diag-sub">${used ? `사용 중인 진단 · ${when(used.created_at, true)}${used.id === r?.id ? ' (최근)' : ''}` : r ? `최근 진단 · ${when(r.created_at, true)}` : (hist.recordsError ? '진단 기록을 불러오지 못했어요' : '내 진단')}</p>${n > 1 ? recordPicker(used) : ''}</div>
+          ${slider(a, facts + moneyRow)}</div>
         <div class="dash-diag-actions"><a class="btn orange" href="#result">가점 근거·전체 결과 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 · PDF 저장 ↗</a></div>
       </div>
       ${dashSoon()}
@@ -254,6 +249,10 @@
   function dashSoon() {
     const ROWS = 5;   // 항상 한 상자만 펼쳐 있으므로 5줄 (왼쪽 높이와 맞춤)
     const loading = !state.user?.id || !live.recs;
+    if (live.recsError) {   // 서버 오류를 '0건'으로 보여 주지 않는다
+      const err = `<div class="dash-err"><b>서버에서 추천 공고를 불러오지 못했어요.</b><small>${esc(live.recsError)}</small><small>백엔드를 새로 받았다면 DB 업데이트가 필요할 수 있어요: <code>docker compose exec backend alembic upgrade head</code></small><button type="button" data-action="dash-retry">다시 불러오기</button></div>`;
+      return `<div class="dash-soon">${foldBox('soon', '마감 임박한 내 추천 공고', '', err)}${foldBox('recs', '내 기준에 맞는 공고', '', err)}</div>`;
+    }
     let soonBox;
     if (loading) soonBox = foldBox('soon', '마감 임박한 내 추천 공고', '', '<p class="dash-soon-empty">추천 공고를 불러오는 중이에요…</p>');
     else {
@@ -511,6 +510,8 @@
       hist.selected.clear(); render();
     } else if (act === 'hist-open') {
       hist.scrollTo = true; go('result');
+    } else if (act === 'dash-retry') {
+      live.recsError = null; live.recs = null; hist.loadingFor = 0; render(); loadRecs();
     } else if (act === 'ds-go') {
       hist.slide = Number(b.dataset.value) || 0; render();
     } else if (act === 'cond-edit') {
