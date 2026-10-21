@@ -49,7 +49,7 @@
   async function applyRecord(id) {
     const r = (hist.records || []).find((x) => x.id === id);
     if (!r || hist.applying || r.active) return;
-    hist.applying = id; hist.pickOpen = false; render();
+    hist.applying = id; hist.pickOpen = false; hist.pickDel = null; render();
     try {
       await api(`/users/${state.user.id}/diagnoses/${id}/active`, { method: 'PUT' });
       hist.records = hist.records.map((x) => ({ ...x, active: x.id === id }));
@@ -122,7 +122,7 @@
         <span class="hist-meta">추천 ${r.recommend_count}건 · 자격 충족 ${r.eligible_count}건</span>
         <span class="hist-meta">${esc(r.answers.wish || '전체')} · ${esc(typeLabel(r.answers.type))}</span>
         ${r.id === appliedId ? '<span class="hist-use on">사용 중</span>' : `<button type="button" class="hist-use" data-action="hist-apply" data-id="${r.id}" ${hist.applying ? 'disabled' : ''}>${hist.applying === r.id ? '적용 중…' : '이 조건 사용'}</button>`}
-        <button type="button" class="hist-del" data-action="hist-del" data-id="${r.id}" aria-label="${when(r.created_at, true)} 기록 삭제">삭제</button>
+        ${r.id === appliedId ? '<span class="hist-del" aria-hidden="true"></span>' : `<button type="button" class="hist-del" data-action="hist-del" data-id="${r.id}" aria-label="${when(r.created_at, true)} 기록 삭제">삭제</button>`}
       </label>`).join('');
     const picked = recs.filter((r) => hist.selected.has(r.id)).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     const chips = Object.entries(CRITERIA).map(([k, [name]]) => `<button type="button" class="hist-chip${criteria.has(k) ? ' on' : ''}" data-action="hist-crit" data-value="${k}" aria-pressed="${criteria.has(k)}">${name}</button>`).join('');
@@ -156,31 +156,46 @@
   }
 
   /* ── 내 공간 카드 안: 사용할 진단 기록 고르기 (아래로 펼치는 목록, 화면 이동 없이) ── */
-  const PICK_ROWS = 8;
+  const shortWhen = (iso) => { const d = new Date(iso); const p = (x) => String(x).padStart(2, '0'); return `${p(d.getMonth() + 1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
   function recordPicker(used) {
     const recs = hist.records || [];
-    const items = recs.slice(0, PICK_ROWS).map((r, i) => { const a = r.answers || {}; const on = used && r.id === used.id; return `<button type="button" role="menuitemradio" aria-checked="${on}" class="rp-item${on ? ' on' : ''}" data-action="hist-apply" data-id="${r.id}" ${hist.applying ? 'disabled' : ''}>
-        <span class="rp-check" aria-hidden="true"></span>
-        <span class="rp-main"><b>${when(r.created_at, true)}${i === 0 ? ' <em>최근</em>' : ''}</b><small>${esc(a.marriage || '')} · 무주택 ${esc(a.years ?? 0)}년 · 통장 ${esc(a.account ?? 0)}년 · 희망 ${esc(a.wish || '전체')} · ${esc(typeLabel(a.type))}</small></span>
-        <span class="rp-score">${r.score}<small>점</small></span>${on ? '<span class="rp-tag">사용 중</span>' : ''}</button>`; }).join('');
+    const rows = recs.map((r, i) => {
+      const on = used && r.id === used.id; const a = r.answers || {};
+      const tip = `${when(r.created_at, true)} · ${a.marriage || ''} · 무주택 ${a.years ?? 0}년 · 통장 ${a.account ?? 0}년 · 희망 ${a.wish || '전체'} · ${typeLabel(a.type)}`;
+      if (hist.pickDel === r.id) return `<div class="rp-row rp-ask"><span title="${when(r.created_at, true)} 기록">${shortWhen(r.created_at)} 삭제?</span><button type="button" class="rp-yes" data-action="rp-del-yes" data-id="${r.id}">삭제</button><button type="button" class="rp-no" data-action="rp-del-no">취소</button></div>`;
+      return `<div class="rp-row${on ? ' on' : ''}"><button type="button" role="menuitemradio" aria-checked="${!!on}" class="rp-item" data-action="hist-apply" data-id="${r.id}" title="${esc(tip)}" ${hist.applying ? 'disabled' : ''}>
+          <span class="rp-check" aria-hidden="true"></span><span class="rp-date" title="${on ? '사용 중' : '누르면 이 기록을 사용'}">${shortWhen(r.created_at)}${i === 0 ? '<em>최근</em>' : ''}</span><span class="rp-score">${r.score}점</span></button>
+        ${on ? '<span class="rp-del rp-lock" title="사용 중인 기록은 지울 수 없어요" aria-hidden="true"></span>' : `<button type="button" class="rp-del" data-action="rp-del" data-id="${r.id}" aria-label="${when(r.created_at, true)} 기록 삭제" title="기록 삭제">×</button>`}</div>`;
+    }).join('');
     return `<div class="rp"><button type="button" class="rp-btn" data-action="rp-toggle" aria-haspopup="menu" aria-expanded="${!!hist.pickOpen}">${hist.applying ? '바꾸는 중…' : `다른 진단 기록 사용 (${recs.length}건)`}<span aria-hidden="true"></span></button>
-      ${hist.pickOpen ? `<div class="rp-menu" role="menu"><div class="rp-head">사용할 진단을 고르면 가점·추천 공고·진단 입력값이 그 기록으로 바뀌어요.</div>${items}
-        <button type="button" class="rp-all" data-action="hist-open">${recs.length > PICK_ROWS ? `기록 ${recs.length}건 모두 보기 · 비교 →` : '기록 비교하기 →'}</button></div>` : ''}</div>`;
+      ${hist.pickOpen ? `<div class="rp-menu" role="menu"><div class="rp-list">${rows}</div><button type="button" class="rp-all" data-action="hist-open">기록 비교하기 →</button></div>` : ''}</div>`;
   }
 
   /* ── 내 공간 카드 안: 진단 때 입력한 조건 전체 (예전 '내 조건 요약' 박스를 카드로 옮김) ── */
-  function condGrid(a) {
+  // 진단 6단계와 같은 묶음으로 한 쪽씩 넘겨 본다 (펼쳐서 카드가 길어지지 않게)
+  function condPages(a) {
     const yr = (v) => (v === '' || v == null ? '–' : `${v}년`);
-    const man = (v) => (v === '' || v == null ? '입력 안 함' : Number(v) >= 10000 ? `${(Number(v) / 10000).toFixed(Number(v) % 10000 ? 1 : 0)}억 원` : `${Number(v).toLocaleString('ko-KR')}만 원`);
-    const rows = [
-      ['현재 거주', a.region], ['세대주', a.head], ['주택 소유', a.ownership + (a.ownership === '무주택' ? ` · 과거 소유 ${a.firstHome}` : '')],
-      ['무주택 기간', yr(a.years)], ['부양가족', `${a.family ?? 0}명`], ['미성년 자녀', a.children],
-      ['통장 가입', yr(a.account)], ['납입 회차', `${a.payments ?? 0}회`], ['예치금', man(a.deposit)],
-      ['5년 내 당첨', a.won5], ['연 소득', a.income], ['보유 현금', Number(a.assets) ? man(a.assets) : '입력 안 함'],
-      ['희망 지역', a.wish], ['관심 유형', typeLabel(a.type)],
+    const man = (v) => (v === '' || v == null || !Number(v) ? '입력 안 함' : Number(v) >= 10000 ? `${(Number(v) / 10000).toFixed(Number(v) % 10000 ? 1 : 0)}억 원` : `${Number(v).toLocaleString('ko-KR')}만 원`);
+    return [
+      ['기본 정보', [['연령대', a.age], ['세대주', a.head], ['혼인', a.marriage], ['현재 거주', a.region]]],
+      ['주택 소유', [['주택 소유', a.ownership], ...(a.ownership === '무주택' ? [['과거 주택 소유', a.firstHome]] : []), ['무주택 기간', yr(a.years)]]],
+      ['가족 구성', [['부양가족', `${a.family ?? 0}명`], ['미성년 자녀', a.children]]],
+      ['청약통장', [['가입 기간', yr(a.account)], ['납입 회차', `${a.payments ?? 0}회`], ['예치금', man(a.deposit)], ['5년 내 당첨', a.won5]]],
+      ['소득·자산', [['연 소득', a.income], ['보유 현금', man(a.assets)]]],
+      ['희망 조건', [['희망 지역', a.wish], ['관심 유형', typeLabel(a.type)]]],
     ];
-    return `<div class="dash-cond"><dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v ?? '–')}</dd></div>`).join('')}</dl>
-      <button type="button" class="dash-cond-edit" data-action="redo-diagnosis">조건 수정하기 (다시 진단) →</button></div>`;
+  }
+  function condBar(a) {
+    if (!hist.condOpen) return `<div class="dash-cond-bar"><span class="dash-cond-sum">${[a.age, a.marriage, `${a.region} 거주`, a.ownership, `희망 ${a.wish}`, typeLabel(a.type)].map((x) => `<i>${esc(x)}</i>`).join('')}</span><button type="button" class="dash-cond-btn" data-action="dash-cond" aria-expanded="false">내 조건 전체 보기<span aria-hidden="true"></span></button></div>`;
+    const pages = condPages(a);
+    const i = Math.min(Math.max(hist.condPage || 0, 0), pages.length - 1);
+    const [title, rows] = pages[i];
+    return `<div class="dash-cond-bar cp" aria-live="polite">
+      <button type="button" class="cp-nav" data-action="cond-page" data-value="${i - 1}" ${i === 0 ? 'disabled' : ''} aria-label="이전 묶음">‹</button>
+      <div class="cp-body"><div class="cp-head"><b>${title}</b><span>${i + 1} / ${pages.length}</span><button type="button" class="cp-edit" data-action="cond-edit" data-value="${i}">이 단계 수정 →</button></div>
+        <dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v ?? '–')}</dd></div>`).join('')}</dl></div>
+      <button type="button" class="cp-nav" data-action="cond-page" data-value="${i + 1}" ${i === pages.length - 1 ? 'disabled' : ''} aria-label="다음 묶음">›</button>
+      <button type="button" class="cp-close" data-action="dash-cond" aria-label="조건 요약으로 돌아가기" title="요약으로">×</button></div>`;
   }
 
   /* ── 내 공간: 최근 진단 카드 ── */
@@ -201,7 +216,7 @@
     return `<section class="dash-diag" aria-label="내 진단 결과">
       <div class="dash-diag-left">
         <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><div class="dash-sub-row"><p class="dash-diag-sub">${used ? `사용 중인 진단 · ${when(used.created_at, true)}${used.id === r?.id ? ' (최근)' : ''}` : r ? `최근 진단 · ${when(r.created_at, true)}` : '내 진단'}</p>${n > 1 ? recordPicker(used) : ''}</div>
-          <div class="dash-cond-bar"><span class="dash-cond-sum">${[a.age, a.marriage, `${a.region} 거주`, a.ownership, `희망 ${a.wish}`, typeLabel(a.type)].map((x) => `<i>${esc(x)}</i>`).join('')}</span><button type="button" class="dash-cond-btn" data-action="dash-cond" aria-expanded="${!!hist.condOpen}">${hist.condOpen ? '조건 접기' : '내 조건 전체 보기'}<span aria-hidden="true"></span></button></div>${hist.condOpen ? condGrid(a) : ''}${facts}${moneyRow}</div>
+          ${condBar(a)}${facts}${moneyRow}</div>
         <div class="dash-diag-actions"><a class="btn orange" href="#result">가점 근거·전체 결과 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 · PDF 저장 ↗</a></div>
       </div>
       ${dashSoon()}
@@ -420,8 +435,9 @@
     const entering = routeNow();
     if (entering === 'diagnosis' && hist.lastRoute !== 'diagnosis' && state.diagnosis) {
       state.answers = { ...state.answers, ...(hist.records?.[0]?.answers || {}), ...state.diagnosis };   // 이 브라우저의 최근 진단이 가장 최신
-      state.step = 0;
+      state.step = hist.editStep ?? 0;   // 마이페이지 '이 단계 수정'으로 왔으면 그 단계부터
     }
+    hist.editStep = null;
     hist.lastRoute = entering;
     prevRender();
     sync();
@@ -476,7 +492,7 @@
     } else if (act === 'acct-delete-go') {
       deleteAccount();
     } else if (act === 'dash-cond') {
-      hist.condOpen = !hist.condOpen; render();
+      hist.condOpen = !hist.condOpen; hist.condPage = 0; render();
     } else if (act === 'dash-fold') {
       const k = b.dataset.value; const other = k === 'soon' ? 'recs' : 'soon';   // 항상 하나만 펼침: 누른 상자를 열고 다른 상자는 닫음, 열린 상자를 누르면 서로 바뀜
       const openK = fold[k] === false ? k : other; fold.soon = openK === 'soon'; fold.recs = openK === 'recs'; render();
@@ -490,6 +506,22 @@
       hist.selected.clear(); render();
     } else if (act === 'hist-open') {
       hist.scrollTo = true; go('result');
+    } else if (act === 'cond-page') {
+      hist.condPage = Number(b.dataset.value) || 0; render();
+    } else if (act === 'cond-edit') {
+      hist.editStep = Number(b.dataset.value) || 0; go('diagnosis'); window.scrollTo(0, 0);
+    } else if (act === 'rp-del') {
+      hist.pickDel = Number(b.dataset.id); render();
+    } else if (act === 'rp-del-no') {
+      hist.pickDel = null; render();
+    } else if (act === 'rp-del-yes') {
+      const id = Number(b.dataset.id); hist.pickDel = null;
+      try {
+        await api(`/users/${state.user.id}/diagnoses/${id}`, { method: 'DELETE' });
+        hist.records = (hist.records || []).filter((r) => r.id !== id); hist.selected.delete(id);
+        toast('진단 기록을 삭제했어요.');
+      } catch (error) { toast(`삭제하지 못했어요: ${error.message}`); }
+      render();
     } else if (act === 'rp-toggle') {
       hist.pickOpen = !hist.pickOpen; render();
     } else if (act === 'hist-apply') {
