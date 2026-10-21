@@ -157,7 +157,7 @@
 
   /* ── 내 공간 카드 안: 사용할 진단 기록 고르기 (아래로 펼치는 목록, 화면 이동 없이) ── */
   const shortWhen = (iso) => { const d = new Date(iso); const p = (x) => String(x).padStart(2, '0'); return `${p(d.getMonth() + 1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
-  function recordPicker(used) {
+  function recordPicker(used, label) {
     const recs = hist.records || [];
     const rows = recs.map((r, i) => {
       const on = used && r.id === used.id; const a = r.answers || {};
@@ -167,7 +167,7 @@
           <span class="rp-check" aria-hidden="true"></span><span class="rp-date" title="${on ? '사용 중' : '누르면 이 기록을 사용'}">${shortWhen(r.created_at)}${i === 0 ? '<em>최근</em>' : ''}</span><span class="rp-score">${r.score}점</span></button>
         ${on ? '<span class="rp-del rp-lock" title="사용 중인 기록은 지울 수 없어요" aria-hidden="true"></span>' : `<button type="button" class="rp-del" data-action="rp-del" data-id="${r.id}" aria-label="${when(r.created_at, true)} 기록 삭제" title="기록 삭제">×</button>`}</div>`;
     }).join('');
-    return `<div class="rp"><button type="button" class="rp-btn" data-action="rp-toggle" aria-haspopup="menu" aria-expanded="${!!hist.pickOpen}">${hist.applying ? '바꾸는 중…' : `다른 진단 기록 사용 (${recs.length}건)`}<span aria-hidden="true"></span></button>
+    return `<div class="rp"><button type="button" class="rp-btn" data-action="rp-toggle" title="눌러서 다른 진단 기록으로 바꾸기 (${recs.length}건)" aria-label="사용 중인 진단 ${label}, 눌러서 다른 진단 기록으로 바꾸기" aria-haspopup="menu" aria-expanded="${!!hist.pickOpen}">${hist.applying ? '바꾸는 중…' : label}<span aria-hidden="true"></span></button>
       ${hist.pickOpen ? `<div class="rp-menu" role="menu"><div class="rp-list">${rows}</div><button type="button" class="rp-all" data-action="hist-open">기록 비교하기 →</button></div>` : ''}</div>`;
   }
 
@@ -237,7 +237,13 @@
       <div class="dash-money-actions"><button type="button" data-action="finance-tab" data-value="대출">내 대출 한도·금리 보기 →</button><button type="button" data-action="finance-tab" data-value="자금 계산">자금 계획 계산하기 →</button></div></div>`;
     return `<section class="dash-diag" aria-label="내 진단 결과">
       <div class="dash-diag-left">
-        <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><div class="dash-sub-row"><p class="dash-diag-sub">${used ? `사용 중인 진단 · ${when(used.created_at, true)}${used.id === r?.id ? ' (최근)' : ''}` : r ? `최근 진단 · ${when(r.created_at, true)}` : (hist.recordsError ? '진단 기록을 불러오지 못했어요' : '내 진단')}</p>${n > 1 ? recordPicker(used) : ''}</div>
+        <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><div class="dash-sub-row">${(() => {   // '사용 중인 진단' + 그 진단 날짜가 적힌 선택 상자 (기록이 2개 이상이면 눌러서 다른 기록으로 바꿈)
+            const cur = used || r;
+            if (hist.recordsError) return '<p class="dash-diag-sub">진단 기록을 불러오지 못했어요</p>';
+            if (!cur) return '<p class="dash-diag-sub">내 진단</p>';
+            const label = `${when(cur.created_at, true)}${cur.id === r?.id ? ' (최근)' : ''}`;
+            return `<p class="dash-diag-sub">사용 중인 진단</p>${n > 1 ? recordPicker(cur, label) : `<span class="rp-static">${label}</span>`}`;
+          })()}</div>
           ${slider(a, facts + moneyRow)}</div>
         <div class="dash-diag-actions"><a class="btn orange" href="#result">가점 근거·전체 결과 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 · PDF 저장 ↗</a></div>
       </div>
