@@ -216,7 +216,7 @@
       <button type="button" class="ds-nav" data-action="ds-go" data-value="${i - 1}" ${i === 0 ? 'disabled' : ''} aria-label="이전">‹</button>
       <div class="ds-view" aria-live="polite"><div class="ds-head"><b>${pages[i][0]}</b>${pages[i][2] ? `<small class="ds-note">${pages[i][2]}</small>` : ''}</div>${pages[i][1]}</div>
       <button type="button" class="ds-nav" data-action="ds-go" data-value="${i + 1}" ${i === pages.length - 1 ? 'disabled' : ''} aria-label="다음">›</button>
-      <div class="ds-dots" role="tablist">${pages.map(([t], k) => { const plain = esc(t.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()).replace(/\s*\d+\s*\/\s*\d+점$/, ''); return `<button type="button" role="tab" aria-selected="${k === i}" class="${k === i ? 'on' : ''}" data-action="ds-go" data-value="${k}">${plain}</button>`; }).join('')}<span class="ds-count">${i + 1} / ${pages.length}</span></div>
+      <div class="ds-dots">${pages.map(([t], k) => { const plain = esc(t.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()).replace(/\s*\d+\s*\/\s*\d+점$/, ''); return `<button type="button" class="${k === i ? 'on' : ''}" data-action="ds-go" data-value="${k}" aria-label="${plain}" title="${plain}"></button>`; }).join('')}<span class="ds-count">${i + 1} / ${pages.length}</span></div>
     </div>`;
   }
 
