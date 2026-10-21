@@ -172,25 +172,24 @@
   }
 
   /* ── 내 공간 카드 안: 진단 때 입력한 조건 전체 (예전 '내 조건 요약' 박스를 카드로 옮김) ── */
-  // 진단 6단계와 같은 묶음으로 한 쪽씩 넘겨 본다 (펼쳐서 카드가 길어지지 않게)
+  // 내 조건을 두 쪽으로: 항목마다 진단 몇 단계에서 고치는지(step) 같이 둔다
   function condPages(a) {
     const yr = (v) => (v === '' || v == null ? '–' : `${v}년`);
     const man = (v) => (v === '' || v == null || !Number(v) ? '입력 안 함' : Number(v) >= 10000 ? `${(Number(v) / 10000).toFixed(Number(v) % 10000 ? 1 : 0)}억 원` : `${Number(v).toLocaleString('ko-KR')}만 원`);
     return [
-      ['기본 정보', [['연령대', a.age], ['세대주', a.head], ['혼인', a.marriage], ['현재 거주', a.region]]],
-      ['주택 소유', [['주택 소유', a.ownership], ...(a.ownership === '무주택' ? [['과거 주택 소유', a.firstHome]] : []), ['무주택 기간', yr(a.years)]]],
-      ['가족 구성', [['부양가족', `${a.family ?? 0}명`], ['미성년 자녀', a.children]]],
-      ['청약통장', [['가입 기간', yr(a.account)], ['납입 회차', `${a.payments ?? 0}회`], ['예치금', man(a.deposit)], ['5년 내 당첨', a.won5]]],
-      ['소득·자산', [['연 소득', a.income], ['보유 현금', man(a.assets)]]],
-      ['희망 조건', [['희망 지역', a.wish], ['관심 유형', typeLabel(a.type)]]],
+      ['나와 우리 집', [['연령대', a.age, 0], ['혼인', a.marriage, 0], ['세대주', a.head, 0], ['현재 거주', a.region, 0],
+        ['주택 소유', a.ownership === '무주택' ? (a.firstHome === '있어요' ? '무주택 (과거 소유)' : '무주택 (첫 집)') : a.ownership, 1], ['무주택 기간', yr(a.years), 1], ['부양가족', `${a.family ?? 0}명`, 2], ['미성년 자녀', a.children, 2]]],
+      ['통장 · 자금 · 희망', [['통장 가입', yr(a.account), 3], ['납입 회차', `${a.payments ?? 0}회`, 3], ['예치금', man(a.deposit), 3], ['5년 내 당첨', a.won5 === '잘 모르겠어요' ? '모름' : a.won5, 3],
+        ['연 소득', String(a.income || '').replace(/ 원$/, ''), 4], ['보유 현금', man(a.assets), 4], ['희망 지역', a.wish, 5], ['관심 유형', typeLabel(a.type), 5]]],
     ];
   }
+
   // 카드 왼쪽 넘김 영역: 1쪽 = 청약 현황·자금, 2~7쪽 = 진단 6단계 묶음별 내 조건 (‹ › 로 넘김)
   function slider(a, statusHtml) {
     const conds = condPages(a);
-    const pages = [['내 청약 현황', statusHtml], ...conds.map(([t, rows], i) => [`내 조건 · ${t}`,
-      `<dl class="ds-cond">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v ?? '–')}</dd></div>`).join('')}</dl>
-       <button type="button" class="ds-edit" data-action="cond-edit" data-value="${i}">이 단계 수정하기 →</button>`])];
+    const pages = [['내 청약 현황', statusHtml], ...conds.map(([t, rows]) => [`내 조건 · ${t}`,
+      `<div class="ds-cond">${rows.map(([k, v, step]) => `<button type="button" data-action="cond-edit" data-value="${step}" title="${k} 수정하기 (진단 ${step + 1}단계)"><span>${k}</span><b>${esc(v ?? '–')}</b></button>`).join('')}</div>
+       <p class="ds-hint">항목을 누르면 그 단계부터 진단을 고칠 수 있어요.</p>`])];
     const i = Math.min(Math.max(hist.slide || 0, 0), pages.length - 1);
     return `<div class="ds" aria-roledescription="carousel">
       <button type="button" class="ds-nav" data-action="ds-go" data-value="${i - 1}" ${i === 0 ? 'disabled' : ''} aria-label="이전">‹</button>
