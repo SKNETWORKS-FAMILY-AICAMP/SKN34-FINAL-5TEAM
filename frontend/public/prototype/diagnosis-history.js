@@ -185,17 +185,24 @@
       ['희망 조건', [['희망 지역', a.wish], ['관심 유형', typeLabel(a.type)]]],
     ];
   }
-  function condBar(a) {
-    if (!hist.condOpen) return `<div class="dash-cond-bar"><span class="dash-cond-sum">${[a.age, a.marriage, `${a.region} 거주`, a.ownership, `희망 ${a.wish}`, typeLabel(a.type)].map((x) => `<i>${esc(x)}</i>`).join('')}</span><button type="button" class="dash-cond-btn" data-action="dash-cond" aria-expanded="false">내 조건 전체 보기<span aria-hidden="true"></span></button></div>`;
-    const pages = condPages(a);
-    const i = Math.min(Math.max(hist.condPage || 0, 0), pages.length - 1);
-    const [title, rows] = pages[i];
-    return `<div class="dash-cond-bar cp" aria-live="polite">
-      <button type="button" class="cp-nav" data-action="cond-page" data-value="${i - 1}" ${i === 0 ? 'disabled' : ''} aria-label="이전 묶음">‹</button>
-      <div class="cp-body"><div class="cp-head"><b>${title}</b><span>${i + 1} / ${pages.length}</span><button type="button" class="cp-edit" data-action="cond-edit" data-value="${i}">이 단계 수정 →</button></div>
-        <dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v ?? '–')}</dd></div>`).join('')}</dl></div>
-      <button type="button" class="cp-nav" data-action="cond-page" data-value="${i + 1}" ${i === pages.length - 1 ? 'disabled' : ''} aria-label="다음 묶음">›</button>
-      <button type="button" class="cp-close" data-action="dash-cond" aria-label="조건 요약으로 돌아가기" title="요약으로">×</button></div>`;
+  // 조건 요약 칩: 누르면 아래 넘김 영역이 그 조건 묶음으로 넘어간다
+  function chipBar(a) {
+    const chips = [[a.age, 1], [a.marriage, 1], [`${a.region} 거주`, 1], [a.ownership, 2], [`희망 ${a.wish}`, 6], [typeLabel(a.type), 6]];
+    return `<div class="dash-cond-bar"><span class="dash-cond-sum">${chips.map(([t, i]) => `<button type="button" data-action="ds-go" data-value="${i}" title="이 조건 자세히 보기">${esc(t)}</button>`).join('')}</span></div>`;
+  }
+  // 카드 왼쪽 넘김 영역: 1쪽 = 청약 현황·자금, 2~7쪽 = 진단 6단계 묶음별 내 조건 (‹ › 로 넘김)
+  function slider(a, statusHtml) {
+    const conds = condPages(a);
+    const pages = [['내 청약 현황', statusHtml], ...conds.map(([t, rows], i) => [`내 조건 · ${t}`,
+      `<dl class="ds-cond">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v ?? '–')}</dd></div>`).join('')}</dl>
+       <button type="button" class="ds-edit" data-action="cond-edit" data-value="${i}">이 단계 수정하기 →</button>`])];
+    const i = Math.min(Math.max(hist.slide || 0, 0), pages.length - 1);
+    return `<div class="ds" aria-roledescription="carousel">
+      <button type="button" class="ds-nav" data-action="ds-go" data-value="${i - 1}" ${i === 0 ? 'disabled' : ''} aria-label="이전">‹</button>
+      <div class="ds-view" aria-live="polite"><div class="ds-head"><b>${pages[i][0]}</b><span>${i + 1} / ${pages.length}</span></div>${pages[i][1]}</div>
+      <button type="button" class="ds-nav" data-action="ds-go" data-value="${i + 1}" ${i === pages.length - 1 ? 'disabled' : ''} aria-label="다음">›</button>
+      <div class="ds-dots">${pages.map(([t], k) => `<button type="button" class="${k === i ? 'on' : ''}" data-action="ds-go" data-value="${k}" aria-label="${t}" title="${t}"></button>`).join('')}</div>
+    </div>`;
   }
 
   /* ── 내 공간: 최근 진단 카드 ── */
@@ -216,7 +223,7 @@
     return `<section class="dash-diag" aria-label="내 진단 결과">
       <div class="dash-diag-left">
         <div class="dash-diag-main"><div class="eyebrow">MY SPACE</div><h3>${state.user?.member ? `${esc(state.user.name)}님의 청약 현황` : '내 청약 현황'}</h3><div class="dash-sub-row"><p class="dash-diag-sub">${used ? `사용 중인 진단 · ${when(used.created_at, true)}${used.id === r?.id ? ' (최근)' : ''}` : r ? `최근 진단 · ${when(r.created_at, true)}` : '내 진단'}</p>${n > 1 ? recordPicker(used) : ''}</div>
-          ${condBar(a)}${facts}${moneyRow}</div>
+          ${chipBar(a)}${slider(a, facts + moneyRow)}</div>
         <div class="dash-diag-actions"><a class="btn orange" href="#result">가점 근거·전체 결과 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 · PDF 저장 ↗</a></div>
       </div>
       ${dashSoon()}
@@ -491,8 +498,6 @@
       deleteDialog();
     } else if (act === 'acct-delete-go') {
       deleteAccount();
-    } else if (act === 'dash-cond') {
-      hist.condOpen = !hist.condOpen; hist.condPage = 0; render();
     } else if (act === 'dash-fold') {
       const k = b.dataset.value; const other = k === 'soon' ? 'recs' : 'soon';   // 항상 하나만 펼침: 누른 상자를 열고 다른 상자는 닫음, 열린 상자를 누르면 서로 바뀜
       const openK = fold[k] === false ? k : other; fold.soon = openK === 'soon'; fold.recs = openK === 'recs'; render();
@@ -506,8 +511,8 @@
       hist.selected.clear(); render();
     } else if (act === 'hist-open') {
       hist.scrollTo = true; go('result');
-    } else if (act === 'cond-page') {
-      hist.condPage = Number(b.dataset.value) || 0; render();
+    } else if (act === 'ds-go') {
+      hist.slide = Number(b.dataset.value) || 0; render();
     } else if (act === 'cond-edit') {
       hist.editStep = Number(b.dataset.value) || 0; go('diagnosis'); window.scrollTo(0, 0);
     } else if (act === 'rp-del') {
