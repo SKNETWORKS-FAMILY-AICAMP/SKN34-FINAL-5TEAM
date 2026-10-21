@@ -188,10 +188,10 @@
     const sb = hist.score;
     if (!sb) return '<p class="ds-hint">가점 구성을 불러오는 중이에요…</p>';
     const STEP = { no_house: 1, dependents: 2, account: 3 };
-    return `<div class="sc-list">${sb.items.map((it) => `<button type="button" class="sc-row" data-action="cond-edit" data-value="${STEP[it.key] ?? 0}" title="${it.label} 수정하기">
-        <span class="sc-label"><b>${it.label}</b><small>${esc(it.basis)}</small></span>
+    return `<div class="sc-list">${sb.items.map((it) => `<div role="button" tabindex="0" class="sc-row" data-action="cond-edit" data-value="${STEP[it.key] ?? 0}">
+        <span class="sc-label"><b>${it.label}${it.rule ? `<span class="sc-q" tabindex="0" role="button" aria-label="${it.label} 점수 계산 방법"><span aria-hidden="true">?</span><span class="sc-tip" role="tooltip"><strong>${it.label} · 최대 ${it.max}점</strong>${esc(it.rule)}${it.tip ? `<em>${esc(it.tip)}</em>` : ''}</span></span>` : ''}</b><small>${esc(it.basis)}</small></span>
         <span class="sc-bar"><i style="width:${Math.round((it.score / it.max) * 100)}%"></i></span>
-        <span class="sc-pt"><b>${it.score}</b> / ${it.max}점</span></button>`).join('')}</div>
+        <span class="sc-pt"><b>${it.score}</b> / ${it.max}점</span></div>`).join('')}</div>
       <p class="ds-hint">납입 회차·예치금은 가점이 아니라 1순위 조건에 쓰여요.</p>`;
   }
   async function loadScore() {
@@ -455,6 +455,11 @@
     if (e.target.closest('[data-action="acct-toggle"]')) { e.stopImmediatePropagation(); acctMenu(); return; }
     if (!e.target.closest('.acct-menu')) acctMenu(false);
     else if (e.target.closest('a[role="menuitem"]')) acctMenu(false);
+  }, true);
+  document.addEventListener('click', (e) => {   // 가점 '?' 설명: 눌러도 수정 화면으로 가지 않고, 터치 화면에서는 눌러서 열고 닫는다
+    const q = e.target.closest('.sc-q');
+    document.querySelectorAll('.sc-q.open').forEach((x) => { if (x !== q) x.classList.remove('open'); });
+    if (q) { e.preventDefault(); e.stopImmediatePropagation(); q.classList.toggle('open'); }
   }, true);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { acctMenu(false); if (hist.pickOpen) { hist.pickOpen = false; render(); } } });
   document.addEventListener('click', (e) => {   // 진단 기록 고르기 목록: 바깥을 누르면 닫힘

@@ -360,3 +360,13 @@
 .ds-count{flex-basis:100%;margin:0;text-align:center;font-size:11.5px;font-weight:700;color:#cfe0d3;letter-spacing:1px}
 .rp-btn{background:rgba(255,255,255,.08)}
 .rp-static{font-size:12.5px;font-weight:700;color:#fff}
+/* 가점 항목 '?' 계산 방법 */
+.sc-label b{display:inline-flex;align-items:center;gap:6px}
+.sc-q{position:relative;display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;border:1.5px solid #f6c9a4;color:#f6c9a4;font-size:11px;font-weight:800;line-height:1;cursor:help}
+.sc-q:hover,.sc-q:focus,.sc-q.open{background:#f6c9a4;color:#163f33;outline:none}
+.sc-tip{display:none;position:absolute;left:calc(100% + 10px);top:-10px;z-index:30;width:290px;padding:12px 14px;border-radius:12px;background:#fff;color:#1d2a24;font-size:12px;font-weight:500;line-height:1.6;text-align:left;box-shadow:0 12px 30px #0c241c55;white-space:normal;cursor:default}
+.sc-tip strong{display:block;margin-bottom:4px;font-size:12.5px;color:#163f33}
+.sc-tip em{display:block;margin-top:6px;padding-top:6px;border-top:1px solid #ece6da;font-style:normal;font-weight:700;color:#d65a1f}
+.sc-q:hover .sc-tip,.sc-q:focus .sc-tip,.sc-q.open .sc-tip{display:block}
+.sc-row:last-child .sc-tip{top:auto;bottom:-10px}
+.sc-tip{pointer-events:none}
