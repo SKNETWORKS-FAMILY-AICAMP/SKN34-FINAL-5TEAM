@@ -370,3 +370,9 @@
 .sc-q:hover .sc-tip,.sc-q:focus .sc-tip,.sc-q.open .sc-tip{display:block}
 .sc-row:last-child .sc-tip{top:auto;bottom:-10px}
 .sc-tip{pointer-events:none}
+/* 카드 왼쪽 정렬: 제목 가운데, 사용 중인 진단 오른쪽, 아래 버튼·리포트 가운데 */
+.dash-diag-main h3{text-align:center}
+.dash-sub-row{justify-content:flex-end}
+.dash-diag-left .dash-diag-actions{justify-content:center}
+.dash-diag-left .dash-diag-report{flex-basis:100%;text-align:center}
+.rp-menu{left:auto;right:0}

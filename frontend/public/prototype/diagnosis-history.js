@@ -245,7 +245,7 @@
             return `<p class="dash-diag-sub">사용 중인 진단</p>${n > 1 ? recordPicker(cur, label) : `<span class="rp-static">${label}</span>`}`;
           })()}</div>
           ${slider(a, facts + moneyRow)}</div>
-        <div class="dash-diag-actions"><a class="btn orange" href="#result">가점 근거·전체 결과 <span>↗</span></a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 · PDF 저장 ↗</a></div>
+        <div class="dash-diag-actions"><a class="btn orange" href="#result">가점 근거·전체 결과</a>${n >= 1 ? `<button type="button" class="btn secondary" data-action="hist-open">진단 기록 ${n}건 · 비교</button>` : ''}<a class="dash-diag-report" href="#report">청약 준비 리포트 · PDF 저장 ↗</a></div>
       </div>
       ${dashSoon()}
     </section>`;
