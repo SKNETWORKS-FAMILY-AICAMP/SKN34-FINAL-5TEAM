@@ -165,12 +165,11 @@
   function foldBox(key, title, sub, body, more, badge) {
     const open = fold[key] !== false;
     return `<section class="dash-fold${open ? ' open' : ''}" aria-label="${title}">
-      <button type="button" class="dash-fold-head" data-action="dash-fold" data-value="${key}" aria-expanded="${open}"><h4>${title}</h4>${sub && (open || badge == null) ? `<small>${sub}</small>` : ''}${!open && badge != null ? `<em class="dash-fold-badge">${badge}</em>` : ''}<span class="dash-fold-icon" aria-hidden="true"></span></button>
+      <button type="button" class="dash-fold-head" data-action="dash-fold" data-value="${key}" aria-expanded="${open}"><h4>${title}</h4>${sub && badge == null ? `<small>${sub}</small>` : ''}${badge != null ? `<em class="dash-fold-badge">${badge}</em>` : ''}<span class="dash-fold-icon" aria-hidden="true"></span></button>
       ${open ? `<div class="dash-fold-body">${body}${more || ''}</div>` : ''}</section>`;
   }
   function dashSoon() {
-    const both = fold.soon !== false && fold.recs !== false;
-    const ROWS = both ? 2 : 5;   // 둘 다 펼치면 2줄씩, 하나만 펼치면 5줄 (왼쪽 높이와 맞춤)
+    const ROWS = 5;   // 항상 한 상자만 펼쳐 있으므로 5줄 (왼쪽 높이와 맞춤)
     const loading = !state.user?.id || !live.recs;
     let soonBox;
     if (loading) soonBox = foldBox('soon', '마감 임박한 내 추천 공고', '', '<p class="dash-soon-empty">추천 공고를 불러오는 중이에요…</p>');
@@ -179,7 +178,7 @@
       const rows = groupByName(open).slice(0, ROWS).map(({ r, d, n }) => `<a class="dash-soon-row" href="#detail/${r.house.id}">
         <span class="dash-soon-dday${d <= 3 ? ' hot' : ''}">${ddayText(d)}</span>
         <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''}${r.fp === '1순위 가능' ? ' · 1순위 가능' : ''}</small></span></a>`).join('');
-      soonBox = foldBox('soon', '마감 임박한 내 추천 공고', `7일 안에 마감 ${open.filter((x) => x.d <= 7).length}건`,
+      soonBox = foldBox('soon', '마감 임박한 내 추천 공고', '',
         rows ? `<div class="dash-soon-list">${rows}</div>` : '<p class="dash-soon-empty">지금 접수 마감이 다가오는 추천 공고가 없어요.</p>',
         open.length ? `<button type="button" class="dash-soon-more" data-action="dash-soon-all">${open.length}건 마감순으로 보기 →</button>` : '',
         `7일 안에 마감 ${open.filter((x) => x.d <= 7).length}건`);
@@ -282,7 +281,8 @@
     } else if (act === 'hist-more') {
       hist.showAll = !hist.showAll; render();
     } else if (act === 'dash-fold') {
-      const k = b.dataset.value; fold[k] = fold[k] === false; render();
+      const k = b.dataset.value; const other = k === 'soon' ? 'recs' : 'soon';   // 항상 하나만 펼침: 누른 상자를 열고 다른 상자는 닫음, 열린 상자를 누르면 서로 바뀜
+      const openK = fold[k] === false ? k : other; fold.soon = openK === 'soon'; fold.recs = openK === 'recs'; render();
     } else if (act === 'dash-filter') {
       hist.dashFilter = b.dataset.value; render();
     } else if (act === 'dash-soon-all') {
