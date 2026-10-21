@@ -261,7 +261,7 @@
     const row = (k, v) => `<div class="kv"><span>${k}</span><strong>${v}</strong></div>`;
     return `<div class="wrap page reveal settings-page"><div class="page-title"><h1>계정 설정</h1><p>계정 정보와 저장된 진단 정보를 관리해요. 청약 현황은 <a href="#dashboard" class="text-link">마이페이지</a>에서 볼 수 있어요.</p></div>
       <section class="panel"><h3>계정</h3>${u?.member ? row('닉네임', esc(u.name)) + row('이메일', esc(u.email)) : '<p class="settings-note">로그인하면 진단 기록과 관심 공고를 다른 기기에서도 이어 볼 수 있어요.</p>'}
-        <div class="settings-actions">${u?.member ? '<button type="button" class="btn secondary small" data-action="logout">로그아웃</button>' : '<button type="button" class="btn small" data-action="signup">로그인</button>'}</div></section>
+        ${u?.member ? '<p class="settings-note">로그아웃은 오른쪽 위 이름 버튼 메뉴에 있어요.</p>' : '<div class="settings-actions"><button type="button" class="btn small" data-action="signup">로그인</button></div>'}</section>
       <section class="panel"><h3>진단 정보</h3>${row('진단 상태', a ? '완료' : '아직 없음')}${last ? row('최근 진단', when(last.created_at, true)) : ''}${row('저장된 진단 기록', `${n}건`)}
         <div class="settings-actions">${a ? '<button type="button" class="btn small" data-action="redo-diagnosis">진단 정보 수정 (다시 진단)</button>' : '<a class="btn small" href="#diagnosis">진단 시작하기</a>'}${n ? '<button type="button" class="btn secondary small" data-action="hist-open">진단 기록 보기 · 비교</button>' : ''}</div></section>
       <section class="panel"><h3>이 브라우저의 데이터</h3><p class="settings-note">진단 정보는 추천 계산을 위해 서버(DB)에 저장돼요. 아래 버튼은 이 브라우저에 남은 진단 정보만 지워요. 서버에 저장된 정보를 지우는 기능은 아직 없어요.</p>
@@ -269,14 +269,34 @@
     </div>`;
   }
 
-  // 상단: 이름(마이페이지) 버튼 옆에 톱니바퀴 → 계정 설정
-  const GEAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+  // 상단 계정 메뉴: 이름 버튼을 누르면 마이페이지 · 계정 설정 · 로그아웃이 아래로 펼쳐진다
   const prevHeader = header;
   header = function (route) {
     prevHeader(route);
-    const pill = $('#header .nav-account a.pill');
-    if (pill && !$('#header .nav-gear')) pill.insertAdjacentHTML('afterend', `<a class="nav-gear${route === 'profile' ? ' active' : ''}" href="#profile" aria-label="계정 설정" title="계정 설정">${GEAR}</a>`);
+    const box = $('#header .nav-account');
+    if (!box || !state.user?.member) return;
+    const name = esc(state.user.name);
+    box.innerHTML = `<div class="acct">
+      <button type="button" class="pill acct-btn${['dashboard', 'profile'].includes(route) ? ' active' : ''}" data-action="acct-toggle" aria-haspopup="menu" aria-expanded="false">${name}님<span class="acct-caret" aria-hidden="true"></span></button>
+      <div class="acct-menu" role="menu" hidden>
+        <div class="acct-who"><b>${name}</b><small>${esc(state.user.email)}</small></div>
+        <a role="menuitem" href="#dashboard" class="${route === 'dashboard' ? 'on' : ''}">마이페이지<small>청약 현황 · 추천 공고 · 자금</small></a>
+        <a role="menuitem" href="#profile" class="${route === 'profile' ? 'on' : ''}">계정 설정<small>계정 · 진단 정보 관리</small></a>
+        <button type="button" role="menuitem" class="acct-logout" data-action="logout">로그아웃</button>
+      </div></div>`;
   };
+  function acctMenu(open) {
+    const btn = $('#header .acct-btn'), menu = $('#header .acct-menu');
+    if (!btn || !menu) return;
+    const next = open ?? menu.hidden;
+    menu.hidden = !next; btn.setAttribute('aria-expanded', String(next));
+  }
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-action="acct-toggle"]')) { e.stopImmediatePropagation(); acctMenu(); return; }
+    if (!e.target.closest('.acct-menu')) acctMenu(false);
+    else if (e.target.closest('a[role="menuitem"]')) acctMenu(false);
+  }, true);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') acctMenu(false); });
 
   const prevRender = render;
   render = function () {
