@@ -252,21 +252,65 @@
     $('#app .dash-grid')?.classList.add('dash-grid-one');
   }
 
-  /* ── 계정 설정 (#profile): 상단 이름 버튼 옆 톱니바퀴로 들어온다 ── */
+  /* ── 계정 설정 (#profile): 계정 정보 · 내 데이터 백업 · 회원 탈퇴. 진단 정보 관리는 마이페이지에서 한다 ── */
   function settingsPage() {
     const u = state.user;
-    const a = state.diagnosis;
-    const n = hist.records?.length || 0;
-    const last = hist.records?.[0];
+    if (!u?.member) return `<div class="wrap page reveal settings-page"><div class="page-title"><h1>계정 설정</h1><p>로그인하면 계정 정보와 내 데이터를 관리할 수 있어요.</p></div><section class="panel"><button type="button" class="btn small" data-action="signup">로그인</button></section></div>`;
     const row = (k, v) => `<div class="kv"><span>${k}</span><strong>${v}</strong></div>`;
-    return `<div class="wrap page reveal settings-page"><div class="page-title"><h1>계정 설정</h1><p>계정 정보와 저장된 진단 정보를 관리해요. 청약 현황은 <a href="#dashboard" class="text-link">마이페이지</a>에서 볼 수 있어요.</p></div>
-      <section class="panel"><h3>계정</h3>${u?.member ? row('닉네임', esc(u.name)) + row('이메일', esc(u.email)) : '<p class="settings-note">로그인하면 진단 기록과 관심 공고를 다른 기기에서도 이어 볼 수 있어요.</p>'}
-        ${u?.member ? '<p class="settings-note">로그아웃은 오른쪽 위 이름 버튼 메뉴에 있어요.</p>' : '<div class="settings-actions"><button type="button" class="btn small" data-action="signup">로그인</button></div>'}</section>
-      <section class="panel"><h3>진단 정보</h3>${row('진단 상태', a ? '완료' : '아직 없음')}${last ? row('최근 진단', when(last.created_at, true)) : ''}${row('저장된 진단 기록', `${n}건`)}
-        <div class="settings-actions">${a ? '<button type="button" class="btn small" data-action="redo-diagnosis">진단 정보 수정 (다시 진단)</button>' : '<a class="btn small" href="#diagnosis">진단 시작하기</a>'}${n ? '<button type="button" class="btn secondary small" data-action="hist-open">진단 기록 보기 · 비교</button>' : ''}</div></section>
-      <section class="panel"><h3>이 브라우저의 데이터</h3><p class="settings-note">진단 정보는 추천 계산을 위해 서버(DB)에 저장돼요. 아래 버튼은 이 브라우저에 남은 진단 정보만 지워요. 서버에 저장된 정보를 지우는 기능은 아직 없어요.</p>
-        <div class="settings-actions">${a ? '<button type="button" class="btn secondary small" data-action="delete-diagnosis">이 브라우저의 진단 정보 삭제</button>' : ''}</div></section>
+    return `<div class="wrap page reveal settings-page"><div class="page-title"><h1>계정 설정</h1><p>계정 정보와 내 데이터를 관리해요. 진단 조건 수정·진단 기록은 <a href="#dashboard" class="text-link">마이페이지</a>에서 할 수 있어요.</p></div>
+      <section class="panel"><h3>계정 정보</h3>${row('닉네임', esc(u.name))}${row('이메일', esc(u.email))}
+        <p class="settings-note">로그인은 이메일과 닉네임으로 해요. 비밀번호·본인 인증은 아직 없어요.</p></section>
+      <section class="panel"><h3>내 데이터 백업</h3><p class="settings-note">서버에 저장된 내 프로필, 날짜별 진단 기록(조건·가점·추천 수), 관심 공고, 내가 쓴 글과 댓글을 파일로 내려받아요.</p>
+        <div class="settings-actions"><button type="button" class="btn small" data-action="acct-export" data-value="json">전체 데이터 내려받기 (JSON)</button><button type="button" class="btn secondary small" data-action="acct-export" data-value="csv">진단 기록만 내려받기 (CSV · 엑셀)</button></div></section>
+      <section class="panel settings-danger"><h3>회원 탈퇴</h3><p class="settings-note">탈퇴하면 서버에 저장된 <b>프로필 · 진단 기록 · 관심 공고 · 내가 쓴 글과 댓글 · 공감</b>이 모두 지워지고 되돌릴 수 없어요. 필요하면 먼저 위에서 백업해 두세요.</p>
+        <div class="settings-actions"><button type="button" class="btn small danger" data-action="acct-delete">회원 탈퇴</button></div></section>
     </div>`;
+  }
+  const confirmBody = () => ({ email: state.user.email, nickname: state.user.name });
+  function download(name, text, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+  async function exportData(kind) {
+    try {
+      const data = await api(`/users/${state.user.id}/export`, { method: 'POST', body: confirmBody() });
+      const day = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      if (kind === 'csv') {
+        const cols = [['age', '연령대'], ['marriage', '혼인'], ['head', '세대주'], ['region', '현재 거주'], ['ownership', '주택 소유'], ['firstHome', '과거 주택 소유'], ['years', '무주택 기간(년)'], ['family', '부양가족'], ['children', '미성년 자녀'], ['account', '통장 가입(년)'], ['payments', '납입 회차'], ['deposit', '예치금(만원)'], ['won5', '5년 내 당첨'], ['income', '연 소득'], ['assets', '보유 현금(만원)'], ['wish', '희망 지역'], ['type', '관심 유형']];
+        const keys = cols.map(([k]) => k);
+        const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+        const lines = [['진단 일시', '청약 가점', '추천 공고 수', '자격 충족 수', ...cols.map(([, label]) => label)].map(q).join(',')]
+          .concat(data.diagnoses.map((r) => [r.created_at, r.score, r.recommend_count, r.eligible_count, ...keys.map((k) => r.answers?.[k])].map(q).join(',')));
+        download(`청약돼_진단기록_${day}.csv`, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');   // BOM: 엑셀에서 한글이 깨지지 않게
+        toast(`진단 기록 ${data.diagnoses.length}건을 내려받았어요.`);
+      } else {
+        download(`청약돼_내데이터_${day}.json`, JSON.stringify(data, null, 2), 'application/json');
+        toast('내 데이터를 내려받았어요.');
+      }
+    } catch (err) { toast(`내려받지 못했어요: ${err.message}`); }
+  }
+  function deleteDialog() {
+    modal(`<div class="eyebrow" style="color:#b3402b">DELETE ACCOUNT</div><h2>정말 탈퇴할까요?</h2><p>프로필, 진단 기록, 관심 공고, 내가 쓴 글·댓글·공감이 모두 지워지고 되돌릴 수 없어요.<br>확인을 위해 닉네임 <b>${esc(state.user.name)}</b>을(를) 입력해 주세요.</p>
+      <div class="field"><input id="acct-del-name" placeholder="닉네임 입력" autocomplete="off"></div>
+      <div style="display:flex;gap:8px"><button type="button" class="btn secondary" data-action="close" style="flex:1">취소</button><button type="button" class="btn danger" data-action="acct-delete-go" style="flex:1" disabled>탈퇴하기</button></div><p id="acct-del-error" style="margin:12px 0 0;color:#b3402b"></p>`);
+    const input = $('#acct-del-name'), go = $('[data-action="acct-delete-go"]');
+    input?.addEventListener('input', () => { go.disabled = input.value.trim() !== state.user.name; });
+    input?.focus();
+  }
+  async function deleteAccount() {
+    const btn = $('[data-action="acct-delete-go"]'); if (btn) { btn.disabled = true; btn.textContent = '탈퇴하는 중…'; }
+    try {
+      await api(`/users/${state.user.id}`, { method: 'DELETE', body: confirmBody() });
+      closeModal();
+      // 로그아웃과 같이 이 브라우저의 정보도 지운다
+      state.diagnosis = null; save('diagnosis', null); state.user = null; save('user', null);
+      live.recs = null; live.userTried = false; hist.records = null; hist.selected.clear();
+      location.hash = 'start'; render(); toast('탈퇴했어요. 그동안 이용해 주셔서 감사해요.');
+    } catch (err) {
+      const msg = $('#acct-del-error'); if (msg) msg.textContent = `탈퇴하지 못했어요: ${err.message}`;
+      if (btn) { btn.disabled = false; btn.textContent = '탈퇴하기'; }
+    }
   }
 
   // 상단 계정 메뉴: 이름 버튼을 누르면 마이페이지 · 계정 설정 · 로그아웃이 아래로 펼쳐진다
@@ -337,6 +381,12 @@
       save('history-criteria', [...criteria]); render();
     } else if (act === 'hist-more') {
       hist.showAll = !hist.showAll; render();
+    } else if (act === 'acct-export') {
+      exportData(b.dataset.value);
+    } else if (act === 'acct-delete') {
+      deleteDialog();
+    } else if (act === 'acct-delete-go') {
+      deleteAccount();
     } else if (act === 'dash-cond') {
       hist.condOpen = !hist.condOpen; render();
     } else if (act === 'dash-fold') {
