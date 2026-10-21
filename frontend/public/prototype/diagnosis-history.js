@@ -324,8 +324,8 @@
       <button type="button" class="pill acct-btn${['dashboard', 'profile'].includes(route) ? ' active' : ''}" data-action="acct-toggle" aria-haspopup="menu" aria-expanded="false">${name}님<span class="acct-caret" aria-hidden="true"></span></button>
       <div class="acct-menu" role="menu" hidden>
         <div class="acct-who"><b>${name}</b><small>${esc(state.user.email)}</small></div>
-        <a role="menuitem" href="#dashboard" class="${route === 'dashboard' ? 'on' : ''}">마이페이지<small>청약 현황 · 추천 공고 · 자금</small></a>
-        <a role="menuitem" href="#profile" class="${route === 'profile' ? 'on' : ''}">계정 설정<small>계정 · 진단 정보 관리</small></a>
+        <a role="menuitem" href="#dashboard" class="${route === 'dashboard' ? 'on' : ''}">마이페이지<small>청약 현황 · 추천 공고 · 내 조건 · 진단 기록</small></a>
+        <a role="menuitem" href="#profile" class="${route === 'profile' ? 'on' : ''}">계정 설정<small>계정 정보 · 데이터 백업 · 회원 탈퇴</small></a>
         <button type="button" role="menuitem" class="acct-logout" data-action="logout">로그아웃</button>
       </div></div>`;
   };
