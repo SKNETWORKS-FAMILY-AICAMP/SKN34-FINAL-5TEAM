@@ -24,8 +24,19 @@
   };
   const I = n => `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[n] || paths.grid}</svg>`;
   const B = (text, attrs = '', cls = 'secondary') => `<button class="${cls}" ${attrs}>${text}</button>`;
-  let state = window.CheongyakCommunityDemoStorage.load(localStorage);
-  const files = window.CheongyakCommunityAttachments.repository;
+  const sessions = window.CheongyakCommunitySession;
+  const account = sessions.forFrame(window);
+  const lockScreen = () => {
+    document.body.innerHTML = '<main style="max-width:620px;margin:60px auto;padding:24px"><h1>로그인이 필요합니다</h1><p>새싹 시연 계정으로 로그인한 뒤 커뮤니티를 이용해 주세요.</p><a class="btn" data-community-login href="../index.html#community" target="_top">서비스에서 로그인하기</a></main>';
+  };
+  if (!account?.demo) { lockScreen(); return; }
+  const repository = window.CheongyakCommunityDemoStorage.forAccount(account);
+  let state = repository.load(localStorage);
+  const files = window.CheongyakCommunityAttachments.forAccount(account).repository;
+  const sessionActive = () => {
+    const current = sessions.forFrame(window);
+    return current?.demo === true && current.accountId === account.accountId;
+  };
   const recommendations = window.CheongyakCommunityRecommendations;
   const management = window.CheongyakCommunityManagement;
   const drafts = new Map(),
@@ -60,8 +71,9 @@
     return m < 1 ? '방금 전' : m < 60 ? `${m}분 전` : m < 1440 ? `${Math.floor(m / 60)}시간 전` : `${Math.floor(m / 1440)}일 전`;
   };
   function save() {
+    if (!sessionActive()) { lockScreen(); return; }
     try {
-      window.CheongyakCommunityDemoStorage.save(localStorage, state);
+      repository.save(localStorage, state);
     } catch {
       toast('저장 공간이 부족해 이번 화면에서만 유지됩니다.');
     }
@@ -125,9 +137,10 @@
     return `<div class="attachment-composer"><label class="attach-button">＋ 파일 첨부<input type="file" multiple data-upload-owner="${esc(owner)}" aria-label="첨부파일 선택"></label><small>모든 형식 · 최대 10개 · 파일당 50MB</small><span class="upload-status" role="status" data-upload-status="${esc(owner)}"></span><div data-draft-owner="${esc(owner)}">${attachmentMarkup(drafts.get(owner) || [], owner)}</div></div>`;
   }
   async function fileURL(id) {
+    if (!sessionActive()) return null;
     if (fileURLs.has(id)) return fileURLs.get(id);
     const blob = await files.get(id);
-    if (!blob) return null;
+    if (!blob || !sessionActive()) return null;
     const url = URL.createObjectURL(blob);
     fileURLs.set(id, url);
     return url;
@@ -197,7 +210,7 @@
     if (status) status.textContent = '파일 저장 중…';
     try {
       const added = await files.add(input.files, (drafts.get(owner) || []).length);
-      if (uploadTokens.get(owner) !== token) {
+      if (uploadTokens.get(owner) !== token || !sessionActive()) {
         await files.remove(added.map(file => file.id));
         return;
       }
@@ -331,6 +344,7 @@
     return heading('내 정보', '나의 활동과 커뮤니티 설정을 한곳에서 관리해요.') + `<section class="settings-profile">${av(state.me, 'large')}<div><h2>${esc(state.me.name)}</h2><p>${state.me.region} · ${state.me.age} · 관심 지역 ${esc(state.me.interest)}</p><small>${esc(state.me.bio)}</small></div>${B('프로필 수정', 'data-action="profile"')}</section><div class="activity-stats">${[['mine', '내가 쓴 글', state.posts.filter(p => p.author === 0).length], ['commented', '댓글 단 글', state.posts.filter(p => p.comments.some(c => c.author === 0)).length], ['saved', '스크랩', state.saved.length]].map(([id, n, c]) => `<button data-go="${id}"><strong>${c}</strong><span>${n}</span></button>`).join('')}</div><div class="settings-groups">${groups.map(([t, rs]) => `<section class="settings-group"><h2>${t}</h2>${rs.map(([label, id, v]) => `<button data-action="${id}"><span>${label}</span><small>${v}</small>${I('chevron')}</button>`).join('')}</section>`).join('')}</div>`;
   }
   function render() {
+    if (!sessionActive()) { lockScreen(); return; }
     $('#sidebar').innerHTML = sidebar();
     $('#rightbar').innerHTML = rail();
     $('#content').innerHTML = route === 'home' ? home() : route === 'boards' ? directory() : route === 'friends' ? friends() : route === 'messages' ? messages() : route === 'settings' ? settings() : route === 'post' ? detail() : listing();
@@ -441,12 +455,21 @@
       pendingFiles.clear();
       fileURLs.forEach(url => URL.revokeObjectURL(url));
       fileURLs.clear();
-      state = window.CheongyakCommunityDemoStorage.reset(localStorage);
+      state = repository.reset(localStorage);
       region = state.me.region;
       scope = '지역';
       return go('home');
     }
   }
+  for (const type of ['click', 'submit', 'change']) document.addEventListener(type, event => {
+    if (sessionActive()) return;
+    if (event.type === 'click' && event.target.closest?.('[data-community-login]')) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    fileURLs.forEach(url => URL.revokeObjectURL(url));
+    fileURLs.clear();
+    lockScreen();
+  }, true);
   document.addEventListener('click', e => {
     const el = e.target.closest('button');
     if (!el) return;

@@ -3,3 +3,8 @@ body.community-demo-active { margin: 0; overflow: hidden; }
 .community-demo-active > footer { display: none; }
 .community-demo-active > #app { margin: 0; padding: 0; max-width: none; }
 .community-demo-frame { display: block; width: 100%; height: calc(100vh - var(--community-shell-height, 116px)); height: calc(100dvh - var(--community-shell-height, 116px)); border: 0; background: var(--paper); }
+.community-access { max-width: 680px; margin: 40px auto; padding: 36px; }
+.community-access h1 { font-size: clamp(22px, 4vw, 30px); line-height: 1.5; }
+.community-access p { line-height: 1.8; }
+.community-access-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+@media (max-width: 600px) { .community-access { padding: 24px; margin: 20px auto; } }
