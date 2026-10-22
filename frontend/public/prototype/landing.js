@@ -134,6 +134,16 @@
   // · 진단 기록이 없으면: 추천할 근거가 없으니 공고 대신 "진단 하러 가기" 안내
   // · 진단 기록이 있으면: 내 조건 추천 공고(서버 계산, 모자라면 접수 중 공고로 채움)를 전광판처럼 계속 흘려 보낸다
   let marquee = null;
+  // 관심 유형 밖의 추천: 내 유형 추천이 적을 때 전광판을 채우는 데만 쓴다 (유형 구분 없이 서버에 한 번 더 묻는다)
+  const otherRecs = { started: false, houses: [], key: '' };
+  async function loadOtherRecs() {
+    otherRecs.started = true; otherRecs.key = `${state.user.id}:${state.diagnosis?.type}`;
+    try {
+      const data = await api(`/recommendations/${state.user.id}`);
+      otherRecs.houses = data.items.filter((it) => it.fit !== '대상 아님').map((it) => upsertHouse(toHouse(it.listing)));
+    } catch { otherRecs.houses = []; }
+    if (routeNow() === 'home') render();
+  }
   function homeListings() {
     if (marquee) { cancelAnimationFrame(marquee.raf); marquee = null; }
     const grid = $('#app .section .grid3');
@@ -145,16 +155,31 @@
       return;
     }
     if (state.user?.id && live.recs === null && !live.recsLoading) loadRecs();
+    if (otherRecs.started && otherRecs.key !== `${state.user?.id}:${state.diagnosis?.type}`) { otherRecs.started = false; otherRecs.houses = []; }
     const recs = [...myRecs()].sort((x, y) => (y.eligible ? 1 : 0) - (x.eligible ? 1 : 0)).map((r) => r.house).filter(Boolean);   // 신청 자격 충족 공고를 앞에
     const seen = new Set(recs.map((h) => h.id));
     const eligibleIds = new Set(myRecs().filter((r) => r.eligible).map((r) => r.house.id));
     const dd = (h) => { const d = daysLeft(h); return d == null || d < 0 ? 9999 : d; };
-    const houses = (recs.length ? recs : featuredHouses().filter((h) => !seen.has(h.id))).slice(0, 12)   // 추천이 있으면 추천만 (접수 중 공고를 섞지 않는다)
-      .sort((x, y) => dd(x) - dd(y) || (eligibleIds.has(y.id) ? 1 : 0) - (eligibleIds.has(x.id) ? 1 : 0));   // 마감이 가까운 순서(D-day 오름차순)
-    if (head) head.textContent = (recs.length ? '내 진단 조건으로 고른 공고예요.' : '지금 접수 중인 공고예요.') + ' 접수 마감이 가까운 순서로 흘러가요. 마우스를 올리면 잠시 멈춰요.';
+    // 추천 공고를 마감이 가까운 순으로 먼저, 추천이 8곳보다 적으면 지금 접수 중인 공고로 이어 채운다
+    // (추천은 단지마다 한 줄이라 몇 곳뿐일 수 있다 — 그래도 전광판이 끊기지 않게, 추천 카드에는 '내 조건' 표시)
+    const byDday = (x, y) => dd(x) - dd(y) || (eligibleIds.has(y.id) ? 1 : 0) - (eligibleIds.has(x.id) ? 1 : 0);
+    const mine = recs.slice(0, 12).sort(byDday);
+    const nameKey = (h) => String(h.name || '').replace(/^\s*\[정정공고\]\s*/, '');
+    const names = new Set(mine.map(nameKey));
+    if (mine.length < 8 && state.user?.id && !otherRecs.started) loadOtherRecs();
+    const pool = [...otherRecs.houses, ...featuredHouses()];   // 다른 유형의 내 추천(서버, 단지마다 한 줄) → 그래도 모자라면 접수 중 공고
+    const fill = mine.length < 8 ? pool.filter((h) => !seen.has(h.id)).sort(byDday)
+      .filter((h) => { const k = nameKey(h); if (names.has(k)) return false; names.add(k); return true; }).slice(0, 12 - mine.length) : [];   // 같은 단지(주택형만 다른 공고)는 한 장만
+    const houses = [...mine, ...fill];
+    const recIds = new Set(mine.map((h) => h.id));
+    if (head) head.textContent = (!recs.length ? '지금 접수 중인 공고예요.' : fill.length ? `관심 유형 추천 ${mine.length}곳을 먼저, 이어서 다른 유형의 추천·접수 중 공고를 보여 드려요.` : '내 진단 조건으로 고른 공고예요.') + ' 마우스를 올리면 잠시 멈춰요.';
     grid.closest('.section')?.setAttribute('id', 'lp-reco');
     const h2 = grid.closest('.section')?.querySelector('.section-head h2'); if (h2 && recs.length) h2.textContent = '내 조건에 맞는 공고';
-    if (houses.length < 4) return;                                // 공고가 적으면 원래 3칸 그대로
+    const markMine = (root) => root.querySelectorAll('.house-card').forEach((card) => {   // 접수 중 공고와 섞일 때만 추천 카드에 '내 조건' 표시
+      const id = Number(card.querySelector('[data-hid]')?.dataset.hid);
+      if (fill.length && recIds.has(id)) card.querySelector('.house-body .tags')?.insertAdjacentHTML('afterbegin', '<span class="lp-mine">내 조건</span>');
+    });
+    if (houses.length < 4) { grid.innerHTML = houses.map((h) => houseCard(h)).join(''); markMine(grid); if (typeof cardMedia === 'function') cardMedia(); return; }   // 너무 적으면 3칸 그대로 (내용은 추천으로)
     grid.outerHTML = `<div class="lp-marquee" aria-label="추천 공고 (자동으로 넘어가요)"><div class="lp-track">${houses.map((h) => houseCard(h)).join('')}</div></div>`;
     document.querySelectorAll('.lp-track .house-card').forEach((card) => {   // 카드마다 D-day 표시
       const h = houseById(Number(card.querySelector('[data-hid]')?.dataset.hid));
@@ -162,6 +187,7 @@
       if (d == null || d < 0) return;
       card.querySelector('.house-body .tags')?.insertAdjacentHTML('beforeend', `<span class="lp-dday${d <= 2 ? ' hot' : ''}">${d === 0 ? '오늘 마감' : `마감 D-${d}`}</span>`);
     });
+    markMine(document.querySelector('.lp-track'));
     if (typeof cardMedia === 'function') cardMedia();            // 카드 사진(로드뷰) 다시 붙이기
     startMarquee();
   }

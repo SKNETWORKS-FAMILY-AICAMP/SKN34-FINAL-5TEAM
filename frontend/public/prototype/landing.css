@@ -133,3 +133,4 @@ body.lp-home #app .section:first-of-type .section-head{margin-bottom:22px}
 .lp-caption b{color:var(--green,#163f33)}
 /* 첫 페이지에서는 상단 카테고리 메뉴를 숨겨 '진단 시작'에 집중 (로고·로그인은 유지) */
 body.landing-active #header .nav-links{visibility:hidden}
+.lp-mine{display:inline-block;margin-right:6px;font-weight:800;font-size:11.5px;color:#fff;background:#163f33;border-radius:6px;padding:4px 8px;vertical-align:middle}
