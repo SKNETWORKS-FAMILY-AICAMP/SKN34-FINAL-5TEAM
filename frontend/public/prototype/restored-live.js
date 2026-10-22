@@ -82,7 +82,7 @@ render = function () {
   const member = state.user?.member ? state.user.id : 0;
   if (sync.saved !== member) { sync.saved = member; if (member) loadSaved(member); else state.saved = []; }
   const route = (location.hash.slice(1) || 'home').split('/')[0];
-  const panel = route === 'homes' && $('.filter-panel');
+  const panel = route === 'homes' && $('.filter-panel');   // 집 찾기 조건은 목록 위 칸으로 옮기면서 '내 집 기준 설정' 링크를 직접 넣었다
   if (panel && !panel.querySelector('[href="#preferences"]')) panel.insertAdjacentHTML('beforeend', '<a href="#preferences" class="text-link" style="display:block;margin-top:20px">내 집 기준 설정 ↗</a>');
 };
 render();
