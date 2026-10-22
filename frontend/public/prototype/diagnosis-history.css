@@ -489,3 +489,4 @@
 .loan-card>.options{margin-top:4px}
 @media (max-width:640px){.step-actions .sa-hint{display:none}}
 .loan-extra-head{margin-top:40px}
+.dash-fold-badge.calm{background:#fdf0e8;color:#c45a22}
