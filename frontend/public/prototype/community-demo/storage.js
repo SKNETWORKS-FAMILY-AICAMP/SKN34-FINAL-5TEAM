@@ -2,6 +2,8 @@
 (function (root) {
   const KEY = 'cheongyak:community-demo:v1:standalone';
   const SOURCE = 'community-demo';
+  const ACCOUNT_PREFIX = 'cheongyak:community-demo:v2:account:';
+  const sessions = root.CheongyakCommunitySession || (typeof module === 'object' && module.exports ? require('./session.js') : null);
   const seed = () => root.CheongyakCommunityDemoSeed.createState();
   function attachmentsValid(items) {
     return items === undefined || Array.isArray(items) && items.length <= 10 && items.every(item => item.dataSource === SOURCE && typeof item.id === 'string' && item.id.startsWith('demo-attachment-') && typeof item.name === 'string' && typeof item.type === 'string' && Number.isFinite(item.size) && item.size >= 0 && ['image', 'audio', 'video', 'file'].includes(item.kind) && !('blob' in item));
@@ -41,13 +43,57 @@
     save(storage, value);
     return value;
   }
+  function forAccount(account) {
+    if (!sessions.isSession(account)) throw new Error('A signed-in community account is required.');
+    // Capture immutable identity: a later login must never redirect an old write to a new account.
+    const { accountId, name, demo } = account;
+    const key = ACCOUNT_PREFIX + accountId;
+    function initialState() {
+      const value = seed();
+      if (!demo) {
+        Object.assign(value, {
+          me: { id: 0, name, email: '', region: '', age: '', interest: '', bio: '', color: '#dfeada', interests: [] },
+          people: [], posts: [], saved: [], liked: [], pins: [], chats: {},
+          unread: [], reports: [], blocked: [], hiddenChats: []
+        });
+      }
+      value.ownerId = accountId;
+      value.fixtureSet = demo ? 'saessak' : 'empty';
+      return value;
+    }
+    function valid(value) {
+      return isDemoState(value) && value.ownerId === accountId && value.fixtureSet === (demo ? 'saessak' : 'empty');
+    }
+    function loadAccount(storage) {
+      try {
+        const value = JSON.parse(storage.getItem(key));
+        if (valid(value)) return value;
+      } catch {/* Never import an unowned legacy record or another account's state. */}
+      return initialState();
+    }
+    function saveAccount(storage, value) {
+      if (!valid(value)) throw new Error('Community records must belong to the current account.');
+      storage.setItem(key, JSON.stringify(value));
+    }
+    return Object.freeze({
+      KEY: key,
+      load: loadAccount,
+      save: saveAccount,
+      reset(storage) {
+        const value = initialState();
+        saveAccount(storage, value);
+        return value;
+      }
+    });
+  }
   const repository = Object.freeze({
     KEY,
     SOURCE,
     isDemoState,
     load,
     save,
-    reset
+    reset,
+    forAccount
   });
   root.CheongyakCommunityDemoStorage = repository;
   if (typeof module === 'object' && module.exports) module.exports = repository;

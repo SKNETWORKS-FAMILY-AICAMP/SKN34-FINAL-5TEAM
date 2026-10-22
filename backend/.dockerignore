@@ -1,0 +1,18 @@
+# Runtime configuration comes from Compose/the mounted backend, not image layers.
+.env
+.env.*
+!.env.example
+
+# Local environments, caches, collected data and private database backups.
+venv/
+.venv/
+*.venv/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.git/
+data/
+*.dump
+*.backup
+*.sql
+*.log

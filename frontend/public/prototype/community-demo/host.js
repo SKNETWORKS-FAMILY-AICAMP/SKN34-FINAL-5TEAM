@@ -1,10 +1,42 @@
-/* Reuse the service header; only navigation/layout crosses the demo-data boundary. */
+/* Reuse the service login/header; only a minimal account scope crosses the demo boundary. */
 (() => {
+  const sessions = window.CheongyakCommunitySession;
   const serviceRoutes = new Set(['home', 'diagnosis', 'homes', 'finance', 'dashboard']);
   const renderService = render;
   let frame = null;
   let frameReady = false;
   let detach = () => {};
+  let frameAccount = null;
+  let promptedFor = null;
+  let resumeCommunity = null;
+
+  const currentSession = () => sessions.fromUser(state.user);
+  window.CheongyakCommunityHost = Object.freeze({ getSession: currentSession });
+
+  function releaseFrame() {
+    detach();
+    detach = () => {};
+    frame?.remove();
+    frame = null;
+    frameReady = false;
+    frameAccount = null;
+  }
+
+  function gate(account) {
+    const title = account ? '새싹 시연 계정 전용 커뮤니티예요' : '로그인이 필요합니다';
+    const description = account
+      ? '현재 커뮤니티는 새싹 계정으로만 이용할 수 있어요. 다른 계정에는 새싹의 글·친구·메시지가 표시되지 않아요.'
+      : '커뮤니티는 로그인 후 이용할 수 있어요. 새싹 시연 계정으로 로그인해 주세요.';
+    const controls = '<div class="community-access-actions"><button class="btn" data-community-access="login">' +
+      (account ? '새싹 계정으로 로그인' : '로그인하기') +
+      '</button><button class="btn secondary" data-community-access="leave">다른 기능 둘러보기</button></div>';
+    $('#app').innerHTML = `<div class="wrap page"><section class="panel community-access" aria-labelledby="community-access-title"><div class="eyebrow">COMMUNITY</div><h1 id="community-access-title">${title}</h1><p>${description}</p>${controls}</section></div>`;
+    const key = `${location.hash}:${account?.accountId || 'guest'}`;
+    if (promptedFor !== key) {
+      promptedFor = key;
+      modal(`<h2>${title}</h2><p>${description}</p>${controls}`);
+    }
+  }
 
   function sizeFrame() {
     if (!frame || !frame.isConnected) return;
@@ -28,6 +60,8 @@
 
   function syncAddress() {
     if (!frameReady || !frame) return;
+    const account = currentSession();
+    if (!account?.demo || account.accountId !== frameAccount) { render(); return; }
     const raw = frame.contentWindow.location.hash.slice(1) || 'home';
     const next = raw === 'home' ? 'community' : raw.startsWith('post/') ? raw : `community/${raw}`;
     if (location.hash !== `#${next}`) location.hash = next;
@@ -36,19 +70,34 @@
   render = function () {
     const route = (location.hash.slice(1) || 'home').split('/')[0];
     const active = route === 'community' || route === 'post';
-    document.body.classList.toggle('community-demo-active', active);
+    const account = currentSession();
+    const allowed = active && account?.demo === true;
+    document.body.classList.toggle('community-demo-active', allowed);
     if (!active) {
-      detach(); frame = null; frameReady = false;
+      if (resumeCommunity && afterLogin === resumeCommunity) afterLogin = null;
+      resumeCommunity = null;
+      promptedFor = null;
+      releaseFrame();
       renderService();
+      const preview = document.querySelector('#app .community-preview > div:last-child');
+      if (preview && !account?.demo) preview.innerHTML = '<p>로그인 후 이웃들의 이야기를 만나보세요.</p><a class="btn soft" href="#community">커뮤니티 로그인 안내 →</a>';
       return;
     }
 
     // Same logo, menu, active underline and login controls as every service page.
-    // No account or diagnosis object is passed into the demo frame.
+    // Only accountId/name/demo are exposed; no service profile or diagnosis is passed.
     header('community');
+    if (!allowed) {
+      releaseFrame();
+      gate(account);
+      return;
+    }
+    promptedFor = null;
+    if (frameAccount !== account.accountId) releaseFrame();
 
     if (!frame || !frame.isConnected) {
       frameReady = false;
+      frameAccount = account.accountId;
       $('#app').innerHTML = '<iframe class="community-demo-frame" title="커뮤니티 · 시연 전용 가짜 데이터"></iframe>';
       frame = $('.community-demo-frame');
       const mountedFrame = frame;
@@ -70,8 +119,38 @@
 
   window.addEventListener('message', event => {
     if (!frame || event.source !== frame.contentWindow || event.origin !== location.origin) return;
+    const account = currentSession();
+    if (!account?.demo || account.accountId !== frameAccount) return;
     const data = event.data;
     if (data?.type === 'cheongyak:community-service-route' && serviceRoutes.has(data.route)) go(data.route);
+  });
+  document.addEventListener('click', event => {
+    const button = event.target.closest('[data-community-access]');
+    if (!button) return;
+    event.preventDefault();
+    if (button.dataset.communityAccess === 'leave') {
+      afterLogin = null;
+      go('home');
+      return;
+    }
+    const destination = location.hash.slice(1) || 'community';
+    resumeCommunity = () => { resumeCommunity = null; go(destination); };
+    afterLogin = resumeCommunity;
+    login();
+    $('#email').value = sessions.DEMO_ACCOUNT.email;
+    $('#nickname').value = sessions.DEMO_ACCOUNT.nickname;
+    $('#login-form').insertAdjacentHTML('beforebegin', '<p class="callout">커뮤니티 시연 계정 정보를 채웠어요. 이미 만든 계정이면 로그인, 처음이면 결과 저장하고 시작을 눌러 주세요.</p>');
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && resumeCommunity && afterLogin === resumeCommunity) {
+      afterLogin = null;
+      resumeCommunity = null;
+    }
+  });
+  window.addEventListener('storage', event => {
+    if (event.key !== null && event.key !== 'cydemo-user') return;
+    state.user = read('user', null);
+    render();
   });
   render();
 })();

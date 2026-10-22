@@ -44,12 +44,12 @@
       }
     };
   }
-  function indexedDBDriver() {
+  function indexedDBDriver(database = DATABASE) {
     let opening;
     function open() {
       if (!root.indexedDB) return Promise.reject(new Error('이 브라우저에서는 파일 저장을 사용할 수 없어요.'));
       return opening ||= new Promise((resolve, reject) => {
-        const request = root.indexedDB.open(DATABASE, 1);
+        const request = root.indexedDB.open(database, 1);
         request.onupgradeneeded = () => request.result.createObjectStore('files', {
           keyPath: 'id'
         });
@@ -95,6 +95,12 @@
     MAX_FILES,
     kind,
     createRepository,
+    forAccount(account) {
+      const sessions = root.CheongyakCommunitySession || (typeof module === 'object' && module.exports ? require('./session.js') : null);
+      if (!sessions.isSession(account)) throw new Error('A signed-in community account is required.');
+      const database = DATABASE + ':' + account.accountId;
+      return Object.freeze({ DATABASE: database, repository: createRepository(indexedDBDriver(database)) });
+    },
     repository: createRepository(indexedDBDriver())
   };
   root.CheongyakCommunityAttachments = api;

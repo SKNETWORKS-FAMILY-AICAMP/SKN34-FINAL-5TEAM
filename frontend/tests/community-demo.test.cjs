@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const directory = path.resolve(__dirname, '../public/prototype/community-demo');
 const seed = require(path.join(directory, 'seed.js'));
 const repository = require(path.join(directory, 'storage.js'));
+const sessions = require(path.join(directory, 'session.js'));
 
 function memoryStorage(entries = {}) {
   const values = new Map(Object.entries(entries));
@@ -100,17 +101,19 @@ test('community navigation bridge checks frame, origin, message type and allowed
   let serviceRenders = 0;
   let load;
   const child = { location: { hash: '#home' }, addEventListener: (name, fn) => { childEvents[name] = fn; }, removeEventListener() {} };
-  const frame = { isConnected: true, contentWindow: child, addEventListener: (name, fn) => { if (name === 'load') load = fn; } };
+  const frame = { isConnected: true, remove() {}, contentWindow: child, addEventListener: (name, fn) => { if (name === 'load') load = fn; } };
   const context = {
+    state: { user: { id: 7, email: sessions.DEMO_ACCOUNT.email, name: '새싹', member: true } },
     location: { hash: '#community', origin: 'https://app.example' },
     document: {
+      addEventListener() {},
       body: { classList: { toggle() {} }, style: { setProperty: (name, value) => layout.set(name, value) } },
       querySelector: selector => ({ getBoundingClientRect: () => ({ height: selector === '#header' ? 83 : 33 }) }),
     },
     $: selector => selector === '#app' ? { innerHTML: '' } : frame,
     render: () => { serviceRenders++; }, go: route => navigation.push(route),
     header: route => headers.push(route),
-    window: { addEventListener: (name, fn) => { events[name] = fn; } },
+    window: { CheongyakCommunitySession: sessions, addEventListener: (name, fn) => { events[name] = fn; } },
   };
   vm.runInNewContext(fs.readFileSync(path.join(directory, 'host.js'), 'utf8'), context);
   assert.match(frame.src, /community-demo\/index\.html#home$/);
