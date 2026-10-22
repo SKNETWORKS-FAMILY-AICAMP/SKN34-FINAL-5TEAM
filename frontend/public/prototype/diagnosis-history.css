@@ -376,3 +376,5 @@
 .dash-diag-left .dash-diag-actions{justify-content:center}
 .dash-diag-left .dash-diag-report{flex-basis:100%;text-align:center}
 .rp-menu{left:auto;right:0}
+.badge.sp-badge{background:#fff0e4;color:#bd5d2b}
+.badge.sp-free{background:#e8f1fb;color:#2c5d8f}

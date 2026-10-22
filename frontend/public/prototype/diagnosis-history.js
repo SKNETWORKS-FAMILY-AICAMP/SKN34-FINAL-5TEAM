@@ -37,7 +37,7 @@
   const routeNow = () => (location.hash.slice(1) || 'home').split('/')[0];
 
   // 지금 쓰고 있는 진단 = 이 브라우저의 진단 조건(state.diagnosis)과 같은 기록 (같은 게 여럿이면 가장 최근)
-  const COND_KEYS = ['age', 'marriage', 'head', 'region', 'ownership', 'firstHome', 'years', 'family', 'children', 'account', 'payments', 'deposit', 'won5', 'income', 'assets', 'wish', 'type'];
+  const COND_KEYS = ['age', 'marriage', 'head', 'region', 'ownership', 'firstHome', 'years', 'family', 'children', 'household', 'account', 'payments', 'deposit', 'won5', 'income', 'welfare', 'assets', 'wish', 'type'];
   // 기록에 있는 항목만 비교한다 (예전 기록에는 나중에 생긴 질문이 없을 수 있어서)
   const sameCond = (rec, cur) => COND_KEYS.filter((k) => rec && k in rec).every((k) => String(rec[k] ?? '') === String(cur?.[k] ?? ''));
   // 사용 중 기록: 서버가 알려 준 기록(active). 서버 값이 없으면(예전 서버) 지금 조건과 같은 가장 최근 기록
@@ -178,9 +178,9 @@
     return [
       ['연령대', a.age, 0], ['혼인', a.marriage, 0], ['세대주', a.head, 0], ['현재 거주', a.region, 0],
       ['주택 소유', a.ownership === '무주택' ? (a.firstHome === '있어요' ? '무주택 (과거 소유)' : '무주택 (첫 집)') : a.ownership, 1],
-      ['미성년 자녀', a.children, 2], ['납입 회차', `${a.payments ?? 0}회`, 3],
+      ['미성년 자녀', a.children, 2], ['가구원 수', a.household || '–', 4], ['납입 회차', `${a.payments ?? 0}회`, 3],
       ['예치금', man(a.deposit), 3], ['5년 내 당첨', a.won5 === '잘 모르겠어요' ? '모름' : a.won5, 3], ['연 소득', String(a.income || '').replace(/ 원$/, ''), 4],
-      ['보유 현금', man(a.assets), 4], ['희망 지역', a.wish, 5], ['관심 유형', typeLabel(a.type), 5],
+      ['보유 현금', man(a.assets), 4], ['수급·차상위', a.welfare === '아니요' ? '해당 없음' : (a.welfare || '–').replace(' 수급자', ''), 4], ['희망 지역', a.wish, 5], ['관심 유형', typeLabel(a.type), 5],
     ];
   }
   // 가점 구성 (서버 계산: 무주택 32 + 부양가족 35 + 통장 17)
@@ -229,7 +229,7 @@
     const mine = live.recs ? myRecs() : null;              // 지금 추천(관심 유형 반영)이 있으면 그 숫자, 없으면 최근 기록 숫자
     const score = live.recs?.[0]?.score ?? r?.score;
     const fact = (label, value, unit) => `<div><small>${label}</small><b>${value ?? '–'}<span>${unit}</span></b></div>`;
-    const facts = `<div class="dash-diag-facts">${fact('청약 가점', score, '/84')}${fact('1순위 가능', mine ? mine.filter((x) => x.fp === '1순위 가능').length : null, '건')}${fact('추천 공고', mine ? mine.length : r?.recommend_count, '건')}${fact('자금 충족', mine ? mine.filter((x) => x.eligible).length : r?.eligible_count, '건')}</div>`;
+    const facts = `<div class="dash-diag-facts">${fact('청약 가점', score, '/84')}${fact('1순위·자격 가능', mine ? mine.filter((x) => ['1순위 가능', '자격 가능'].includes(recStatus(x).label)).length : null, '건')}${fact('추천 공고', mine ? mine.length : r?.recommend_count, '건')}${fact('자금 충족', mine ? mine.filter((x) => x.eligible).length : r?.eligible_count, '건')}</div>`;
     // 자금: 보유 현금과 계약금 10% 기준 분양가 상한 + 대출·자금 계산 바로가기 (계산기 자체는 금융 정보 화면)
     const assets = Number(a.assets) || 0;
     const eok = (man) => (man >= 10000 ? `${(man / 10000).toFixed(man % 10000 ? 1 : 0)}억 원` : `${man.toLocaleString('ko-KR')}만 원`);
@@ -285,7 +285,7 @@
       const open = myRecs().map((r) => ({ r, d: ddayOf(r.house) })).filter((x) => x.d != null && x.d >= 0).sort((x, y) => x.d - y.d);
       const rows = groupByName(open).slice(0, ROWS).map(({ r, d, n }) => `<a class="dash-soon-row" href="#detail/${r.house.id}">
         <span class="dash-soon-dday${d <= 3 ? ' hot' : ''}">${ddayText(d)}</span>
-        <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''}${r.fp === '1순위 가능' ? ' · 1순위 가능' : ''}</small></span></a>`).join('');
+        <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''}${['1순위 가능', '자격 가능'].includes(recStatus(r).label) ? ` · ${recStatus(r).label}` : ''}${r.badges?.length ? ` · ${esc(r.badges[0])}` : ''}</small></span></a>`).join('');
       soonBox = foldBox('soon', '마감 임박한 내 추천 공고', '',
         rows ? `<div class="dash-soon-list">${rows}</div>` : '<p class="dash-soon-empty">지금 접수 마감이 다가오는 추천 공고가 없어요.</p>',
         open.length ? `<button type="button" class="dash-soon-more" data-action="dash-soon-all">${open.length}건 마감순으로 보기 →</button>` : '',
@@ -296,12 +296,12 @@
     else {
       const all = rankedRecs();
       const f = hist.dashFilter || 'all';
-      const filters = [['all', '전체', all.length], ['first', '1순위 가능', all.filter((r) => r.fp === '1순위 가능').length], ['eligible', '자금 충족', all.filter((r) => r.eligible).length]];
-      const list = all.filter((r) => f === 'all' || (f === 'first' ? r.fp === '1순위 가능' : r.eligible));
+      const filters = [['all', '전체', all.length], ['first', '1순위·자격 가능', all.filter((r) => ['1순위 가능', '자격 가능'].includes(recStatus(r).label)).length], ['eligible', '자금 충족', all.filter((r) => r.eligible).length]];
+      const list = all.filter((r) => f === 'all' || (f === 'first' ? ['1순위 가능', '자격 가능'].includes(recStatus(r).label) : r.eligible));
       const chips = `<div class="dash-mini-chips" role="group" aria-label="공고 보기">${filters.map(([k, label, cnt]) => `<button type="button" class="${f === k ? 'on' : ''}" data-action="dash-filter" data-value="${k}">${label} ${cnt}</button>`).join('')}<span class="dash-mini-note">자금 → 1순위 → 당첨 구간 순</span></div>`;
       const rows = groupByName(list.map((r) => ({ r, d: ddayOf(r.house) }))).slice(0, ROWS).map(({ r, d, n }) => `<a class="dash-soon-row" href="#detail/${r.house.id}">
-        <span class="dash-soon-dday fp ${FP_CLASS[r.fp] || 'fp-etc'}">${esc(r.fp)}</span>
-        <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''} · ${r.eligible ? '자금 충족' : '자금 확인'}${d != null && d >= 0 ? ` · ${ddayText(d)}` : ''}</small></span></a>`).join('');
+        <span class="dash-soon-dday fp ${recStatus(r).cls}">${esc(recStatus(r).label)}</span>
+        <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''} · ${r.eligible ? '자금 충족' : '자금 확인'}${r.badges?.length ? ` · ${esc(r.badges[0])}` : ''}${d != null && d >= 0 ? ` · ${ddayText(d)}` : ''}</small></span></a>`).join('');
       recsBox = foldBox('recs', '내 기준에 맞는 공고', '',
         chips + (rows ? `<div class="dash-soon-list">${rows}</div>` : '<p class="dash-soon-empty">조건에 맞는 공고가 없어요.</p>'),
         list.length ? `<button type="button" class="dash-soon-more" data-action="dash-all">${list.length}건 모두 보기 →</button>` : '',
@@ -379,7 +379,7 @@
       <div class="settings-actions"><button type="button" class="btn secondary small" data-action="acct-csv" ${n ? '' : 'disabled'}>${n ? `선택한 ${n}건 내려받기 (CSV · 엑셀)` : '내려받을 기록을 골라 주세요'}</button></div>`;
   }
   function csvOf(records) {
-    const cols = [['age', '연령대'], ['marriage', '혼인'], ['head', '세대주'], ['region', '현재 거주'], ['ownership', '주택 소유'], ['firstHome', '과거 주택 소유'], ['years', '무주택 기간(년)'], ['family', '부양가족'], ['children', '미성년 자녀'], ['account', '통장 가입(년)'], ['payments', '납입 회차'], ['deposit', '예치금(만원)'], ['won5', '5년 내 당첨'], ['income', '연 소득'], ['assets', '보유 현금(만원)'], ['wish', '희망 지역'], ['type', '관심 유형']];
+    const cols = [['age', '연령대'], ['marriage', '혼인'], ['head', '세대주'], ['region', '현재 거주'], ['ownership', '주택 소유'], ['firstHome', '과거 주택 소유'], ['years', '무주택 기간(년)'], ['family', '부양가족'], ['children', '미성년 자녀'], ['household', '가구원 수'], ['account', '통장 가입(년)'], ['payments', '납입 회차'], ['deposit', '예치금(만원)'], ['won5', '5년 내 당첨'], ['income', '연 소득'], ['welfare', '수급·차상위'], ['assets', '보유 현금(만원)'], ['wish', '희망 지역'], ['type', '관심 유형']];
     const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
     const head = ['진단 일시', '청약 가점', '추천 공고 수', '자격 충족 수', ...cols.map(([, label]) => label)];
     const body = records.map((r) => [when(r.created_at, true), r.score, r.recommend_count, r.eligible_count, ...cols.map(([k]) => (k === 'type' ? typeLabel(r.answers?.type) : r.answers?.[k]))]);
