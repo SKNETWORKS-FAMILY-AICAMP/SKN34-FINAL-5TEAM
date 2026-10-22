@@ -227,6 +227,7 @@ function loanPayload(a) {
     current_loan_type: has ? a.loanType || null : null,
     current_loan_rate: has ? LOAN_RATE_MID[a.loanRate] ?? null : null,
     current_loan_balance: has ? won(a.loanBalance) : null,
+    credit_score_band: on ? a.creditBand || null : null,
   };
 }
 function loanFromProfile(p) {
@@ -240,6 +241,7 @@ function loanFromProfile(p) {
     loanType: p.current_loan_type || null,
     loanRate: p.current_loan_rate == null ? null : near(p.current_loan_rate),
     loanBalance: p.current_loan_balance == null ? null : Math.round(Number(p.current_loan_balance) / 10000),
+    creditBand: p.credit_score_band || null,
   };
 }
 
@@ -688,7 +690,13 @@ function loanPanel() {
   if (L.loading) body = '<div class="empty"><h3>대출 상품을 계산하는 중이에요…</h3></div>';
   else if (L.error) body = noteBox(`대출을 불러오지 못했어요: ${L.error}`);
   else if (!L.items?.length) body = '<div class="callout">이 공고와 맞는 대출 상품이 없어요.</div>';
-  else body = `<div class="grid3">${L.items.map((p) => `<article class="product-card"><div class="product-top"><div class="product-logo">${esc((p.company_name || p.fin_group || '?')[0])}</div><div><h3>${esc(p.company_name || p.fin_group || '금융사')}</h3><small>${esc(p.product_type || p.category)}</small></div></div><span class="badge gray">${esc(p.name)}</span><div class="product-number" style="font-size:22px">${p.interest_rate_min != null ? `연 ${p.interest_rate_min}${p.interest_rate_max != null && p.interest_rate_max !== p.interest_rate_min ? '~' + p.interest_rate_max : ''}%` : '금리 공시 확인'}</div><p>${p.max_loan != null ? `예상 대출 가능액 ${money(toMan(p.max_loan))}` : p.estimated_limit != null ? `예상 한도 ${money(toMan(p.estimated_limit))}` : esc(p.loan_limit_text || '한도 공시 확인')}</p>${p.covers_shortfall != null ? `<span class="badge ${p.covers_shortfall ? '' : 'gray'}">${p.covers_shortfall ? '부족 자금 충당 가능' : '부족 자금 일부만 충당'}</span>` : ''}${p.note ? `<p style="font-size:12px;color:var(--muted)">${esc(p.note)}</p>` : ''}</article>`).join('')}</div>`;
+  else {
+    const card = (p) => `<article class="product-card"><div class="product-top"><div class="product-logo">${esc((p.company_name || p.fin_group || '?')[0])}</div><div><h3>${esc(p.company_name || p.fin_group || '금융사')}</h3><small>${esc(p.product_type || p.category)}</small></div></div><span class="badge gray">${esc(p.name)}</span><div class="product-number" style="font-size:22px">${p.interest_rate_min != null ? `연 ${p.interest_rate_min}${p.interest_rate_max != null && p.interest_rate_max !== p.interest_rate_min ? '~' + p.interest_rate_max : ''}%` : '금리 공시 확인'}</div><p>${p.max_loan != null ? `예상 대출 가능액 ${money(toMan(p.max_loan))}` : p.estimated_limit != null ? `예상 한도 ${money(toMan(p.estimated_limit))}` : esc(p.loan_limit_text || '한도 공시 확인')}</p>${p.covers_shortfall != null ? `<span class="badge ${p.covers_shortfall ? '' : 'gray'}">${p.covers_shortfall ? '부족 자금 충당 가능' : '부족 자금 일부만 충당'}</span>` : ''}${p.note ? `<p style="font-size:12px;color:var(--muted)">${esc(p.note)}</p>` : ''}</article>`;
+    const main = L.items.filter((p) => p.role !== '보조 대출'), extra = L.items.filter((p) => p.role === '보조 대출');
+    const band = extra.find((p) => p.credit_band)?.credit_band;
+    body = `${main.length ? `<div class="grid3">${main.map(card).join('')}</div>` : '<div class="callout">이 공고와 맞는 주 대출 상품이 없어요.</div>'}
+      ${extra.length ? `<div class="section-head loan-extra-head"><div><h3>모자란 돈을 메우는 신용대출</h3><p>${band ? `신용점수 <b>${esc(band)}</b> 구간의 공시 금리가 낮은 순서예요.` : '진단에서 신용점수 구간을 고르면 내 구간 금리로 보여 드려요.'} 계약금이나 주 대출로 모자란 금액 일부에 써요.</p></div></div><div class="grid3">${extra.map(card).join('')}</div>` : ''}`;
+  }
   return `<div class="field" style="max-width:520px"><label for="loan-house">대출을 계산할 공고</label><select id="loan-house">${candidates.map((h) => `<option value="${h.id}" ${h.id === Number(cur) ? 'selected' : ''}>${esc(h.name)}</option>`).join('')}</select></div>${body}`;
 }
 function finance(sub, id) {

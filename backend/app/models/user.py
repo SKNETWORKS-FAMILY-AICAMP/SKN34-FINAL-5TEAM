@@ -56,6 +56,7 @@ class UserProfile(Base):
     current_loan_type: Mapped[str | None] = mapped_column(String(30), nullable=True)  # 지금 받고 있는 대출 종류
     current_loan_rate: Mapped[float | None] = mapped_column(Numeric(4, 2), nullable=True)  # 그 대출의 금리(%), 구간 대표값
     current_loan_balance: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)  # 그 대출의 잔액(원)
+    credit_score_band: Mapped[str | None] = mapped_column(String(20), nullable=True)  # 신용점수 구간 (900점 초과 / 801~900점 / … / 600점 이하 / 잘 모르겠어요)
     welfare_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # 수급·차상위 여부 (영구·매입임대 대상 판정)
     active_diagnosis_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 지금 '사용 중'으로 고른 진단 기록 id (없으면 가장 최근 기록)
     workplace_address: Mapped[str] = mapped_column(String(255), nullable=True)  # 직장 주소 (출퇴근 경로)

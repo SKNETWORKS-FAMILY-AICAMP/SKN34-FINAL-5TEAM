@@ -157,16 +157,18 @@
   const LOAN_TERM = ['10년', '20년', '30년', '잘 모르겠어요'];
   const LOAN_TYPE = ['주택담보대출', '전세자금대출', '신용대출', '정책대출', '기타'];
   const LOAN_RATE = ['3% 미만', '3%대', '4%대', '5%대', '6% 이상'];
+  const CREDIT_BAND = ['900점 초과', '801~900점', '701~800점', '601~700점', '600점 이하', '잘 모르겠어요'];
   function loanBlock(a) {
     const on = a.loanWanted === '받을래요';
     const head = `<div class="fs-row"><span><span class="fs-tags"><i class="fs-type">선택</i></span><b class="fs-title">대출 추천도 받을래요?</b></span></div>
-      <p class="dx-lead">답해 주시면 정책대출(디딤돌 등)과 은행 대출 중 내 소득·상환 기간·지금 대출에 맞는 상품을 골라 드려요. 추천이 필요 없으면 '괜찮아요'를 고르세요.</p>
+      <p class="dx-lead">답해 주시면 정책대출(디딤돌 등)과 은행 대출 중 내 소득·신용점수·상환 기간·지금 대출에 맞는 상품을 골라 드려요. 추천이 필요 없으면 '괜찮아요'를 고르세요.</p>
       ${options('loanWanted', ['받을래요', '괜찮아요'])}`;
     if (!on) return `<div class="fs-card open loan-card">${head}</div>`;
     const has = a.loanHas === '있어요';
     return `<div class="fs-card open loan-card">${head}
       <div class="field"><label>대출이 필요한 곳</label>${options('loanPurpose', LOAN_PURPOSE)}<small>분양·매매는 주택담보·디딤돌, 전세·임대는 전세자금대출 위주로 보여 드려요. 갈아타기는 지금보다 금리가 낮은 상품만 보여요.</small></div>
       ${num('loanNeed', '필요한 대출 금액 · 만원 (선택)', '모르면 비워 두세요. 공고 가격에서 현금을 뺀 금액으로 계산해요.', 'min="0" max="200000" step="100"')}<div class="field"><label>원하는 상환 기간</label>${options('loanTerm', LOAN_TERM)}<small>길수록 월 상환액이 줄어 받을 수 있는 한도가 커져요.</small></div>
+      <div class="field"><label>신용점수 · 대략</label>${options('creditBand', CREDIT_BAND)}<small>토스·카카오뱅크·은행 앱에서 무료로 볼 수 있어요 (NICE·KCB 1000점 기준). 신용점수를 조회하지 않고, 고른 구간만 저장해 신용대출 금리를 골라요.</small></div>
       <div class="field"><label>지금 받고 있는 대출이 있나요?</label>${options('loanHas', ['없어요', '있어요'])}<small>지금 갚고 있는 금액만큼 소득 기준 한도(DSR)가 줄어들어요.</small></div>
       ${has ? `<div class="field"><label>대출 종류</label>${options('loanType', LOAN_TYPE)}</div>
       <div class="field"><label>금리 · 대략</label>${options('loanRate', LOAN_RATE)}<small>이보다 금리가 낮은 상품은 '지금보다 낮아요'로 표시해요.</small></div>
@@ -175,6 +177,7 @@
   function loanSummary(a) {
     if (a.loanWanted !== '받을래요') return a.loanWanted === '괜찮아요' ? '받지 않음' : '답하지 않음';
     const parts = [a.loanPurpose, a.loanTerm && a.loanTerm !== '잘 모르겠어요' ? `${a.loanTerm} 상환` : null, Number(a.loanNeed) > 0 ? `${man(a.loanNeed)} 필요` : null];
+    if (a.creditBand && a.creditBand !== '잘 모르겠어요') parts.push(`신용 ${a.creditBand}`);
     if (a.loanHas === '있어요') parts.push(`지금 ${a.loanType || '대출'} ${a.loanRate || ''} ${Number(a.loanBalance) > 0 ? man(a.loanBalance) : ''}`.replace(/\s+/g, ' ').trim());
     else if (a.loanHas === '없어요') parts.push('지금 대출 없음');
     return parts.filter(Boolean).join(' · ') || '받을래요';
