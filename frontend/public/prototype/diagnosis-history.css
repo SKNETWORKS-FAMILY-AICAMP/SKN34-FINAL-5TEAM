@@ -454,3 +454,16 @@
 .tc-ex{font-size:10.5px;color:#748079;font-weight:500;line-height:1.35}
 .tc-extra{font-size:10.5px;font-weight:800;color:#d65a1f}
 .tc-extra.none{color:#9aa69b;font-weight:600}
+/* 유형 버튼 아래 줄 같은 높이 + 상태색, 추가 정보 카드의 유형·출처 태그 */
+.type-cards{align-items:stretch}
+.type-cards .option{height:auto}
+.tc-extra{margin-top:auto;padding-top:6px;border-top:1px dashed #dfe8dc;width:100%;text-align:center}
+.tc-extra.ok{color:#163f33}
+.tc-extra.later{color:#9a6a00}
+.fs-tags{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:3px}
+.fs-type{font-style:normal;font-size:10.5px;font-weight:800;color:#163f33;background:#e6efe8;border-radius:6px;padding:2px 7px}
+.fs-tags .src-badge{margin:0;font-style:normal}
+.fs-card.open .fs-tags{margin:0 0 4px}
+.flow-status .fs-tags{flex-direction:row;flex:none}
+.flow-status .fs-row>span>b{display:block}
+.tc-extra{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

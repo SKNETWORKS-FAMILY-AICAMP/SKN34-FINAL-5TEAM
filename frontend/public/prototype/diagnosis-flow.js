@@ -20,11 +20,11 @@
   ];
   const FLOWS = {
     account: {
-      groups: ['공공분양', '민간분양'], key: 'accountInfo', title: '청약통장 정보', tag: '공공분양 · 민간분양',
+      groups: ['공공분양', '민간분양'], key: 'accountInfo', title: '청약통장 정보', short: '청약통장', tag: '공공분양 · 민간분양', src: ['applyhome', 'lh'],
       lead: '분양(청약홈·LH 분양)은 청약통장의 가입 기간·납입 회차·예치금으로 1순위와 가점을 정해요.',
     },
     rental: {
-      groups: ['공공임대'], key: 'rentalInfo', title: '공공임대 자격 정보', tag: '공공임대',
+      groups: ['공공임대'], key: 'rentalInfo', title: '공공임대 자격 정보', short: '임대 자격', tag: '공공임대', src: ['lh', 'sh'],
       lead: '국민임대·행복주택·영구임대 등은 청약통장이 없어도 되는 경우가 많아요. 대신 수급 여부와 총자산(현금+부동산+자동차+금융자산−부채)으로 자격을 봐요.',
     },
   };
@@ -46,6 +46,16 @@
     민간임대: { src: ['applyhome'], extra: '추가 질문 없음', ex: '공공지원민간임대 등' },
   };
   const SRC_NAME = { applyhome: '청약홈', lh: 'LH', sh: 'SH' };
+  // 유형 버튼 맨 아래 한 줄: 이 유형을 고르면 필요한 추가 정보와 그 상태 (모든 버튼에서 같은 높이에 맞춘다)
+  function extraLine(g) {
+    const k = Object.keys(FLOWS).find((x) => FLOWS[x].groups.includes(g));
+    if (!k) return '<span class="tc-extra none">추가 정보 없음</span>';
+    const v = state.answers[FLOWS[k].key];
+    const name = FLOWS[k].short;
+    if (v === '입력') return `<span class="tc-extra ok">✓ ${name} 입력됨</span>`;
+    if (v === '나중에') return `<span class="tc-extra later">${name} 나중에</span>`;
+    return `<span class="tc-extra">${name} 입력 필요</span>`;
+  }
   typeOptions = function () {
     const t = state.answers.type; const all = t === '전체' || t == null; const picked = all ? new Set(TYPE_GROUPS) : typeSet(t);
     return `<p class="type-help">필요한 유형만 <b>여러 개</b> 고를 수 있어요. <b>전체</b>를 체크하면 모든 유형이 선택되고, 한 번 더 누르면 모두 풀려요.</p>
@@ -54,7 +64,7 @@
         <span class="tc-name">${on ? '✓ ' : ''}${g}</span>
         <span class="tc-src">${info.src.map((x) => `<i class="src-badge src-${x}">${SRC_NAME[x]}</i>`).join('')}</span>
         <span class="tc-ex">${info.ex}</span>
-        <span class="tc-extra${info.extra === '추가 질문 없음' ? ' none' : ''}">${info.extra === '추가 질문 없음' ? info.extra : `+ ${info.extra}`}</span></button>`; }).join('')}</div>
+        ${extraLine(g)}</button>`; }).join('')}</div>
       ${picked.size ? '' : '<small class="type-empty">아무 유형도 고르지 않으면 전체 유형으로 보여 드려요.</small>'}`;
   };
 
@@ -65,8 +75,11 @@
     return `<div class="flow-status">${list.map((k) => {
       const f = FLOWS[k]; const v = a[f.key]; const open = flow.open === k;
       const badge = v === '입력' ? '<em class="ok">입력함</em>' : v === '나중에' ? '<em class="later">나중에 입력</em>' : '<em class="todo">아직 안 함</em>';
-      if (!open) return `<div class="fs-card"><div class="fs-row"><span><b>${f.title}</b><small>${f.tag}</small></span>${badge}<button type="button" data-action="flow-open" data-value="${k}">${v === '입력' ? '수정' : '지금 입력'}</button></div></div>`;
-      return `<div class="fs-card open" id="fs-${k}"><div class="fs-row"><span><span class="dx-tag">${f.tag} 선택</span><b class="fs-title">${f.title}</b></span><button type="button" class="dx-later" data-action="flow-later">나중에 입력</button></div>
+      const mine = f.groups.filter((g) => pickedGroups(a.type).includes(g));   // 고른 유형만, 그 유형의 공고 출처만
+      const srcs = [...new Set(mine.flatMap((g) => TYPE_INFO[g]?.src || []))];
+      const tags = `<span class="fs-tags">${mine.map((g) => `<i class="fs-type">${g}</i>`).join('')}${srcs.map((x) => `<i class="src-badge src-${x}">${SRC_NAME[x]}</i>`).join('')}</span>`;
+      if (!open) return `<div class="fs-card"><div class="fs-row"><span><b>${f.title}</b>${tags}</span>${badge}<button type="button" data-action="flow-open" data-value="${k}">${v === '입력' ? '수정' : '지금 입력'}</button></div></div>`;
+      return `<div class="fs-card open" id="fs-${k}"><div class="fs-row"><span>${tags}<b class="fs-title">${f.title}</b></span><button type="button" class="dx-later" data-action="flow-later">나중에 입력</button></div>
         <p class="dx-lead">${f.lead}</p>${modalBody(k)}
         <div class="dx-foot"><span>${flow.queue.length ? `다음: ${FLOWS[flow.queue[0]].title}` : ''}</span><button type="button" class="btn secondary small" data-action="flow-later">나중에 입력</button><button type="button" class="btn small" data-action="flow-save">저장하기</button></div></div>`;
     }).join('')}</div>`;
