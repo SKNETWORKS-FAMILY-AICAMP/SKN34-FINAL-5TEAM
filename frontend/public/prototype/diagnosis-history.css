@@ -384,3 +384,10 @@
 .src-badge.src-lh{background:#e2f2e6;color:#1f6b3a}
 .src-badge.src-sh{background:#fdeadf;color:#b4501d}
 .tags .src-badge{padding:6px 9px;font-size:10px;margin-right:0}
+/* 진단 6단계: 공공임대 자산 상세 */
+.asset-box{padding:18px 20px;border-radius:14px;background:#f4f7f2;border:1px solid #dfe8dc}
+.asset-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;margin-top:16px}
+.asset-grid .field{margin-bottom:10px}
+.asset-sum{margin:6px 0 0;font-size:13px;color:#163f33}
+.asset-sum b{font-size:16px}
+.asset-sum small{color:#748079}

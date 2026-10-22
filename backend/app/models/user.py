@@ -43,6 +43,11 @@ class UserProfile(Base):
     won_within_5y: Mapped[bool | None] = mapped_column(Boolean, nullable=True)  # 최근 5년 안 세대 청약 당첨 이력 (규제지역 1순위 제한)
     minor_children: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 미성년 자녀 수 (2=2명 이상)
     household_size: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 세대 가구원 수 (임대 소득 기준이 가구원수별)
+    # 공공임대 총자산 판정용 (선택): 부동산·자동차·기타 금융자산·부채 (원). 하나라도 입력하면 '상세 입력'으로 본다
+    real_estate_value: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)
+    car_value: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)
+    other_financial_assets: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)
+    debt_amount: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)
     welfare_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # 수급·차상위 여부 (영구·매입임대 대상 판정)
     active_diagnosis_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 지금 '사용 중'으로 고른 진단 기록 id (없으면 가장 최근 기록)
     workplace_address: Mapped[str] = mapped_column(String(255), nullable=True)  # 직장 주소 (출퇴근 경로)

@@ -240,7 +240,12 @@ function profilePayload(email) {
     won_within_5y: a.won5 === '있어요' ? true : a.won5 === '없어요' ? false : null,
     minor_children: { 없음: 0, '1명': 1, '2명 이상': 2 }[a.children] ?? null,
     household_size: { '1인': 1, '2인': 2, '3인': 3, '4인': 4, '5인 이상': 5 }[a.household] ?? null,
-    welfare_status: a.welfare || null,                                    // 소득 구간의 대표값(원). 입력 안 함이면 null
+    welfare_status: a.welfare || null,
+    ...(() => {   // 공공임대 총자산 판정용 상세 자산 (만원 → 원). '자세히 입력'을 고른 경우에만 보낸다
+      const on = a.assetDetail === '자세히 입력할게요';
+      const won = (v) => (on ? Math.round((Number(v) || 0) * 10000) : null);
+      return { real_estate_value: won(a.realEstate), car_value: won(a.car), other_financial_assets: won(a.otherFin), debt_amount: won(a.debt) };
+    })(),                                    // 소득 구간의 대표값(원). 입력 안 함이면 null
     desired_region_code: REGION_CODE[a.wish] || null,
   };
 }
@@ -284,6 +289,12 @@ function diagnosisFromProfile(p) {
     children: ['없음', '1명', '2명 이상'][p.minor_children ?? -1] || state.answers.children,
     household: ['1인', '2인', '3인', '4인', '5인 이상'][(p.household_size ?? 0) - 1] || state.answers.household,
     welfare: p.welfare_status || state.answers.welfare,
+    ...(() => {
+      const keys = ['real_estate_value', 'car_value', 'other_financial_assets', 'debt_amount'];
+      if (!keys.some((k) => p[k] != null)) return { assetDetail: '나중에 할게요' };
+      const man = (v) => Math.round((Number(v) || 0) / 10000);
+      return { assetDetail: '자세히 입력할게요', realEstate: man(p.real_estate_value), car: man(p.car_value), otherFin: man(p.other_financial_assets), debt: man(p.debt_amount) };
+    })(),
     firstHome: p.is_first_time_buyer ? '없어요' : '있어요',
     income: incomeBand(p.annual_income == null ? null : Number(p.annual_income)),
     years: Math.round(months / 12),

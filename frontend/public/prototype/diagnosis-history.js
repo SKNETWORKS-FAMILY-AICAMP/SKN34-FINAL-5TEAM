@@ -37,7 +37,7 @@
   const routeNow = () => (location.hash.slice(1) || 'home').split('/')[0];
 
   // 지금 쓰고 있는 진단 = 이 브라우저의 진단 조건(state.diagnosis)과 같은 기록 (같은 게 여럿이면 가장 최근)
-  const COND_KEYS = ['age', 'marriage', 'head', 'region', 'ownership', 'firstHome', 'years', 'family', 'children', 'household', 'account', 'payments', 'deposit', 'won5', 'income', 'welfare', 'assets', 'wish', 'type'];
+  const COND_KEYS = ['age', 'marriage', 'head', 'region', 'ownership', 'firstHome', 'years', 'family', 'children', 'household', 'account', 'payments', 'deposit', 'won5', 'income', 'welfare', 'assets', 'assetDetail', 'realEstate', 'car', 'otherFin', 'debt', 'wish', 'type'];
   // 기록에 있는 항목만 비교한다 (예전 기록에는 나중에 생긴 질문이 없을 수 있어서)
   const sameCond = (rec, cur) => COND_KEYS.filter((k) => rec && k in rec).every((k) => String(rec[k] ?? '') === String(cur?.[k] ?? ''));
   // 사용 중 기록: 서버가 알려 준 기록(active). 서버 값이 없으면(예전 서버) 지금 조건과 같은 가장 최근 기록
@@ -180,7 +180,7 @@
       ['주택 소유', a.ownership === '무주택' ? (a.firstHome === '있어요' ? '무주택 (과거 소유)' : '무주택 (첫 집)') : a.ownership, 1],
       ['미성년 자녀', a.children, 2], ['가구원 수', a.household || '–', 4], ['납입 회차', `${a.payments ?? 0}회`, 3],
       ['예치금', man(a.deposit), 3], ['5년 내 당첨', a.won5 === '잘 모르겠어요' ? '모름' : a.won5, 3], ['연 소득', String(a.income || '').replace(/ 원$/, ''), 4],
-      ['보유 현금', man(a.assets), 4], ['수급·차상위', a.welfare === '아니요' ? '해당 없음' : (a.welfare || '–').replace(' 수급자', ''), 4], ['희망 지역', a.wish, 5], ['관심 유형', typeLabel(a.type), 5],
+      ['보유 현금', man(a.assets), 4], ['수급·차상위', a.welfare === '아니요' ? '해당 없음' : (a.welfare || '–').replace(' 수급자', ''), 4], ['총자산(추정)', a.assetDetail === '자세히 입력할게요' ? man((Number(a.assets) || 0) + (Number(a.realEstate) || 0) + (Number(a.car) || 0) + (Number(a.otherFin) || 0) - (Number(a.debt) || 0)) : '입력 안 함', 5], ['희망 지역', a.wish, 5], ['관심 유형', typeLabel(a.type), 5],
     ];
   }
   // 가점 구성 (서버 계산: 무주택 32 + 부양가족 35 + 통장 17)
@@ -379,7 +379,7 @@
       <div class="settings-actions"><button type="button" class="btn secondary small" data-action="acct-csv" ${n ? '' : 'disabled'}>${n ? `선택한 ${n}건 내려받기 (CSV · 엑셀)` : '내려받을 기록을 골라 주세요'}</button></div>`;
   }
   function csvOf(records) {
-    const cols = [['age', '연령대'], ['marriage', '혼인'], ['head', '세대주'], ['region', '현재 거주'], ['ownership', '주택 소유'], ['firstHome', '과거 주택 소유'], ['years', '무주택 기간(년)'], ['family', '부양가족'], ['children', '미성년 자녀'], ['household', '가구원 수'], ['account', '통장 가입(년)'], ['payments', '납입 회차'], ['deposit', '예치금(만원)'], ['won5', '5년 내 당첨'], ['income', '연 소득'], ['welfare', '수급·차상위'], ['assets', '보유 현금(만원)'], ['wish', '희망 지역'], ['type', '관심 유형']];
+    const cols = [['age', '연령대'], ['marriage', '혼인'], ['head', '세대주'], ['region', '현재 거주'], ['ownership', '주택 소유'], ['firstHome', '과거 주택 소유'], ['years', '무주택 기간(년)'], ['family', '부양가족'], ['children', '미성년 자녀'], ['household', '가구원 수'], ['account', '통장 가입(년)'], ['payments', '납입 회차'], ['deposit', '예치금(만원)'], ['won5', '5년 내 당첨'], ['income', '연 소득'], ['welfare', '수급·차상위'], ['realEstate', '부동산(만원)'], ['car', '자동차(만원)'], ['otherFin', '기타 금융자산(만원)'], ['debt', '부채(만원)'], ['assets', '보유 현금(만원)'], ['wish', '희망 지역'], ['type', '관심 유형']];
     const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
     const head = ['진단 일시', '청약 가점', '추천 공고 수', '자격 충족 수', ...cols.map(([, label]) => label)];
     const body = records.map((r) => [when(r.created_at, true), r.score, r.recommend_count, r.eligible_count, ...cols.map(([k]) => (k === 'type' ? typeLabel(r.answers?.type) : r.answers?.[k]))]);
@@ -501,6 +501,10 @@
     }
   };
 
+  // 진단 6단계 자산 상세: 금액을 바꾸면 총자산 합계를 다시 그린다 (app.js 가 값을 저장한 다음)
+  document.addEventListener('change', (e) => {
+    if (['realEstate', 'car', 'otherFin', 'debt'].includes(e.target.dataset?.answer)) setTimeout(render, 0);
+  });
   document.addEventListener('change', (e) => {
     if (e.target.matches?.('[data-dl-all]')) { hist.dlSel = e.target.checked ? new Set((hist.records || []).map((r) => r.id)) : new Set(); render(); return; }
     if (e.target.dataset?.dlPick) { const id = Number(e.target.dataset.dlPick); if (e.target.checked) hist.dlSel.add(id); else hist.dlSel.delete(id); render(); return; }
