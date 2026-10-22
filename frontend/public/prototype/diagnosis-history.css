@@ -378,3 +378,9 @@
 .rp-menu{left:auto;right:0}
 .badge.sp-badge{background:#fff0e4;color:#bd5d2b}
 .badge.sp-free{background:#e8f1fb;color:#2c5d8f}
+/* 공고 출처 배지: 청약홈 / LH / SH */
+.src-badge{display:inline-flex;align-items:center;flex:none;padding:2px 7px;margin-right:6px;border-radius:6px;font-size:10.5px;font-weight:800;line-height:1.5;vertical-align:1px;white-space:nowrap}
+.src-badge.src-applyhome{background:#e3eefb;color:#1f5aa6}
+.src-badge.src-lh{background:#e2f2e6;color:#1f6b3a}
+.src-badge.src-sh{background:#fdeadf;color:#b4501d}
+.tags .src-badge{padding:6px 9px;font-size:10px;margin-right:0}

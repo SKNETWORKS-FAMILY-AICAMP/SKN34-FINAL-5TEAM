@@ -285,7 +285,7 @@
       const open = myRecs().map((r) => ({ r, d: ddayOf(r.house) })).filter((x) => x.d != null && x.d >= 0).sort((x, y) => x.d - y.d);
       const rows = groupByName(open).slice(0, ROWS).map(({ r, d, n }) => `<a class="dash-soon-row" href="#detail/${r.house.id}">
         <span class="dash-soon-dday${d <= 3 ? ' hot' : ''}">${ddayText(d)}</span>
-        <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''}${['1순위 가능', '자격 가능'].includes(recStatus(r).label) ? ` · ${recStatus(r).label}` : ''}${r.badges?.length ? ` · ${esc(r.badges[0])}` : ''}</small></span></a>`).join('');
+        <span class="dash-soon-main"><b>${srcBadge(r.house)}${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''}${['1순위 가능', '자격 가능'].includes(recStatus(r).label) ? ` · ${recStatus(r).label}` : ''}${r.badges?.length ? ` · ${esc(r.badges[0])}` : ''}</small></span></a>`).join('');
       soonBox = foldBox('soon', '마감 임박한 내 추천 공고', '',
         rows ? `<div class="dash-soon-list">${rows}</div>` : '<p class="dash-soon-empty">지금 접수 마감이 다가오는 추천 공고가 없어요.</p>',
         open.length ? `<button type="button" class="dash-soon-more" data-action="dash-soon-all">${open.length}건 마감순으로 보기 →</button>` : '',
@@ -301,7 +301,7 @@
       const chips = `<div class="dash-mini-chips" role="group" aria-label="공고 보기">${filters.map(([k, label, cnt]) => `<button type="button" class="${f === k ? 'on' : ''}" data-action="dash-filter" data-value="${k}">${label} ${cnt}</button>`).join('')}<span class="dash-mini-note">자금 → 1순위 → 당첨 구간 순</span></div>`;
       const rows = groupByName(list.map((r) => ({ r, d: ddayOf(r.house) }))).slice(0, ROWS).map(({ r, d, n }) => `<a class="dash-soon-row" href="#detail/${r.house.id}">
         <span class="dash-soon-dday fp ${recStatus(r).cls}">${esc(recStatus(r).label)}</span>
-        <span class="dash-soon-main"><b>${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''} · ${r.eligible ? '자금 충족' : '자금 확인'}${r.badges?.length ? ` · ${esc(r.badges[0])}` : ''}${d != null && d >= 0 ? ` · ${ddayText(d)}` : ''}</small></span></a>`).join('');
+        <span class="dash-soon-main"><b>${srcBadge(r.house)}${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''} · ${r.eligible ? '자금 충족' : '자금 확인'}${r.badges?.length ? ` · ${esc(r.badges[0])}` : ''}${d != null && d >= 0 ? ` · ${ddayText(d)}` : ''}</small></span></a>`).join('');
       recsBox = foldBox('recs', '내 기준에 맞는 공고', '',
         chips + (rows ? `<div class="dash-soon-list">${rows}</div>` : '<p class="dash-soon-empty">조건에 맞는 공고가 없어요.</p>'),
         list.length ? `<button type="button" class="dash-soon-more" data-action="dash-all">${list.length}건 모두 보기 →</button>` : '',
