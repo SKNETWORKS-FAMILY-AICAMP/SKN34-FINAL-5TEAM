@@ -31,7 +31,9 @@
   const flow = { open: null, queue: [], advance: false };
   const allGroups = () => [...TYPE_GROUPS];
   const groupsOf = (type) => { const s = typeSet(type); return s.size ? [...s] : allGroups(); };
-  const neededFlows = (a) => Object.keys(FLOWS).filter((k) => FLOWS[k].groups.some((g) => groupsOf(a.type).includes(g)));
+  // 추가 질문은 '직접 고른' 유형 기준: 아무것도 안 고르면(빈 값) 묻지 않고, '전체'면 모두 묻는다
+  const pickedGroups = (type) => (type === '전체' || type == null ? allGroups() : [...typeSet(type)]);
+  const neededFlows = (a) => Object.keys(FLOWS).filter((k) => FLOWS[k].groups.some((g) => pickedGroups(a.type).includes(g)));
   const pendingFlows = (a) => neededFlows(a).filter((k) => !a[FLOWS[k].key]);
   const man = (v) => { const n = Number(v) || 0; return n >= 10000 ? `${(n / 10000).toFixed(n % 10000 ? 1 : 0)}억 원` : `${n.toLocaleString('ko-KR')}만 원`; };
   const num = (k, label, hint, attrs = 'min="0" max="10000000" step="100"') => `<div class="field"><label for="${k}">${label}</label><input id="${k}" type="number" ${attrs} value="${state.answers[k] ?? ''}" data-answer="${k}">${hint ? `<small>${hint}</small>` : ''}</div>`;
@@ -39,7 +41,7 @@
   // 유형별 추가 정보: 유형 버튼 바로 아래에 펼쳐지는 카드 (창을 띄우지 않아 다른 내용이 가려지지 않게)
   function flowStatus(a) {
     const list = neededFlows(a);
-    if (!list.length) return '<p class="flow-none">고른 유형은 추가로 입력할 정보가 없어요.</p>';
+    if (!list.length) return `<p class="flow-none">${pickedGroups(a.type).length ? '고른 유형은 추가로 입력할 정보가 없어요.' : '유형을 고르면 그 유형에만 필요한 질문이 여기에 펼쳐져요.'}</p>`;
     return `<div class="flow-status">${list.map((k) => {
       const f = FLOWS[k]; const v = a[f.key]; const open = flow.open === k;
       const badge = v === '입력' ? '<em class="ok">입력함</em>' : v === '나중에' ? '<em class="later">나중에 입력</em>' : '<em class="todo">아직 안 함</em>';
@@ -142,13 +144,18 @@
     if (act === 'flow-later') { e.preventDefault(); e.stopImmediatePropagation(); closeFlow('나중에'); return; }
     // 유형을 새로 고르면 그 유형에만 필요한 질문 창을 바로 연다 (app.js 가 값을 바꾼 다음에 비교)
     if (act === 'type-toggle' || act === 'type-all') {
-      const before = new Set(groupsOf(state.answers.type));
+      const before = new Set(pickedGroups(state.answers.type));
       const explicitBefore = typeSet(state.answers.type).size > 0 || state.answers.type === '전체';
       setTimeout(() => {
-        const after = groupsOf(state.answers.type);
-        const added = after.filter((g) => !explicitBefore || !before.has(g));
-        const keys = Object.keys(FLOWS).filter((k) => FLOWS[k].groups.some((g) => added.includes(g)) && state.answers[FLOWS[k].key] !== '입력');
-        openFlows(keys);
+        // 유형을 빼서 더 이상 필요 없는 카드는 닫는다
+        const need = neededFlows(state.answers);
+        flow.queue = flow.queue.filter((k) => need.includes(k));
+        if (flow.open && !need.includes(flow.open)) { flow.open = flow.queue.shift() || null; render(); }
+        const after = pickedGroups(state.answers.type);
+        const added = after.filter((g) => !before.has(g));
+        if (!added.length) return;
+        const keys = Object.keys(FLOWS).filter((k) => FLOWS[k].groups.some((g) => added.includes(g)) && state.answers[FLOWS[k].key] !== '입력' && k !== flow.open);
+        if (keys.length) openFlows(flow.open ? [flow.open, ...keys] : keys);
       }, 0);
       return;
     }
