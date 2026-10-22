@@ -48,6 +48,14 @@ class UserProfile(Base):
     car_value: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)
     other_financial_assets: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)
     debt_amount: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)
+    # 대출 추천용 (선택). loan_wanted=False면 대출 추천을 원하지 않음
+    loan_wanted: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    loan_purpose: Mapped[str | None] = mapped_column(String(20), nullable=True)  # 집 사기 / 전세·임대 보증금 / 대출 갈아타기
+    loan_need_amount: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)  # 필요한 대출 금액(원). 있으면 부족 자금 대신 쓴다
+    loan_term_years: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 원하는 상환 기간(년)
+    current_loan_type: Mapped[str | None] = mapped_column(String(30), nullable=True)  # 지금 받고 있는 대출 종류
+    current_loan_rate: Mapped[float | None] = mapped_column(Numeric(4, 2), nullable=True)  # 그 대출의 금리(%), 구간 대표값
+    current_loan_balance: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)  # 그 대출의 잔액(원)
     welfare_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # 수급·차상위 여부 (영구·매입임대 대상 판정)
     active_diagnosis_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 지금 '사용 중'으로 고른 진단 기록 id (없으면 가장 최근 기록)
     workplace_address: Mapped[str] = mapped_column(String(255), nullable=True)  # 직장 주소 (출퇴근 경로)

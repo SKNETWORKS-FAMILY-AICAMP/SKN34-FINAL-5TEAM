@@ -212,6 +212,37 @@ async function ensureUnits(id) {
 const INCOME_WON = { '3천만 원 이하': 25000000, '3천~5천만 원': 40000000, '5천~7천만 원': 60000000, '7천만~1억 원': 85000000, '1억 원 초과': 120000000 };
 const incomeBand = (won) => (won == null ? '입력 안 함' : Object.entries(INCOME_WON).reduce((best, [k, v]) => (Math.abs(v - won) < Math.abs(INCOME_WON[best] - won) ? k : best), '3천만 원 이하'));
 
+// 진단의 '대출 추천' 답변 (선택) ↔ 서버 값. 금리는 구간 대표값으로 보낸다
+const LOAN_RATE_MID = { '3% 미만': 2.5, '3%대': 3.5, '4%대': 4.5, '5%대': 5.5, '6% 이상': 6.5 };
+const LOAN_TERM_YEARS = { '10년': 10, '20년': 20, '30년': 30 };
+function loanPayload(a) {
+  const on = a.loanWanted === '받을래요';
+  const has = on && a.loanHas === '있어요';
+  const won = (v) => (v == null || v === '' ? null : Math.round(Number(v) * 10000));
+  return {
+    loan_wanted: a.loanWanted === '받을래요' ? true : a.loanWanted === '괜찮아요' ? false : null,
+    loan_purpose: on ? a.loanPurpose || null : null,
+    loan_need_amount: on && Number(a.loanNeed) > 0 ? won(a.loanNeed) : null,
+    loan_term_years: on ? LOAN_TERM_YEARS[a.loanTerm] ?? null : null,
+    current_loan_type: has ? a.loanType || null : null,
+    current_loan_rate: has ? LOAN_RATE_MID[a.loanRate] ?? null : null,
+    current_loan_balance: has ? won(a.loanBalance) : null,
+  };
+}
+function loanFromProfile(p) {
+  const near = (v) => Object.keys(LOAN_RATE_MID).find((k) => Math.abs(LOAN_RATE_MID[k] - Number(v)) < 0.51) || null;
+  return {
+    loanWanted: p.loan_wanted == null ? null : p.loan_wanted ? '받을래요' : '괜찮아요',
+    loanPurpose: p.loan_purpose || null,
+    loanNeed: p.loan_need_amount == null ? null : Math.round(Number(p.loan_need_amount) / 10000),
+    loanTerm: Object.keys(LOAN_TERM_YEARS).find((k) => LOAN_TERM_YEARS[k] === p.loan_term_years) || (p.loan_wanted ? '잘 모르겠어요' : null),
+    loanHas: p.current_loan_type || p.current_loan_balance != null ? '있어요' : p.loan_wanted ? '없어요' : null,
+    loanType: p.current_loan_type || null,
+    loanRate: p.current_loan_rate == null ? null : near(p.current_loan_rate),
+    loanBalance: p.current_loan_balance == null ? null : Math.round(Number(p.current_loan_balance) / 10000),
+  };
+}
+
 function profilePayload(email) {
   const a = state.diagnosis;
   const base = { email, ...(state.user?.member ? { nickname: state.user.name } : {}) };
@@ -250,6 +281,7 @@ function profilePayload(email) {
       return { real_estate_value: won(a.realEstate), car_value: won(a.car), other_financial_assets: won(a.otherFin), debt_amount: won(a.debt) };
     })(),                                    // 소득 구간의 대표값(원). 입력 안 함이면 null
     desired_region_code: REGION_CODE[a.wish] || null,
+    ...loanPayload(a),
   };
 }
 
@@ -310,6 +342,7 @@ function diagnosisFromProfile(p) {
     assets: Math.round((Number(p.available_assets) || 0) / 10000),            // 원 → 만원
     wish: REGION_NAME[p.desired_region_code] || '전체',
     type: '전체',
+    ...loanFromProfile(p),
   };
 }
 
