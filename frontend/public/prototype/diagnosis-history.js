@@ -267,14 +267,14 @@
   // 이름이 같은 공고(주택형만 다른 공고)는 한 줄로 묶는다
   function groupByName(list) {
     const m = new Map();
-    list.forEach((x) => { const k = x.r.house.name; if (m.has(k)) m.get(k).n += 1; else m.set(k, { ...x, n: 1 }); });
+    list.forEach((x) => { const k = x.r.house.name.replace(/^\s*\[정정공고\]\s*/, ''); const c = x.r.housingTypes || 1; if (m.has(k)) m.get(k).n += c; else m.set(k, { ...x, n: c }); });
     return [...m.values()];
   }
   const FP_CLASS = { '1순위 가능': 'fp-ok', '1순위 아님': 'fp-no', '확인 필요': 'fp-check' };
-  function foldBox(key, title, sub, body, more, badge) {
+  function foldBox(key, title, sub, body, more, badge, tone) {
     const open = fold[key] !== false;
     return `<section class="dash-fold${open ? ' open' : ''}" aria-label="${title}">
-      <button type="button" class="dash-fold-head" data-action="dash-fold" data-value="${key}" aria-expanded="${open}"><h4>${title}</h4>${sub ? `<small>${sub}</small>` : ''}${badge != null ? `<em class="dash-fold-badge${key === 'recs' ? ' green' : ''}">${badge}</em>` : ''}<span class="dash-fold-icon" aria-hidden="true"></span></button>
+      <button type="button" class="dash-fold-head" data-action="dash-fold" data-value="${key}" aria-expanded="${open}"><h4>${title}</h4>${sub ? `<small>${sub}</small>` : ''}${badge != null ? `<em class="dash-fold-badge${key === 'recs' ? ' green' : tone === 'calm' ? ' calm' : ''}">${badge}</em>` : ''}<span class="dash-fold-icon" aria-hidden="true"></span></button>
       ${open ? `<div class="dash-fold-body">${body}${more || ''}</div>` : ''}</section>`;
   }
   function dashSoon() {
@@ -293,8 +293,9 @@
         <span class="dash-soon-main"><b>${srcBadge(r.house)}${esc(r.house.name)}</b><small>${esc(r.house.region)} · ${esc(r.house.type)}${n > 1 ? ` · 주택형 ${n}개` : ''}${['1순위 가능', '자격 가능'].includes(recStatus(r).label) ? ` · ${recStatus(r).label}` : ''}${r.badges?.length ? ` · ${esc(r.badges[0])}` : ''}</small></span></a>`).join('');
       soonBox = foldBox('soon', '마감 임박한 내 추천 공고', '',
         rows ? `<div class="dash-soon-list">${rows}</div>` : '<p class="dash-soon-empty">지금 접수 마감이 다가오는 추천 공고가 없어요.</p>',
-        open.length ? `<button type="button" class="dash-soon-more" data-action="dash-soon-all">${open.length}건 마감순으로 보기 →</button>` : '',
-        `7일 안에 마감 ${open.filter((x) => x.d <= 7).length}건`);
+        open.length ? `<button type="button" class="dash-soon-more" data-action="dash-soon-all">${groupByName(open).length}건 마감순으로 보기 →</button>` : '',
+        (() => { const week = groupByName(open.filter((x) => x.d <= 7)).length; return week ? `7일 안에 마감 ${week}건` : `접수 중 ${groupByName(open).length}건`; })(),
+        groupByName(open.filter((x) => x.d <= 7)).length ? '' : 'calm');
     }
     let recsBox;
     if (loading) recsBox = foldBox('recs', '내 기준에 맞는 공고', '', '<p class="dash-soon-empty">추천 공고를 불러오는 중이에요…</p>');

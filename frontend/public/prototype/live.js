@@ -373,6 +373,7 @@ async function loadRecs() {
       eligible: item.eligible, score: item.score, band: item.percentile_band,
       fp: item.first_priority || '확인 필요', fpNotes: item.first_priority_notes || [],
       fit: item.fit || null, fitNotes: item.fit_notes || [], badges: item.badges || [],
+      housingTypes: item.housing_types || 1,   // 서버가 단지마다 한 줄로 묶어 준다 (주택형 수)
     }));
   } catch (error) { live.recsError = error.message; live.recs = []; }
   finally { live.recsLoading = false; }
