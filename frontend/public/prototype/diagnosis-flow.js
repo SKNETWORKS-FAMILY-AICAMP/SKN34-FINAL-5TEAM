@@ -126,9 +126,9 @@
     return `<div class="diagnosis-wrap reveal"><div class="diagnosis-head"><div class="eyebrow" style="justify-content:center">GET TO KNOW YOUR CONDITIONS</div><h1>내 집 찾기, 내 조건부터.</h1><p>관심 유형을 먼저 고르면, 그 유형에 필요한 것만 물어볼게요.</p></div>
       <div class="stepper">${STAGES.map((s, i) => `<button data-action="step" data-id="${i}" class="${i === state.step ? 'current' : i < state.step ? 'done' : ''}"><span>${i < state.step ? '✓' : i + 1}</span>${s}</button>`).join('')}</div>
       <div class="progress"><div style="width:${((state.step + 1) / STAGES.length) * 100}%"></div></div>
-      <div class="diagnosis-body"><section class="panel diagnosis-panel"><div class="step-count">STEP 0${state.step + 1} / 0${STAGES.length}</div><h2>${STAGES[state.step]}</h2><p class="description">${LEADS[state.step]}</p>${body}
+      <div class="diagnosis-body dx-single"><section class="panel diagnosis-panel${state.step === 0 ? ' dx-bare' : ''}"><div class="step-count">STEP 0${state.step + 1} / 0${STAGES.length}</div><h2>${STAGES[state.step]}</h2><p class="description">${LEADS[state.step]}</p>${body}
         <div class="step-actions"><button class="btn secondary" data-action="previous" ${state.step === 0 ? 'disabled' : ''}>이전</button><button class="btn" data-action="next">${state.step === 5 ? '진단 결과 보기' : '다음'} →</button></div></section>
-      <aside class="diagnosis-aside"><h3>유형별로 필요한 정보</h3><p>공통 질문은 단계로, 유형에만 필요한 질문은 유형을 고를 때 따로 물어봐요.</p><div class="flow-mini"><div>공공·민간분양 <span>청약통장</span></div><div>공공임대 <span>수급·총자산</span></div><div>민간임대 <span>추가 없음</span></div><div>모든 유형 <span>무주택·가족·소득</span></div></div><p>입력한 조건은 추천 계산을 위해 서버에 저장돼요.</p></aside></div></div>`;
+      </div></div>`;
   };
 
   /* ── 유형별 질문 창 ── */

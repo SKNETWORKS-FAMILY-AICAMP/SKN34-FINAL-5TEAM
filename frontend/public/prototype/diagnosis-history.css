@@ -467,3 +467,7 @@
 .flow-status .fs-tags{flex-direction:row;flex:none}
 .flow-status .fs-row>span>b{display:block}
 .tc-extra{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 진단: 오른쪽 안내 박스 없이 한 칸 + 1단계(유형 선택)는 흰 박스 없이 */
+.diagnosis-body.dx-single{grid-template-columns:1fr;max-width:820px;margin:0 auto}
+.diagnosis-panel.dx-bare{background:transparent;border:0;box-shadow:none;padding:6px 0 0}
