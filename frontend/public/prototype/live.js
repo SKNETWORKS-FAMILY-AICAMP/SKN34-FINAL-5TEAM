@@ -219,6 +219,9 @@ function profilePayload(email) {
   const now = new Date();
   const ageOffset = { '20대': 25, '30대': 35, '40대 이상': 45 }[a.age] ?? 35;      // 연령대의 가운데 나이로 출생 연도를 추정
   const joined = new Date(now); joined.setFullYear(now.getFullYear() - (Number(a.account) || 0));
+  // 청약통장: '나중에 입력'이면 모름(null), '통장 없음'이면 없음으로 보낸다 (분양을 안 고른 사람도 예전 값은 그대로)
+  const accountOn = a.accountInfo !== '나중에' && a.hasAccount !== '없어요';
+  const accountKnown = a.accountInfo !== '나중에';
   return {
     ...base,
     birth_date: `${now.getFullYear() - ageOffset}-01-01`,
@@ -228,19 +231,19 @@ function profilePayload(email) {
     is_first_time_buyer: a.ownership === '무주택' && a.firstHome !== '있어요',      // 세대원 포함 주택 소유 이력이 없어야 생애최초
     no_house_period_months: a.ownership === '무주택' ? Math.round((Number(a.years) || 0) * 12) : 0,
     dependents_count: Number(a.family) || 0,
-    subscription_account_type: '주택청약종합저축',
-    subscription_joined_at: joined.toISOString().slice(0, 10),
-    subscription_payment_count: Number(a.payments) || 0,
+    subscription_account_type: accountOn ? '주택청약종합저축' : null,
+    subscription_joined_at: accountOn ? joined.toISOString().slice(0, 10) : null,
+    subscription_payment_count: accountOn ? Number(a.payments) || 0 : 0,
     available_assets: (Number(a.assets) || 0) * 10000,                              // 만원 → 원
     annual_income: INCOME_WON[a.income] ?? null,
     // 청약 1순위 판정용 (모르면 null → 서버가 '확인 필요'로 표시)
     residence_region_code: REGION_CODE[a.region] || null,
     house_count: { 무주택: 0, '1주택': 1, '주택 보유': 1, '2주택 이상': 2 }[a.ownership] ?? null,
-    deposit_balance: a.deposit == null || a.deposit === '' ? null : Number(a.deposit) * 10000,     // 만원 → 원
-    won_within_5y: a.won5 === '있어요' ? true : a.won5 === '없어요' ? false : null,
+    deposit_balance: !accountKnown ? null : !accountOn ? 0 : a.deposit == null || a.deposit === '' ? null : Number(a.deposit) * 10000,     // 만원 → 원
+    won_within_5y: !accountKnown ? null : a.won5 === '있어요' ? true : a.won5 === '없어요' ? false : null,
     minor_children: { 없음: 0, '1명': 1, '2명 이상': 2 }[a.children] ?? null,
     household_size: { '1인': 1, '2인': 2, '3인': 3, '4인': 4, '5인 이상': 5 }[a.household] ?? null,
-    welfare_status: a.welfare || null,
+    welfare_status: a.rentalInfo === '입력' ? a.welfare || null : null,   // 공공임대 질문 창에서 입력한 경우만
     ...(() => {   // 공공임대 총자산 판정용 상세 자산 (만원 → 원). '자세히 입력'을 고른 경우에만 보낸다
       const on = a.assetDetail === '자세히 입력할게요';
       const won = (v) => (on ? Math.round((Number(v) || 0) * 10000) : null);
@@ -289,6 +292,9 @@ function diagnosisFromProfile(p) {
     children: ['없음', '1명', '2명 이상'][p.minor_children ?? -1] || state.answers.children,
     household: ['1인', '2인', '3인', '4인', '5인 이상'][(p.household_size ?? 0) - 1] || state.answers.household,
     welfare: p.welfare_status || state.answers.welfare,
+    hasAccount: p.subscription_joined_at ? '있어요' : p.deposit_balance != null && Number(p.deposit_balance) === 0 ? '없어요' : state.answers.hasAccount,
+    accountInfo: p.subscription_joined_at || (p.deposit_balance != null && Number(p.deposit_balance) === 0) ? '입력' : '나중에',
+    rentalInfo: p.welfare_status != null || ['real_estate_value', 'car_value', 'other_financial_assets', 'debt_amount'].some((k) => p[k] != null) ? '입력' : state.answers.rentalInfo,
     ...(() => {
       const keys = ['real_estate_value', 'car_value', 'other_financial_assets', 'debt_amount'];
       if (!keys.some((k) => p[k] != null)) return { assetDetail: '나중에 할게요' };

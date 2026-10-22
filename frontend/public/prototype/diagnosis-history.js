@@ -37,7 +37,7 @@
   const routeNow = () => (location.hash.slice(1) || 'home').split('/')[0];
 
   // 지금 쓰고 있는 진단 = 이 브라우저의 진단 조건(state.diagnosis)과 같은 기록 (같은 게 여럿이면 가장 최근)
-  const COND_KEYS = ['age', 'marriage', 'head', 'region', 'ownership', 'firstHome', 'years', 'family', 'children', 'household', 'account', 'payments', 'deposit', 'won5', 'income', 'welfare', 'assets', 'assetDetail', 'realEstate', 'car', 'otherFin', 'debt', 'wish', 'type'];
+  const COND_KEYS = ['age', 'marriage', 'head', 'region', 'ownership', 'firstHome', 'years', 'family', 'children', 'household', 'account', 'payments', 'deposit', 'won5', 'income', 'welfare', 'assets', 'assetDetail', 'realEstate', 'car', 'otherFin', 'debt', 'hasAccount', 'accountInfo', 'rentalInfo', 'wish', 'type'];
   // 기록에 있는 항목만 비교한다 (예전 기록에는 나중에 생긴 질문이 없을 수 있어서)
   const sameCond = (rec, cur) => COND_KEYS.filter((k) => rec && k in rec).every((k) => String(rec[k] ?? '') === String(cur?.[k] ?? ''));
   // 사용 중 기록: 서버가 알려 준 기록(active). 서버 값이 없으면(예전 서버) 지금 조건과 같은 가장 최근 기록
@@ -176,18 +176,23 @@
   function condRows(a) {
     const man = (v) => (v === '' || v == null || !Number(v) ? '입력 안 함' : Number(v) >= 10000 ? `${(Number(v) / 10000).toFixed(Number(v) % 10000 ? 1 : 0)}억 원` : `${Number(v).toLocaleString('ko-KR')}만 원`);
     return [
-      ['연령대', a.age, 0], ['혼인', a.marriage, 0], ['세대주', a.head, 0], ['현재 거주', a.region, 0],
-      ['주택 소유', a.ownership === '무주택' ? (a.firstHome === '있어요' ? '무주택 (과거 소유)' : '무주택 (첫 집)') : a.ownership, 1],
-      ['미성년 자녀', a.children, 2], ['가구원 수', a.household || '–', 4], ['납입 회차', `${a.payments ?? 0}회`, 3],
-      ['예치금', man(a.deposit), 3], ['5년 내 당첨', a.won5 === '잘 모르겠어요' ? '모름' : a.won5, 3], ['연 소득', String(a.income || '').replace(/ 원$/, ''), 4],
-      ['보유 현금', man(a.assets), 4], ['수급·차상위', a.welfare === '아니요' ? '해당 없음' : (a.welfare || '–').replace(' 수급자', ''), 4], ['총자산(추정)', a.assetDetail === '자세히 입력할게요' ? man((Number(a.assets) || 0) + (Number(a.realEstate) || 0) + (Number(a.car) || 0) + (Number(a.otherFin) || 0) - (Number(a.debt) || 0)) : '입력 안 함', 5], ['희망 지역', a.wish, 5], ['관심 유형', typeLabel(a.type), 5],
+      ['연령대', a.age, 1], ['혼인', a.marriage, 1], ['세대주', a.head, 1], ['현재 거주', a.region, 1],
+      ['주택 소유', a.ownership === '무주택' ? (a.firstHome === '있어요' ? '무주택 (과거 소유)' : '무주택 (첫 집)') : a.ownership, 2],
+      ['미성년 자녀', a.children, 3], ['가구원 수', a.household || '–', 3],
+      ['납입 회차', a.hasAccount === '없어요' ? '통장 없음' : a.accountInfo === '나중에' ? '나중에 입력' : `${a.payments ?? 0}회`, 'account'],
+      ['예치금', a.hasAccount === '없어요' ? '통장 없음' : a.accountInfo === '나중에' ? '나중에 입력' : man(a.deposit), 'account'],
+      ['5년 내 당첨', a.accountInfo === '나중에' ? '나중에 입력' : a.won5 === '잘 모르겠어요' ? '모름' : a.won5, 'account'],
+      ['연 소득', String(a.income || '').replace(/ 원$/, ''), 4], ['보유 현금', man(a.assets), 4],
+      ['수급·차상위', a.rentalInfo !== '입력' ? '나중에 입력' : a.welfare === '아니요' ? '해당 없음' : (a.welfare || '–').replace(' 수급자', ''), 'rental'],
+      ['총자산(추정)', a.assetDetail === '자세히 입력할게요' ? man((Number(a.assets) || 0) + (Number(a.realEstate) || 0) + (Number(a.car) || 0) + (Number(a.otherFin) || 0) - (Number(a.debt) || 0)) : '나중에 입력', 'rental'],
+      ['희망 지역', a.wish, 0], ['관심 유형', typeLabel(a.type), 0],
     ];
   }
   // 가점 구성 (서버 계산: 무주택 32 + 부양가족 35 + 통장 17)
   function scorePage() {
     const sb = hist.score;
     if (!sb) return '<p class="ds-hint">가점 구성을 불러오는 중이에요…</p>';
-    const STEP = { no_house: 1, dependents: 2, account: 3 };
+    const STEP = { no_house: 2, dependents: 3, account: 'account' };
     return `<div class="sc-list">${sb.items.map((it) => `<div role="button" tabindex="0" class="sc-row" data-action="cond-edit" data-value="${STEP[it.key] ?? 0}">
         <span class="sc-label"><b>${it.label}${it.rule ? `<span class="sc-q" tabindex="0" role="button" aria-label="${it.label} 점수 계산 방법"><span aria-hidden="true">?</span><span class="sc-tip" role="tooltip"><strong>${it.label} · 최대 ${it.max}점</strong>${esc(it.rule)}${it.tip ? `<em>${esc(it.tip)}</em>` : ''}</span></span>` : ''}</b><small>${esc(it.basis)}</small></span>
         <span class="sc-bar"><i style="width:${Math.round((it.score / it.max) * 100)}%"></i></span>
@@ -472,7 +477,8 @@
     const entering = routeNow();
     if (entering === 'diagnosis' && hist.lastRoute !== 'diagnosis' && state.diagnosis) {
       state.answers = { ...state.answers, ...(hist.records?.[0]?.answers || {}), ...state.diagnosis };   // 이 브라우저의 최근 진단이 가장 최신
-      state.step = hist.editStep ?? 0;   // 마이페이지 '이 단계 수정'으로 왔으면 그 단계부터
+      state.step = typeof hist.editStep === 'number' ? hist.editStep : 0;   // 마이페이지 '이 단계 수정'으로 왔으면 그 단계부터
+      if (typeof hist.editStep === 'string') { const k = hist.editStep; setTimeout(() => window.openDiagnosisFlow?.(k), 0); }   // 청약통장·공공임대 항목은 질문 창으로
     }
     hist.editStep = null;
     hist.lastRoute = entering;
@@ -501,10 +507,6 @@
     }
   };
 
-  // 진단 6단계 자산 상세: 금액을 바꾸면 총자산 합계를 다시 그린다 (app.js 가 값을 저장한 다음)
-  document.addEventListener('change', (e) => {
-    if (['realEstate', 'car', 'otherFin', 'debt'].includes(e.target.dataset?.answer)) setTimeout(render, 0);
-  });
   document.addEventListener('change', (e) => {
     if (e.target.matches?.('[data-dl-all]')) { hist.dlSel = e.target.checked ? new Set((hist.records || []).map((r) => r.id)) : new Set(); render(); return; }
     if (e.target.dataset?.dlPick) { const id = Number(e.target.dataset.dlPick); if (e.target.checked) hist.dlSel.add(id); else hist.dlSel.delete(id); render(); return; }
@@ -551,7 +553,7 @@
     } else if (act === 'ds-go') {
       hist.slide = Number(b.dataset.value) || 0; render(); if (hist.slide === 1) loadScore();
     } else if (act === 'cond-edit') {
-      hist.editStep = Number(b.dataset.value) || 0; go('diagnosis'); window.scrollTo(0, 0);
+      const v = b.dataset.value; hist.editStep = /^\d+$/.test(v) ? Number(v) : v; go('diagnosis'); window.scrollTo(0, 0);
     } else if (act === 'rp-del') {
       hist.pickDel = Number(b.dataset.id); render();
     } else if (act === 'rp-del-no') {
