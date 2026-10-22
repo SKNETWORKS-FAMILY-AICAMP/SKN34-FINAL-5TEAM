@@ -42,6 +42,22 @@ class UserProfile(Base):
     deposit_balance: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)  # 청약통장 잔액(원, 민영주택 예치금 기준)
     won_within_5y: Mapped[bool | None] = mapped_column(Boolean, nullable=True)  # 최근 5년 안 세대 청약 당첨 이력 (규제지역 1순위 제한)
     minor_children: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 미성년 자녀 수 (2=2명 이상)
+    household_size: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 세대 가구원 수 (임대 소득 기준이 가구원수별)
+    # 공공임대 총자산 판정용 (선택): 부동산·자동차·기타 금융자산·부채 (원). 하나라도 입력하면 '상세 입력'으로 본다
+    real_estate_value: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)
+    car_value: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)
+    other_financial_assets: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)
+    debt_amount: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)
+    # 대출 추천용 (선택). loan_wanted=False면 대출 추천을 원하지 않음
+    loan_wanted: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    loan_purpose: Mapped[str | None] = mapped_column(String(20), nullable=True)  # 집 사기 / 전세·임대 보증금 / 대출 갈아타기
+    loan_need_amount: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)  # 필요한 대출 금액(원). 있으면 부족 자금 대신 쓴다
+    loan_term_years: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 원하는 상환 기간(년)
+    current_loan_type: Mapped[str | None] = mapped_column(String(30), nullable=True)  # 지금 받고 있는 대출 종류
+    current_loan_rate: Mapped[float | None] = mapped_column(Numeric(4, 2), nullable=True)  # 그 대출의 금리(%), 구간 대표값
+    current_loan_balance: Mapped[int | None] = mapped_column(Numeric(14, 0), nullable=True)  # 그 대출의 잔액(원)
+    credit_score_band: Mapped[str | None] = mapped_column(String(20), nullable=True)  # 신용점수 구간 (900점 초과 / 801~900점 / … / 600점 이하 / 잘 모르겠어요)
+    welfare_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # 수급·차상위 여부 (영구·매입임대 대상 판정)
     active_diagnosis_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 지금 '사용 중'으로 고른 진단 기록 id (없으면 가장 최근 기록)
     workplace_address: Mapped[str] = mapped_column(String(255), nullable=True)  # 직장 주소 (출퇴근 경로)
     home_address: Mapped[str] = mapped_column(String(255), nullable=True)  # 현재 집 주소 (출퇴근 비교)

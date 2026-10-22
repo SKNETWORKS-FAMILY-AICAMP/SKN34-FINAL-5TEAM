@@ -192,12 +192,8 @@
     m.raf = requestAnimationFrame(step);
   }
 
-  // 진단 단계마다 "나중에 입력하기": 진단을 멈추고 메인으로 (입력한 답은 이 화면을 닫기 전까지 남아 있다)
-  function addLaterButton() {
-    const bar = $('.step-actions');
-    if (!bar || bar.querySelector('[data-action="diagnosis-later"]')) return;
-    bar.querySelector('[data-action="next"]')?.insertAdjacentHTML('beforebegin', '<button type="button" class="lp-later" data-action="diagnosis-later">나중에 입력하기</button>');
-  }
+  // 진단 단계의 "나중에 입력하기"는 diagnosis-flow.js 가 단계마다 직접 그린다 (누르면 그 단계를 건너뛸 수 있게 '다음'이 나타남)
+  function addLaterButton() {}
 
   const prevRender = render;
   render = function () {
@@ -260,13 +256,6 @@
     if (act === 'landing-open') { e.preventDefault(); openPanel(); return; }
     if (act === 'landing-close') { e.preventDefault(); closePanel(); return; }
     if (act === 'redo-diagnosis') { e.preventDefault(); state.step = 0; if (state.diagnosis) state.answers = { ...state.answers, ...state.diagnosis }; go('diagnosis'); window.scrollTo(0, 0); return; }
-    if (act === 'diagnosis-later') {
-      e.preventDefault(); e.stopImmediatePropagation();
-      landing.open = false; state.step = 0;
-      go('home'); window.scrollTo(0, 0);
-      toast('진단은 상단 "청약 진단"에서 언제든 할 수 있어요.');
-      return;
-    }
     if (act === 'logout') { setTimeout(() => { if (!isMember()) go('start'); }, 0); return; }   // 로그아웃하면 첫 페이지로
     if (routeNow() === 'start' && act === 'next' && state.step === 5) {
       e.preventDefault(); e.stopImmediatePropagation();

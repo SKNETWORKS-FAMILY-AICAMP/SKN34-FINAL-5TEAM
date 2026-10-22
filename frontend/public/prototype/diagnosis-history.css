@@ -376,3 +376,116 @@
 .dash-diag-left .dash-diag-actions{justify-content:center}
 .dash-diag-left .dash-diag-report{flex-basis:100%;text-align:center}
 .rp-menu{left:auto;right:0}
+.badge.sp-badge{background:#fff0e4;color:#bd5d2b}
+.badge.sp-free{background:#e8f1fb;color:#2c5d8f}
+/* 공고 출처 배지: 청약홈 / LH / SH */
+.src-badge{display:inline-flex;align-items:center;flex:none;padding:2px 7px;margin-right:6px;border-radius:6px;font-size:10.5px;font-weight:800;line-height:1.5;vertical-align:1px;white-space:nowrap}
+.src-badge.src-applyhome{background:#e3eefb;color:#1f5aa6}
+.src-badge.src-lh{background:#e2f2e6;color:#1f6b3a}
+.src-badge.src-sh{background:#fdeadf;color:#b4501d}
+.tags .src-badge{padding:6px 9px;font-size:10px;margin-right:0}
+/* 진단 6단계: 공공임대 자산 상세 */
+.asset-box{padding:18px 20px;border-radius:14px;background:#f4f7f2;border:1px solid #dfe8dc}
+.asset-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;margin-top:16px}
+.asset-grid .field{margin-bottom:10px}
+.asset-sum{margin:6px 0 0;font-size:13px;color:#163f33}
+.asset-sum b{font-size:16px}
+.asset-sum small{color:#748079}
+/* 새 진단 흐름: 유형별 추가 정보 상태 · 확인 단계 · 질문 창 */
+.flow-status{display:flex;flex-direction:column;gap:6px;margin:-6px 0 22px}
+.flow-status>div{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:#f4f7f2;border:1px solid #dfe8dc}
+.flow-status span{flex:1;display:flex;flex-direction:column}
+.flow-status b{font-size:13px}
+.flow-status small{font-size:11px;color:#748079}
+.flow-status em{font-style:normal;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px}
+.flow-status em.ok{background:#163f33;color:#fff}
+.flow-status em.later{background:#fff1d6;color:#9a6a00}
+.flow-status em.todo{background:#fde9de;color:#b4501d}
+.flow-status .fs-row>button:not(.dx-later){padding:6px 12px;border-radius:9px;border:1px solid #163f33;background:#fff;color:#163f33;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.flow-none{margin:-6px 0 22px;font-size:12.5px;color:#748079}
+.dx-summary{display:flex;flex-direction:column;border:1px solid var(--line,#e2dccf);border-radius:14px;overflow:hidden;margin-bottom:20px}
+.dx-summary button{display:grid;grid-template-columns:110px 1fr auto;gap:12px;align-items:center;padding:12px 16px;border:0;border-top:1px solid var(--line,#e2dccf);background:#fff;font:inherit;text-align:left;cursor:pointer}
+.dx-summary button:first-child{border-top:0}
+.dx-summary button:hover{background:#f6f9f4}
+.dx-summary span{font-size:12px;color:#748079}
+.dx-summary b{font-size:13.5px}
+.dx-summary i{font-style:normal;font-size:11.5px;color:#ef783e;font-weight:800}
+.dx-sub{font-size:14px;margin:0 0 12px}
+.dx-modal-back{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:20px;background:#0f241e99;backdrop-filter:blur(4px)}
+.dx-modal{width:100%;max-width:620px;max-height:90vh;overflow:auto;background:#fff;border-radius:22px;padding:26px 30px;box-shadow:0 24px 70px #0005}
+.dx-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.dx-head h2{margin:6px 0 0;font-size:23px}
+.dx-tag{display:inline-block;font-size:11px;font-weight:800;color:#ef783e;background:#fff0e4;border-radius:999px;padding:3px 10px}
+.dx-later{flex:none;padding:7px 12px;border-radius:9px;border:1px solid var(--line,#e2dccf);background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#5f6b64;cursor:pointer}
+.dx-later:hover{border-color:#163f33;color:#163f33}
+.dx-lead{margin:10px 0 18px;font-size:12.5px;line-height:1.7;color:#5f6b64}
+.dx-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.dx-grid .field{margin-bottom:14px}
+.dx-note{font-size:12.5px;color:#5f6b64;background:#f4f7f2;border-radius:12px;padding:12px 14px}
+.dx-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line,#e2dccf)}
+.dx-foot span{margin-right:auto;font-size:12px;color:#748079}
+@media (max-width:640px){.dx-grid{grid-template-columns:1fr}.dx-summary button{grid-template-columns:84px 1fr auto}}
+/* 유형별 추가 정보: 펼침 카드 */
+.fs-card{border-radius:12px;background:#f4f7f2;border:1px solid #dfe8dc}
+.fs-card.open{background:#fff;border:2px solid #163f33;padding:16px 18px 14px;box-shadow:0 8px 24px #163f3314}
+.fs-row{display:flex;align-items:center;gap:10px;padding:10px 14px}
+.fs-card.open .fs-row{padding:0}
+.fs-row>span{flex:1;display:flex;flex-direction:column;gap:2px}
+.fs-row b{font-size:13px}
+.fs-row small{font-size:11px;color:#748079}
+.fs-title{font-size:17px!important;margin-top:4px}
+.fs-row em{font-style:normal;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px}
+.fs-row em.ok{background:#163f33;color:#fff}
+.fs-row em.later{background:#fff1d6;color:#9a6a00}
+.fs-row em.todo{background:#fde9de;color:#b4501d}
+.fs-row>button:not(.dx-later){padding:6px 12px;border-radius:9px;border:1px solid #163f33;background:#fff;color:#163f33;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.fs-card.open .dx-lead{margin:8px 0 14px}
+.fs-card.open .dx-foot{margin-top:12px;padding-top:12px}
+.flow-status{gap:8px}
+.flow-status>div.fs-card{display:block;padding:0}
+.flow-status>div.fs-card.open{padding:16px 18px 14px}
+.flow-status .fs-row em{flex:none}
+.fs-row .dx-tag{align-self:flex-start}
+/* 관심 유형 버튼: 출처 배지 · 예시 · 추가 질문 */
+.type-cards .option{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 8px}
+.tc-name{font-size:13.5px;font-weight:800}
+.tc-src{display:flex;gap:4px;justify-content:center}
+.tc-src .src-badge{margin:0;font-style:normal}
+.tc-ex{font-size:10.5px;color:#748079;font-weight:500;line-height:1.35}
+.tc-extra{font-size:10.5px;font-weight:800;color:#d65a1f}
+.tc-extra.none{color:#9aa69b;font-weight:600}
+/* 유형 버튼 아래 줄 같은 높이 + 상태색, 추가 정보 카드의 유형·출처 태그 */
+.type-cards{align-items:stretch}
+.type-cards .option{height:auto}
+.tc-extra{margin-top:auto;padding-top:6px;border-top:1px dashed #dfe8dc;width:100%;text-align:center}
+.tc-extra.ok{color:#163f33}
+.tc-extra.later{color:#9a6a00}
+.fs-tags{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:3px}
+.fs-type{font-style:normal;font-size:10.5px;font-weight:800;color:#163f33;background:#e6efe8;border-radius:6px;padding:2px 7px}
+.fs-tags .src-badge{margin:0;font-style:normal}
+.fs-card.open .fs-tags{margin:0 0 4px}
+.flow-status .fs-tags{flex-direction:row;flex:none}
+.flow-status .fs-row>span>b{display:block}
+.tc-extra{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 진단: 오른쪽 안내 박스 없이 한 칸 + 1단계(유형 선택)는 흰 박스 없이 */
+.diagnosis-body.dx-single{grid-template-columns:1fr;max-width:820px;margin:0 auto}
+.diagnosis-panel.dx-bare{background:transparent;border:0;box-shadow:none;padding:6px 0 0}
+/* 모든 단계 같은 레이아웃: 흰 박스 없이, 단계 제목은 가운데 */
+.diagnosis-panel.dx-bare>.step-count,.diagnosis-panel.dx-bare>h2,.diagnosis-panel.dx-bare>.description{text-align:center}
+.diagnosis-panel.dx-bare>.step-count{display:block}
+.diagnosis-panel.dx-bare>.description{margin-bottom:30px}
+.diagnosis-panel.dx-bare .step-actions{align-items:center}
+.stepper button:disabled{cursor:default;opacity:.55}
+/* '다음'은 답했을 때만, 아니면 '나중에 입력하기' */
+.step-actions .sa-right{display:flex;align-items:center;gap:12px;margin-left:auto}
+.step-actions .sa-hint{font-size:12px;color:#8a958c}
+.step-actions .sa-skip{white-space:nowrap}
+.sa-later{display:inline-block;font-style:normal;font-size:11px;font-weight:700;color:#9a6a00;background:#fff4d6;border-radius:999px;padding:3px 9px;margin-right:4px}
+.dx-summary .sa-later{margin-right:6px}
+/* 대출 추천(선택) 카드 */
+.loan-card{margin-top:26px}
+.loan-card .field{margin-top:18px}
+.loan-card>.options{margin-top:4px}
+@media (max-width:640px){.step-actions .sa-hint{display:none}}
+.loan-extra-head{margin-top:40px}
