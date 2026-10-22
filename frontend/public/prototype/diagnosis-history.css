@@ -446,3 +446,11 @@
 .flow-status>div.fs-card.open{padding:16px 18px 14px}
 .flow-status .fs-row em{flex:none}
 .fs-row .dx-tag{align-self:flex-start}
+/* 관심 유형 버튼: 출처 배지 · 예시 · 추가 질문 */
+.type-cards .option{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 8px}
+.tc-name{font-size:13.5px;font-weight:800}
+.tc-src{display:flex;gap:4px;justify-content:center}
+.tc-src .src-badge{margin:0;font-style:normal}
+.tc-ex{font-size:10.5px;color:#748079;font-weight:500;line-height:1.35}
+.tc-extra{font-size:10.5px;font-weight:800;color:#d65a1f}
+.tc-extra.none{color:#9aa69b;font-weight:600}

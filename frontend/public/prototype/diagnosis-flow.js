@@ -38,6 +38,26 @@
   const man = (v) => { const n = Number(v) || 0; return n >= 10000 ? `${(n / 10000).toFixed(n % 10000 ? 1 : 0)}억 원` : `${n.toLocaleString('ko-KR')}만 원`; };
   const num = (k, label, hint, attrs = 'min="0" max="10000000" step="100"') => `<div class="field"><label for="${k}">${label}</label><input id="${k}" type="number" ${attrs} value="${state.answers[k] ?? ''}" data-answer="${k}">${hint ? `<small>${hint}</small>` : ''}</div>`;
 
+  // 관심 유형 버튼: 이름 아래에 공고 출처(청약홈·LH·SH) 배지와, 고르면 더 묻는 정보를 작게 표시
+  const TYPE_INFO = {
+    공공분양: { src: ['applyhome', 'lh'], extra: '청약통장', ex: '국민주택·신혼희망타운·LH 분양' },
+    민간분양: { src: ['applyhome'], extra: '청약통장', ex: '민영 아파트·오피스텔·무순위' },
+    공공임대: { src: ['lh', 'sh'], extra: '수급·총자산', ex: '국민·행복·영구·매입임대' },
+    민간임대: { src: ['applyhome'], extra: '추가 질문 없음', ex: '공공지원민간임대 등' },
+  };
+  const SRC_NAME = { applyhome: '청약홈', lh: 'LH', sh: 'SH' };
+  typeOptions = function () {
+    const t = state.answers.type; const all = t === '전체' || t == null; const picked = all ? new Set(TYPE_GROUPS) : typeSet(t);
+    return `<p class="type-help">필요한 유형만 <b>여러 개</b> 고를 수 있어요. <b>전체</b>를 체크하면 모든 유형이 선택되고, 한 번 더 누르면 모두 풀려요.</p>
+      <label class="type-all"><input type="checkbox" data-action="type-all" ${all ? 'checked' : ''}> 전체 유형 보기</label>
+      <div class="options type-options type-cards">${TYPE_GROUPS.map((g) => { const info = TYPE_INFO[g] || { src: [], extra: '', ex: '' }; const on = picked.has(g); return `<button type="button" class="option ${on ? 'selected' : ''}" data-action="type-toggle" data-value="${g}" aria-pressed="${on}">
+        <span class="tc-name">${on ? '✓ ' : ''}${g}</span>
+        <span class="tc-src">${info.src.map((x) => `<i class="src-badge src-${x}">${SRC_NAME[x]}</i>`).join('')}</span>
+        <span class="tc-ex">${info.ex}</span>
+        <span class="tc-extra${info.extra === '추가 질문 없음' ? ' none' : ''}">${info.extra === '추가 질문 없음' ? info.extra : `+ ${info.extra}`}</span></button>`; }).join('')}</div>
+      ${picked.size ? '' : '<small class="type-empty">아무 유형도 고르지 않으면 전체 유형으로 보여 드려요.</small>'}`;
+  };
+
   // 유형별 추가 정보: 유형 버튼 바로 아래에 펼쳐지는 카드 (창을 띄우지 않아 다른 내용이 가려지지 않게)
   function flowStatus(a) {
     const list = neededFlows(a);
