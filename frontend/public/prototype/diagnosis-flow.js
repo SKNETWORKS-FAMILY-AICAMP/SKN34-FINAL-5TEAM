@@ -2,7 +2,7 @@
  *
  * 1) 관심 유형을 가장 먼저 고른다 — 유형마다 필요한 정보가 다르기 때문.
  * 2) 모든 유형에 공통으로 필요한 질문만 단계(기본 정보 → 주택 소유 → 가족 구성 → 소득·자산)로 묻는다.
- * 3) 유형에만 필요한 질문은 그 유형을 고르는 순간 창으로 바로 묻는다 (오른쪽 위·아래 '나중에 입력'으로 미룰 수 있음).
+ * 3) 유형에만 필요한 질문은 그 유형을 고르는 순간 유형 버튼 바로 아래에 펼쳐서 묻는다 (오른쪽 위·아래 '나중에 입력'으로 미룰 수 있음).
  *    - 공공분양·민간분양 → 청약통장 (가입 기간·납입 회차·예치금·5년 내 당첨)
  *    - 공공임대 → 수급·차상위 여부, 총자산(부동산·자동차·금융자산·부채)
  *    - 민간임대 → 추가 질문 없음 (무주택 여부만 보면 됨)
@@ -36,13 +36,17 @@
   const man = (v) => { const n = Number(v) || 0; return n >= 10000 ? `${(n / 10000).toFixed(n % 10000 ? 1 : 0)}억 원` : `${n.toLocaleString('ko-KR')}만 원`; };
   const num = (k, label, hint, attrs = 'min="0" max="10000000" step="100"') => `<div class="field"><label for="${k}">${label}</label><input id="${k}" type="number" ${attrs} value="${state.answers[k] ?? ''}" data-answer="${k}">${hint ? `<small>${hint}</small>` : ''}</div>`;
 
+  // 유형별 추가 정보: 유형 버튼 바로 아래에 펼쳐지는 카드 (창을 띄우지 않아 다른 내용이 가려지지 않게)
   function flowStatus(a) {
     const list = neededFlows(a);
     if (!list.length) return '<p class="flow-none">고른 유형은 추가로 입력할 정보가 없어요.</p>';
     return `<div class="flow-status">${list.map((k) => {
-      const f = FLOWS[k]; const v = a[f.key];
-      const state_ = v === '입력' ? '<em class="ok">입력함</em>' : v === '나중에' ? '<em class="later">나중에 입력</em>' : '<em class="todo">아직 안 함</em>';
-      return `<div><span><b>${f.title}</b><small>${f.tag}</small></span>${state_}<button type="button" data-action="flow-open" data-value="${k}">${v === '입력' ? '수정' : '지금 입력'}</button></div>`;
+      const f = FLOWS[k]; const v = a[f.key]; const open = flow.open === k;
+      const badge = v === '입력' ? '<em class="ok">입력함</em>' : v === '나중에' ? '<em class="later">나중에 입력</em>' : '<em class="todo">아직 안 함</em>';
+      if (!open) return `<div class="fs-card"><div class="fs-row"><span><b>${f.title}</b><small>${f.tag}</small></span>${badge}<button type="button" data-action="flow-open" data-value="${k}">${v === '입력' ? '수정' : '지금 입력'}</button></div></div>`;
+      return `<div class="fs-card open" id="fs-${k}"><div class="fs-row"><span><span class="dx-tag">${f.tag} 선택</span><b class="fs-title">${f.title}</b></span><button type="button" class="dx-later" data-action="flow-later">나중에 입력</button></div>
+        <p class="dx-lead">${f.lead}</p>${modalBody(k)}
+        <div class="dx-foot"><span>${flow.queue.length ? `다음: ${FLOWS[flow.queue[0]].title}` : ''}</span><button type="button" class="btn secondary small" data-action="flow-later">나중에 입력</button><button type="button" class="btn small" data-action="flow-save">저장하기</button></div></div>`;
     }).join('')}</div>`;
   }
 
@@ -106,46 +110,28 @@
       <div class="dx-grid">${num('realEstate', '부동산 가액', '토지·건물·분양권 (공시가격)')}${num('car', '자동차 가액', '보험 기준 차량 가액')}${num('otherFin', '현금 외 금융자산', '예금·주식·펀드 등')}${num('debt', '부채', '주택담보·신용대출 등')}</div>
       <p class="asset-sum">총자산 약 <b data-asset-sum>${t >= 10000 ? `${(t / 10000).toFixed(1).replace('.0', '')}억 원` : `${Math.max(t, 0).toLocaleString('ko-KR')}만 원`}</b> <small>· 국민임대·행복주택(신혼) 3.45억, 행복주택 청년 2.51억 이하 · 자동차 4,542만 원 이하</small></p></div>`;
   }
-  function modalHtml() {
-    const k = flow.open; const f = FLOWS[k];
-    const left = flow.queue.length;
-    return `<div class="dx-modal-back"><section class="dx-modal" role="dialog" aria-modal="true" aria-label="${f.title}">
-      <div class="dx-head"><div><span class="dx-tag">${f.tag} 선택</span><h2>${f.title}</h2></div><button type="button" class="dx-later" data-action="flow-later">나중에 입력</button></div>
-      <p class="dx-lead">${f.lead}</p>${modalBody(k)}
-      <div class="dx-foot"><span>${left ? `다음: ${FLOWS[flow.queue[0]].title}` : ''}</span><button type="button" class="btn secondary" data-action="flow-later">나중에 입력</button><button type="button" class="btn" data-action="flow-save">저장하고 계속 →</button></div>
-    </section></div>`;
-  }
-  function paintModal() {
-    let root = document.getElementById('dx-flow-root');
-    const route = (location.hash.slice(1) || 'home').split('/')[0];
-    if (!flow.open || !['diagnosis', 'start'].includes(route)) { if (root) root.innerHTML = ''; return; }
-    if (!root) { root = document.createElement('div'); root.id = 'dx-flow-root'; document.body.appendChild(root); }
-    const scroll = root.querySelector('.dx-modal')?.scrollTop || 0;
-    root.innerHTML = modalHtml();
-    const m = root.querySelector('.dx-modal'); if (m) m.scrollTop = scroll;
+  function reveal(k) {   // 펼친 카드가 화면에 보이게
+    requestAnimationFrame(() => document.getElementById(`fs-${k}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
   }
   function openFlows(keys, advance = false) {
     const list = [...new Set(keys)].filter((k) => FLOWS[k]);
     if (!list.length) return false;
     flow.open = list[0]; flow.queue = list.slice(1); flow.advance = advance;
-    paintModal();
+    render(); reveal(flow.open);
     return true;
   }
   function closeFlow(value) {
     const a = state.answers; const f = FLOWS[flow.open];
     a[f.key] = value;
     if (flow.open === 'rental') a.assetDetail = value === '입력' ? '자세히 입력할게요' : '나중에 할게요';
-    if (flow.queue.length) { flow.open = flow.queue.shift(); paintModal(); render(); return; }
-    flow.open = null; paintModal();
+    if (flow.queue.length) { flow.open = flow.queue.shift(); render(); reveal(flow.open); return; }
+    flow.open = null;
     if (flow.advance && state.step === 0) { state.step = 1; window.scrollTo(0, 0); }
     flow.advance = false;
     render();
   }
   window.openDiagnosisFlow = (k) => openFlows([k]);
 
-  // 다시 그릴 때마다 열린 창도 다시 그린다 (창 안에서 고른 값이 바로 보이게)
-  const prevRender = render;
-  render = function () { prevRender(); paintModal(); };
 
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-action]');
@@ -172,16 +158,14 @@
       if (keys.length) { e.preventDefault(); e.stopImmediatePropagation(); openFlows(keys, true); }
     }
   }, true);
-  // 창 안 숫자 입력: 다시 그리지 않고 값만 저장하고 합계만 바꾼다 (입력 중 포커스가 사라지지 않게)
+  // 펼친 카드 안 숫자 입력: 다시 그리지 않고 값만 저장하고 합계만 바꾼다 (입력 중 포커스가 사라지지 않게)
   document.addEventListener('input', (e) => {
     const el = e.target;
-    if (!flow.open || !el.closest?.('.dx-modal') || !el.dataset?.answer) return;
+    if (!flow.open || !el.closest?.('.fs-card.open') || !el.dataset?.answer) return;
     state.answers[el.dataset.answer] = el.value === '' ? (el.dataset.answer === 'deposit' ? null : 0) : Math.max(0, Number(el.value) || 0);
     const a = state.answers; const out = document.querySelector('[data-asset-sum]');
     if (out) { const t = (Number(a.assets) || 0) + (Number(a.realEstate) || 0) + (Number(a.car) || 0) + (Number(a.otherFin) || 0) - (Number(a.debt) || 0); out.textContent = t >= 10000 ? `${(t / 10000).toFixed(1).replace('.0', '')}억 원` : `${Math.max(t, 0).toLocaleString('ko-KR')}만 원`; }
   });
-  // 창 밖 키보드: Esc 는 '나중에 입력'과 같게
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && flow.open) closeFlow('나중에'); });
 
   render();
 })();
