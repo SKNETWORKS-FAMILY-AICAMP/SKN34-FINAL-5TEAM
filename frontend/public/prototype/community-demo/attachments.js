@@ -99,7 +99,27 @@
       const sessions = root.CheongyakCommunitySession || (typeof module === 'object' && module.exports ? require('./session.js') : null);
       if (!sessions.isSession(account)) throw new Error('A signed-in community account is required.');
       const database = DATABASE + ':' + account.accountId;
-      return Object.freeze({ DATABASE: database, repository: createRepository(indexedDBDriver(database)) });
+      const driver = indexedDBDriver(database), publicDriver = indexedDBDriver(DATABASE + ':published');
+      const own = createRepository(driver);
+      return Object.freeze({ DATABASE: database, repository: {
+        ...own,
+        async get(id) { return await own.get(id) || (await publicDriver.get(id))?.blob || null; },
+        async publish(ids) {
+          const records = [];
+          for (const id of new Set(ids)) { if (await publicDriver.get(id)) continue; const record = await driver.get(id); if (record) records.push(record); }
+          if (records.length) await publicDriver.putBatch(records);
+        }
+      } });
+    },
+    async migratePublished(storage) {
+      const keys = typeof storage.key === 'function' ? Array.from({length: storage.length}, (_, i) => storage.key(i)) : [];
+      for (const key of keys.filter(k => k?.startsWith('cheongyak:community-demo:v2:account:'))) {
+        let value;
+        try { value = JSON.parse(storage.getItem(key)); } catch { continue; }
+        if (!/^user-[1-9]\d*$/.test(value?.ownerId) || !root.CheongyakCommunityDemoStorage.isDemoState(value)) continue;
+        const ids = value.posts.flatMap(p => [...(p.attachments || []), ...p.comments.flatMap(c => c.attachments || [])]).map(f => f.id);
+        if (ids.length) await api.forAccount({accountId:value.ownerId, name:value.me.name, demo:value.fixtureSet === 'saessak'}).repository.publish(ids);
+      }
     },
     repository: createRepository(indexedDBDriver())
   };

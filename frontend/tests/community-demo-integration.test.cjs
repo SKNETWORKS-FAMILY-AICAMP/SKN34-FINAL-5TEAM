@@ -57,6 +57,38 @@ function service(user, hash = '#community') {
   return { dom, errors, calls };
 }
 
+test('actual board UI shares posts and comments without inheriting Saessak personal activity', async () => {
+  const hostA = service(demoUser), hostB = service({id:8,name:'관리자',email:'admin@example.com',member:true});
+  const a = createDOM('community-demo/index.html', '#home'), b = createDOM('community-demo/index.html', '#home');
+  try {
+    const local = hostA.dom.window.localStorage;
+    for (const [child,host] of [[a,hostA],[b,hostB]]) {
+      Object.defineProperty(child.dom.window,'parent',{value:host.dom.window});
+      Object.defineProperty(child.dom.window,'localStorage',{value:local});
+    }
+    runScripts(a.dom,path.join(directory,'community-demo'));
+    const docA=a.dom.window.document;
+    docA.querySelector('[data-action="write"]').click();
+    const form=docA.querySelector('#write-form'); form.elements.title.value='새싹이 공유한 테스트 이야기'; form.elements.body.value='모든 계정에 보이는 게시판 내용';
+    form.dispatchEvent(new a.dom.window.Event('submit',{bubbles:true,cancelable:true}));
+    const saved=JSON.parse(local.getItem('cheongyak:community-demo:v2:account:user-7'));
+    const post=saved.posts.find(p=>p.title==='새싹이 공유한 테스트 이야기'); assert.ok(post);
+    runScripts(b.dom,path.join(directory,'community-demo'));
+    const docB=b.dom.window.document;
+    assert.equal(docB.querySelector('#friend-count').textContent,'0');
+    assert.equal(docB.querySelector('#message-count').textContent,'');
+    assert.match(docB.querySelector('#sidebar').textContent,/내가 쓴 글0/);
+    docB.querySelector(`[data-post="${post.id}"]`).click();
+    assert.match(docB.querySelector('.post-detail .post-meta').textContent,/새싹/);
+    docB.querySelector('#comment-form').elements.body.value='관리자가 작성한 댓글';
+    docB.querySelector('#comment-form').dispatchEvent(new b.dom.window.Event('submit',{bubbles:true,cancelable:true}));
+    a.dom.window.dispatchEvent(new a.dom.window.StorageEvent('storage',{key:'cheongyak:community-demo:v3:public'}));
+    assert.match(docA.querySelector('.comments').textContent,/관리자.*관리자가 작성한 댓글/s);
+    assert.equal(docA.querySelector('#friend-count').textContent,'10');
+    assert.deepEqual(a.errors,[]); assert.deepEqual(b.errors,[]);
+  } finally { await tick(); for(const c of [a,b,hostA,hostB]) c.dom.window.close(); }
+});
+
 test('real service script order blocks anonymous browsing and login resumes the requested community screen', async () => {
   const { dom, errors, calls } = service(null, '#home');
   try {
@@ -67,8 +99,8 @@ test('real service script order blocks anonymous browsing and login resumes the 
     assert.equal(doc.querySelector('.community-demo-frame'), null);
     assert.match(doc.querySelector('[role="dialog"]').textContent, /로그인이 필요합니다/);
     doc.querySelector('.modal [data-community-access="login"]').click();
-    assert.equal(doc.querySelector('#email').value, demoUser.email);
-    assert.equal(doc.querySelector('#nickname').value, demoUser.name);
+    doc.querySelector('#email').value = demoUser.email;
+    doc.querySelector('#nickname').value = demoUser.name;
     doc.querySelector('[data-action="login-submit"]').click();
     await waitFor(() => doc.querySelector('.community-demo-frame'));
     assert.equal(dom.window.CheongyakCommunityHost.getSession().accountId, 'user-7');
@@ -78,12 +110,12 @@ test('real service script order blocks anonymous browsing and login resumes the 
   } finally { await tick(); dom.window.close(); }
 });
 
-test('real service scripts reject a same-nickname account without reading its community data', async () => {
+test('real service scripts allow another account to enter shared community', async () => {
   const { dom, errors } = service({ ...demoUser, id: 8, email: 'other@example.com' }, '#post/demo-post-1');
   try {
     await tick();
-    assert.equal(dom.window.document.querySelector('.community-demo-frame'), null);
-    assert.match(dom.window.document.querySelector('#app').textContent, /새싹 시연 계정 전용/);
+    assert.ok(dom.window.document.querySelector('.community-demo-frame'));
+    assert.equal(dom.window.CheongyakCommunityHost.getSession().accountId, 'user-8');
     assert.deepEqual(errors, []);
   } finally { dom.window.close(); }
 });

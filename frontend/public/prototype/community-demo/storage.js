@@ -53,7 +53,7 @@
       if (!demo) {
         Object.assign(value, {
           me: { id: 0, name, email: '', region: '', age: '', interest: '', bio: '', color: '#dfeada', interests: [] },
-          people: [], posts: [], saved: [], liked: [], pins: [], chats: {},
+          people: value.people.map(p => ({ ...p, friend: false, incoming: false, requested: false })), posts: [], saved: [], liked: [], pins: [], chats: {},
           unread: [], reports: [], blocked: [], hiddenChats: []
         });
       }
@@ -64,26 +64,12 @@
     function valid(value) {
       return isDemoState(value) && value.ownerId === accountId && value.fixtureSet === (demo ? 'saessak' : 'empty');
     }
-    function loadAccount(storage) {
-      try {
-        const value = JSON.parse(storage.getItem(key));
-        if (valid(value)) return value;
-      } catch {/* Never import an unowned legacy record or another account's state. */}
-      return initialState();
-    }
-    function saveAccount(storage, value) {
-      if (!valid(value)) throw new Error('Community records must belong to the current account.');
-      storage.setItem(key, JSON.stringify(value));
-    }
+    const shared = (root.CheongyakCommunityShared || (typeof module === 'object' && module.exports ? require('./shared.js') : null)).forAccount(account, { key, initialState, valid, isState: isDemoState });
     return Object.freeze({
       KEY: key,
-      load: loadAccount,
-      save: saveAccount,
-      reset(storage) {
-        const value = initialState();
-        saveAccount(storage, value);
-        return value;
-      }
+      load: shared.load,
+      save: shared.save,
+      reset: shared.reset
     });
   }
   const repository = Object.freeze({

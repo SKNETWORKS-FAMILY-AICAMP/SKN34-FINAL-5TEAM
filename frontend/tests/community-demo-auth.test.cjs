@@ -38,7 +38,7 @@ test('directly opened or unrelated cross-origin frames do not receive a session'
   assert.equal(sessions.forFrame({ location: direct.location, parent }).accountId, 'user-7');
 });
 
-test('only the designated demo account gets fixtures; other account state starts empty', () => {
+test('all accounts share boards and public posts but only Saessak gets private fixtures', () => {
   const local = memoryStorage();
   const demo = storage.forAccount(sessions.fromUser(demoUser())).load(local);
   const other = storage.forAccount(sessions.fromUser(otherUser())).load(local);
@@ -48,14 +48,18 @@ test('only the designated demo account gets fixtures; other account state starts
   assert.equal(other.me.name, '다른이웃');
   assert.equal(other.me.region, '');
   assert.equal(other.me.interest, '');
-  for (const key of ['posts', 'people', 'saved', 'liked', 'pins', 'unread', 'reports', 'blocked', 'hiddenChats']) assert.deepEqual(other[key], []);
+  assert.equal(other.posts.length, demo.posts.length);
+  assert.ok(other.people.length > 0);
+  assert.ok(other.people.every(p => !p.friend && !p.incoming && !p.requested));
+  assert.ok(other.posts.every(p => p.author !== 0));
+  for (const key of ['saved', 'liked', 'pins', 'unread', 'reports', 'blocked', 'hiddenChats']) assert.deepEqual(other[key], []);
   assert.deepEqual(other.chats, {});
   assert.deepEqual(other.me.interests, []);
   assert.equal(storage.isDemoState(other), true);
   assert.throws(() => storage.forAccount(null), /signed-in/);
 });
 
-test('posts, comments, friends, chats, bookmarks and profile changes persist only for their owner', () => {
+test('public comments keep their author while private activity remains isolated', () => {
   const local = memoryStorage({ 'cydemo-diagnosis': 'keep real diagnosis' });
   const demo = storage.forAccount(sessions.fromUser(demoUser()));
   const other = storage.forAccount(sessions.fromUser(otherUser()));
@@ -69,7 +73,7 @@ test('posts, comments, friends, chats, bookmarks and profile changes persist onl
   mine.me.bio = '다른 계정 소개';
   other.save(local, mine);
   assert.notEqual(demo.KEY, other.KEY);
-  assert.equal(other.load(local).posts.length, 0);
+  assert.ok(other.load(local).posts[0].comments.some(c => c.body === '새싹만의 댓글' && c.author !== 0));
   assert.deepEqual(other.load(local).chats, {});
   assert.equal(demo.load(local).me.bio, '새싹만의 소개');
   assert.equal(demo.load(local).chats[1].at(-1).text, '새싹만의 메시지');
@@ -88,7 +92,7 @@ test('unowned legacy records are preserved but never automatically assigned to a
   const copied = scoped.load(local);
   assert.throws(() => another.save(local, copied), /belong/);
   local.setItem(another.KEY, JSON.stringify(copied));
-  assert.equal(another.load(local).posts.length, 0);
+  assert.ok(another.load(local).posts.every(p => p.author !== 0));
 });
 
 test('account reset does not reset another account, diagnosis, login or the legacy backup', () => {
@@ -145,21 +149,22 @@ test('guest navigation and all community deep links show a login dialog without 
   }
 });
 
-test('other accounts, including accounts with the same nickname, cannot mount the demo', () => {
-  for (const user of [otherUser(), { ...otherUser(), name: '새싹' }, { ...demoUser(), member: false }]) {
+test('every signed-in account can mount the community, guests cannot', () => {
+  for (const user of [otherUser(), { ...otherUser(), name: '새싹' }]) assert.equal(hostContext(user).frames.length, 1);
+  for (const user of [{ ...demoUser(), member: false }]) {
     const { frames, app } = hostContext(user);
     assert.equal(frames.length, 0);
-    assert.match(app.innerHTML, /새싹/);
+    assert.match(app.innerHTML, /로그인이 필요합니다/);
   }
   assert.equal(hostContext(demoUser()).frames.length, 1);
 });
 
-test('community login pre-fills the designated account and resumes the requested deep link', () => {
+test('community login does not force a different identity and resumes the requested deep link', () => {
   const { context, documentEvents, inputs, navigations } = hostContext(null, '#community/messages');
   documentEvents.click({ target: { closest: () => ({ dataset: { communityAccess: 'login' } }) }, preventDefault() {} });
   assert.equal(context.logins, 1);
-  assert.equal(inputs['#email'].value, sessions.DEMO_ACCOUNT.email);
-  assert.equal(inputs['#nickname'].value, '새싹');
+  assert.equal(inputs['#email'].value, undefined);
+  assert.equal(inputs['#nickname'].value, undefined);
   context.state.user = demoUser();
   context.afterLogin();
   assert.deepEqual(navigations, ['community/messages']);
@@ -182,8 +187,8 @@ test('logout, same-tab account switching and cross-tab logout immediately remove
     context.state.user = user;
     context.render();
     assert.equal(frames[0].isConnected, false);
-    assert.equal(frames.length, 1);
-    assert.doesNotMatch(app.innerHTML, /iframe/);
+    assert.equal(frames.length, user ? 2 : 1);
+    if (!user) assert.doesNotMatch(app.innerHTML, /iframe/);
   }
   const { context, frames, events } = hostContext(demoUser());
   context.read = () => null;
@@ -260,7 +265,11 @@ test('attachment reads, deletes and resets operate only in the owning account da
     assert.equal(await demo.repository.get(b.id), null);
     await other.repository.remove([a.id]);
     assert.equal(await (await demo.repository.get(a.id)).text(), 'saessak private');
+    await demo.repository.publish([a.id]);
+    assert.equal(await (await other.repository.get(a.id)).text(), 'saessak private', 'only explicitly published board attachments become shared');
+    assert.equal(await demo.repository.get(b.id), null, 'message attachments stay private');
     await demo.repository.clear();
+    assert.equal(await (await other.repository.get(a.id)).text(), 'saessak private', 'personal reset does not break published board attachments');
     assert.equal(await (await other.repository.get(b.id)).text(), 'neighbor private');
     assert.equal(indexedDB.databases.has(attachments.DATABASE), false);
   } finally {

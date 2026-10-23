@@ -23,12 +23,10 @@
   }
 
   function gate(account) {
-    const title = account ? '새싹 시연 계정 전용 커뮤니티예요' : '로그인이 필요합니다';
-    const description = account
-      ? '현재 커뮤니티는 새싹 계정으로만 이용할 수 있어요. 다른 계정에는 새싹의 글·친구·메시지가 표시되지 않아요.'
-      : '커뮤니티는 로그인 후 이용할 수 있어요. 새싹 시연 계정으로 로그인해 주세요.';
+    const title = '로그인이 필요합니다';
+    const description = '커뮤니티는 로그인 후 이용할 수 있어요. 게시판은 함께 보고 개인 활동은 계정별로 보관해요.';
     const controls = '<div class="community-access-actions"><button class="btn" data-community-access="login">' +
-      (account ? '새싹 계정으로 로그인' : '로그인하기') +
+      '로그인하기' +
       '</button><button class="btn secondary" data-community-access="leave">다른 기능 둘러보기</button></div>';
     $('#app').innerHTML = `<div class="wrap page"><section class="panel community-access" aria-labelledby="community-access-title"><div class="eyebrow">COMMUNITY</div><h1 id="community-access-title">${title}</h1><p>${description}</p>${controls}</section></div>`;
     const key = `${location.hash}:${account?.accountId || 'guest'}`;
@@ -61,7 +59,7 @@
   function syncAddress() {
     if (!frameReady || !frame) return;
     const account = currentSession();
-    if (!account?.demo || account.accountId !== frameAccount) { render(); return; }
+    if (!account || account.accountId !== frameAccount) { render(); return; }
     const raw = frame.contentWindow.location.hash.slice(1) || 'home';
     const next = raw === 'home' ? 'community' : raw.startsWith('post/') ? raw : `community/${raw}`;
     if (location.hash !== `#${next}`) location.hash = next;
@@ -71,7 +69,7 @@
     const route = (location.hash.slice(1) || 'home').split('/')[0];
     const active = route === 'community' || route === 'post';
     const account = currentSession();
-    const allowed = active && account?.demo === true;
+    const allowed = active && !!account;
     document.body.classList.toggle('community-demo-active', allowed);
     if (!active) {
       if (resumeCommunity && afterLogin === resumeCommunity) afterLogin = null;
@@ -80,7 +78,7 @@
       releaseFrame();
       renderService();
       const preview = document.querySelector('#app .community-preview > div:last-child');
-      if (preview && !account?.demo) preview.innerHTML = '<p>로그인 후 이웃들의 이야기를 만나보세요.</p><a class="btn soft" href="#community">커뮤니티 로그인 안내 →</a>';
+      if (preview && !account) preview.innerHTML = '<p>로그인 후 이웃들의 이야기를 만나보세요.</p><a class="btn soft" href="#community">커뮤니티 로그인 안내 →</a>';
       return;
     }
 
@@ -120,7 +118,7 @@
   window.addEventListener('message', event => {
     if (!frame || event.source !== frame.contentWindow || event.origin !== location.origin) return;
     const account = currentSession();
-    if (!account?.demo || account.accountId !== frameAccount) return;
+    if (!account || account.accountId !== frameAccount) return;
     const data = event.data;
     if (data?.type === 'cheongyak:community-service-route' && serviceRoutes.has(data.route)) go(data.route);
   });
@@ -137,9 +135,6 @@
     resumeCommunity = () => { resumeCommunity = null; go(destination); };
     afterLogin = resumeCommunity;
     login();
-    $('#email').value = sessions.DEMO_ACCOUNT.email;
-    $('#nickname').value = sessions.DEMO_ACCOUNT.nickname;
-    $('#login-form').insertAdjacentHTML('beforebegin', '<p class="callout">커뮤니티 시연 계정 정보를 채웠어요. 이미 만든 계정이면 로그인, 처음이면 결과 저장하고 시작을 눌러 주세요.</p>');
   });
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && resumeCommunity && afterLogin === resumeCommunity) {

@@ -27,15 +27,15 @@
   const sessions = window.CheongyakCommunitySession;
   const account = sessions.forFrame(window);
   const lockScreen = () => {
-    document.body.innerHTML = '<main style="max-width:620px;margin:60px auto;padding:24px"><h1>로그인이 필요합니다</h1><p>새싹 시연 계정으로 로그인한 뒤 커뮤니티를 이용해 주세요.</p><a class="btn" data-community-login href="../index.html#community" target="_top">서비스에서 로그인하기</a></main>';
+    document.body.innerHTML = '<main style="max-width:620px;margin:60px auto;padding:24px"><h1>로그인이 필요합니다</h1><p>서비스에 로그인한 뒤 커뮤니티를 이용해 주세요.</p><a class="btn" data-community-login href="../index.html#community" target="_top">서비스에서 로그인하기</a></main>';
   };
-  if (!account?.demo) { lockScreen(); return; }
+  if (!account) { lockScreen(); return; }
   const repository = window.CheongyakCommunityDemoStorage.forAccount(account);
   let state = repository.load(localStorage);
   const files = window.CheongyakCommunityAttachments.forAccount(account).repository;
   const sessionActive = () => {
     const current = sessions.forFrame(window);
-    return current?.demo === true && current.accountId === account.accountId;
+    return !!current && current.accountId === account.accountId;
   };
   const recommendations = window.CheongyakCommunityRecommendations;
   const management = window.CheongyakCommunityManagement;
@@ -54,7 +54,7 @@
   let route = 'home',
     selected = 'free',
     scope = '지역',
-    region = state.me.region,
+    region = state.me.region || '서울',
     age = state.me.age,
     query = '',
     page = 1,
@@ -74,9 +74,14 @@
     if (!sessionActive()) { lockScreen(); return; }
     try {
       repository.save(localStorage, state);
+      publishAttachments();
     } catch {
       toast('저장 공간이 부족해 이번 화면에서만 유지됩니다.');
     }
+  }
+  function publishAttachments() {
+    const ids = state.posts.flatMap(p => [...(p.attachments || []), ...p.comments.flatMap(c => c.attachments || [])]).map(f => f.id);
+    return files.publish(ids).catch(() => toast('공개 첨부파일 공유에 실패했어요. 저장 공간을 확인해 주세요.'));
   }
   function toast(t) {
     $('#toast').textContent = t;
@@ -446,11 +451,11 @@
       return modal('게시글 메뉴', `<div class="menu-options">${p.author === 0 ? B('글 수정', `data-edit-post="${p.id}"`) + B('글 삭제', `data-confirm-delete="${p.id}"`) : B('게시글 신고', 'data-action="report"') + B('작성자 차단', `data-block="${p.author}"`)}</div>`);
     }
     if (a === 'report') return modal('게시글 신고', `<form id="report-form" class="form"><label>신고 사유<select name="reason"><option>개인정보 노출</option><option>비방·혐오 표현</option><option>광고·사기 의심</option><option>기타</option></select></label><label>추가 설명<textarea name="body" rows="3" maxlength="500"></textarea></label><small class="muted">신고 내역은 현재 브라우저에만 기록됩니다.</small><button class="primary">신고 접수</button></form>`);
-    if (a === 'reset') return modal('체험 데이터를 초기화할까요?', `<p class="info-body">이 시안에서 작성한 글·댓글·메시지와 설정을 예시 데이터의 초기 상태로 되돌립니다.</p><div class="dialog-actions">${B('취소', 'data-action="close"')}${B('초기화', 'data-action="reset-confirm"', 'primary')}</div>`);
+    if (a === 'reset') return modal('개인 활동을 초기화할까요?', `<p class="info-body">이 계정의 친구·메시지·스크랩·설정을 초기화해요. 함께 보는 게시판의 글과 댓글은 보존돼요.</p><div class="dialog-actions">${B('취소', 'data-action="close"')}${B('초기화', 'data-action="reset-confirm"', 'primary')}</div>`);
     if (a === 'reset-confirm') {
       if (uploading.size) return toast('파일 저장이 끝난 후 초기화해 주세요.');
       for (const owner of uploadTokens.keys()) uploadTokens.set(owner, uploadTokens.get(owner) + 1);
-      files.clear().catch(() => toast('첨부파일 초기화에 실패했어요.'));
+      // Published files remain available on the shared board; private files stay account-scoped.
       drafts.clear();
       pendingFiles.clear();
       fileURLs.forEach(url => URL.revokeObjectURL(url));
@@ -659,7 +664,7 @@
       render();
     }
   });
-  document.addEventListener('submit', e => {
+  document.addEventListener('submit', async e => {
     e.preventDefault();
     const f = e.target,
       data = new FormData(f),
@@ -716,7 +721,7 @@
           comments: [],
           example: false,
           created: Date.now(),
-          region: state.me.region,
+          region: state.me.region || region,
           age: state.me.age
         };
       Object.assign(p, {
@@ -725,6 +730,11 @@
         board: v('anonymous') === 'yes' ? 'secret' : v('board'),
         attachments: takeDraft('post')
       });
+      if (p.attachments?.length) {
+        try { await files.publish(p.attachments.map(f => f.id)); }
+        catch { drafts.set('post', p.attachments); return toast('첨부파일을 공유하지 못했어요. 다시 등록해 주세요.'); }
+        if (!sessionActive()) return;
+      }
       if (!edit) state.posts.unshift(p);
       save();
       pruneFiles(before);
@@ -742,6 +752,16 @@
         body: v('body'),
         attachments: takeDraft(owner)
       });
+      const added = state.posts.find(p => p.id === postId).comments.at(-1);
+      if (added.attachments?.length) {
+        try { await files.publish(added.attachments.map(f => f.id)); }
+        catch {
+          state.posts.find(p => p.id === postId).comments.pop();
+          drafts.set(owner, added.attachments);
+          return toast('첨부파일을 공유하지 못했어요. 다시 등록해 주세요.');
+        }
+        if (!sessionActive()) return;
+      }
       save();
       render();
       return toast('댓글을 남겼어요.');
@@ -840,5 +860,12 @@
     }, location.origin);else location.assign('../index.html#' + route);
   });
   window.addEventListener('hashchange', restoreRoute);
+  window.addEventListener('storage', event => {
+    if (event.key !== window.CheongyakCommunityShared.KEY || !sessionActive()) return;
+    state = repository.load(localStorage);
+    render();
+  });
+  publishAttachments();
+  window.CheongyakCommunityAttachments.migratePublished(localStorage).catch(() => toast('기존 공개 첨부파일을 공유하지 못했어요. 다시 접속해 주세요.'));
   restoreRoute();
 })();
