@@ -1,5 +1,7 @@
 # 청약 전략 플랫폼 (가칭)
 
+> **English:** [see the English version below](#english-version)
+
 청약홈 + 내집다오 기능을 통합해, 사용자의 자산·청약통장·희망지역을 입력받아
 당첨 가능성이 높은 청약 공고를 추천하고 대출(정책대출/은행대출)까지 안내하는 서비스.
 
@@ -171,3 +173,180 @@ DB 마이그레이션: `alembic upgrade head` (016_translation_cache — 한 번
 - `OAUTH_STATE_SECRET` — state 서명용 (운영에서는 긴 랜덤 문자열)
 
 DB 마이그레이션: `alembic upgrade head` (006_user_oauth).
+
+---
+
+<a id="english-version"></a>
+
+# Housing Subscription Strategy Platform (working title) — English version
+
+A service that combines the features of Applyhome (청약홈) and the "My Home" portal (내집다오). It takes a user's assets, subscription account and preferred regions, recommends housing-subscription listings with a high chance of winning, and guides them to loans (policy loans and bank loans).
+
+For the background, data and architecture design, see `docs/청약_전략_플랫폼_기획안.pdf` (Korean).
+
+## Final-project guide and the latest plan
+
+- [How we apply the final-project guide](docs/최종프로젝트_가이드_적용계획.md) (Korean): the reference document that links the home-buying, financial-information and learning plans to Team 5's topic (conversational analysis and automatic reporting), required features, weekly deliverables and evaluation/check items.
+- [Original final-project guide](docs/최종프로젝트_가이드_원문.md) (Korean): an archived copy of the guide provided on 2026-10-16.
+
+Check these documents first whenever the plan, features or schedule change. "Implemented/verified" marks in older documents do not mean the whole new plan, or the current runtime environment, is complete. Keep proposals awaiting the instructor's confirmation separate from what is actually implemented.
+
+## Rules for "update to latest" work
+
+Following the [project working guidelines](AGENTS.md) (Korean), an update covers not only syncing code but also checking DB migrations, whether Docker images or dependencies need rebuilding, and real API and login behaviour. Back up the DB before changing it and keep existing data. Passing mock-API tests or syncing code alone does not mean the runtime environment is up to date.
+
+## Project structure
+
+```
+cheongyak-platform/
+├── backend/                 # FastAPI server
+│   ├── app/
+│   │   ├── main.py          # app entry point
+│   │   ├── core/            # settings
+│   │   ├── db/              # DB session / base
+│   │   ├── models/          # SQLAlchemy models (User, Listing, HistoricalResult, LoanProduct)
+│   │   ├── schemas/         # Pydantic schemas (request/response)
+│   │   ├── api/routes/      # endpoints (recommendations, listings, loans, chat)
+│   │   ├── services/        # matching engine (eligibility filter → probability estimate → loan matching)
+│   │   └── data_pipeline/   # external data collection (Applyhome API, etc.)
+│   ├── tests/
+│   ├── requirements.txt
+│   └── Dockerfile
+├── frontend/                 # React + Redux
+│   └── src/
+│       ├── pages/            # InputForm, Dashboard, ListingDetail, LoanSimulator
+│       ├── store/            # Redux Toolkit slices
+│       ├── components/
+│       └── api/              # axios client
+├── docker-compose.yml         # runs postgres + backend + frontend together
+└── docs/                      # planning documents
+```
+
+## Getting started
+
+### 0. Prerequisites
+- Python 3.11+, Node.js 18+, Docker (optional)
+
+### 1. Run the backend
+```bash
+cd backend
+python -m venv venv && source venv/bin/activate   # on Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload
+```
+The auto-generated API docs are at `http://localhost:8000/docs`.
+
+### 2. Run the frontend
+```bash
+cd frontend
+npm install
+npm start
+```
+Open `http://localhost:3000`.
+
+The default frontend is the shared **Cheongyakdwae?! (청약돼?!) full demo UI**. You can try the start page, eligibility check, Find Homes,
+Finance, the regional/nationwide community and My Space, all in the same design.
+The demo assets are included in `frontend/public/prototype/` and do not depend on an external Sites deployment.
+Listings, products, AI answers and the eligibility check use the existing server integration.
+Only the community runs on **demo-only fake data**; posts, comments, friends and messages are kept in separate browser storage.
+For the fake data, the storage policy and the boundary with the eligibility check, see the [community demo data guide](docs/community-demo.md) (Korean).
+The older screens connected to the backend API are at `http://localhost:3000/legacy/`.
+
+### 3. Run everything at once (Docker)
+```bash
+docker compose up --build
+```
+
+## Preparing notice Q&A search (RAG)
+
+To answer questions such as "What is the income limit?" on a listing page, the original notice documents must be indexed into the vector DB once.
+The app works without indexing; in that case it only searches listing fields such as complex name, sale price and application dates.
+
+```bash
+cd backend
+pip install -r requirements.txt            # includes chromadb, fastembed
+# put RAG_EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-mpnet-base-v2 in backend/.env
+# (leave it empty to turn vector search off; the first run downloads a ~1 GB model)
+python -m scripts.build_vector_index       # index notice chunks; already-indexed notices are skipped (about 1 hour on CPU for all)
+python -m scripts.eval_rag --fresh         # evaluate retrieval accuracy (questions: backend/eval/rag_eval_set.json)
+```
+
+The vector DB is created in `backend/data/vectordb/` and is not committed to Git. If you change the embedding model, re-index with `--force`.
+After you index once by hand, every daily collection run (`save_listings`) automatically indexes only new or corrected notices among open and upcoming listings.
+If there is no vector DB or `RAG_EMBEDDING_MODEL` is empty, this step is skipped and collection continues as usual.
+
+> **Warning: if the project lives in a synced folder such as Google Drive or OneDrive, do not put the vector DB inside it.**
+> Chroma's index files are not saved correctly in synced folders, so reopening fails with `Error loading hnsw index`
+> (this actually happened to us; the app then silently falls back to listing-field search).
+> Point `backend/.env` to a local folder, e.g. `VECTOR_DB_PATH=C:/Users/<your-account>/AppData/Local/cheongyak/vectordb`
+
+## Training the cut-off prediction model (ML + deep learning)
+
+The per-listing expected cut-off model compares four candidates under the same conditions (train 2020–2024 / validate 2025–) and uses the one with the lowest MAE in service.
+Candidates: Ridge regression, random forest, gradient boosting and a **PyTorch MLP (deep learning, `app/services/cutoff_mlp.py`)**.
+
+```bash
+cd backend
+pip install -r requirements.txt               # includes torch (CPU). With Docker: docker compose up -d --build backend
+python -m scripts.tune_cutoff_mlp             # (optional) compare MLP settings → models/cutoff_mlp_tuning.json
+python -m scripts.train_cutoff_model          # compare and save all 4 → models/cutoff_reg_metrics.json, cutoff_mlp_history.json
+```
+
+If you run with Docker, use `docker compose exec backend python -m scripts.train_cutoff_model` for the same training.
+Without torch, only the MLP candidate is skipped and the other three are still compared.
+
+## What works now / what does not yet
+
+For progress and API tables, see `docs/요구사항_정의서.md` and `docs/프론트_API_연동표.md` (Korean).
+
+- Works: collection code; user, listing, recommendation, loan and commute APIs; down-payment amounts read from notices; D-day; required documents; listing Q&A (LangGraph graph, question classification, vector search, local LLM answers with source numbers)
+- Not yet: local listings cannot be checked while Docker is off; cloud deployment; down payments for listings without a notice file link; slow LLM answers without a GPU (40–80 seconds per answer)
+
+## Connecting the LLM for listing Q&A
+
+Without an OpenAI key, answers come from a local [Ollama](https://ollama.com). In `backend/.env`:
+
+```
+LLM_BASE_URL=http://localhost:11434/v1
+LLM_MODEL=exaone3.5:7.8b
+LLM_TIMEOUT_SECONDS=120
+```
+
+```bash
+ollama pull exaone3.5:7.8b                        # about 4.8 GB, for Korean answers
+cd backend && python -m scripts.eval_llm_answers --limit 10   # score answers (result: backend/eval/llm_answer_result_<model>.json)
+```
+
+To use OpenAI, set `LLM_BASE_URL=https://api.openai.com/v1` and `LLM_MODEL=gpt-4o-mini`, and add `OPENAI_API_KEY`.
+If no LLM is available (e.g. Ollama is off), the chat shows the matching notice sentences as they are.
+
+## English screen translation (optional)
+
+Use the **KO | EN** switch in the green bar at the top of the screen to view the site in English. Screen text is replaced from the dictionary in `frontend/public/prototype/i18n-en.js`,
+and server data such as listing titles, addresses and financial product names is translated with Google Cloud Translation (without a key, the original Korean is shown).
+
+`backend/.env`:
+
+- `GOOGLE_TRANSLATE_API_KEY` — an API key created after enabling the **Cloud Translation API** in a [Google Cloud](https://console.cloud.google.com) project (restricting the key to the Cloud Translation API only is recommended)
+
+DB migration: `alembic upgrade head` (016_translation_cache — stores each translated sentence so the API is not called again).
+
+## Google, Kakao, Naver and PASS login
+
+Login starts at backend `GET /auth/google/login`, `/auth/kakao/login`, `/auth/naver/login` or `/auth/pass/login`, and after the callback returns to the frontend at `/auth/callback`.
+
+Example `backend/.env`:
+
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — [Google Cloud](https://console.cloud.google.com) OAuth client
+- `GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/auth/google/callback`
+- `KAKAO_REST_API_KEY` — Kakao Login client_id (same as the REST API key)
+- `KAKAO_OAUTH_REDIRECT_URI=http://localhost:8000/auth/kakao/callback` — register it in your [Kakao Developers](https://developers.kakao.com) app
+- `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` — [Naver Developers](https://developers.naver.com) login API
+- `NAVER_OAUTH_REDIRECT_URI=http://localhost:8000/auth/naver/callback`
+- `PASS_CLIENT_ID`, `PASS_CLIENT_SECRET` — PASS mobile-number login from the three Korean carriers (partnership via [developers.passlogin.com](https://developers.passlogin.com))
+- `PASS_OAUTH_REDIRECT_URI=http://localhost:8000/auth/pass/callback`
+- `FRONTEND_URL=http://localhost:3001` — frontend address to redirect to after OAuth
+- `OAUTH_STATE_SECRET` — for signing the state (use a long random string in production)
+
+DB migration: `alembic upgrade head` (006_user_oauth).
