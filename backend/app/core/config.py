@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:3000"  # OAuth 후 돌아갈 프론트 주소
     oauth_state_secret: str = "change-me-in-production"
     odsay_api_key: str = ""  # 대중교통 경로 (ODsay LAB, 서버용 키)
+    google_translate_api_key: str = ""  # 영어 화면에서 공고명·주소 등 서버 데이터 번역 (Google Cloud Translation, 서버용 키). 비우면 번역 안 함
 
 
 settings = Settings()

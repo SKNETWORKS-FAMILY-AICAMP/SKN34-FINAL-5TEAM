@@ -142,6 +142,17 @@ cd backend && python -m scripts.eval_llm_answers --limit 10   # 답변 채점 (�
 OpenAI를 쓰려면 `LLM_BASE_URL=https://api.openai.com/v1`, `LLM_MODEL=gpt-4o-mini`로 바꾸고 `OPENAI_API_KEY`를 넣는다.
 LLM을 쓸 수 없으면(Ollama 꺼짐 등) 챗은 공고 문장을 그대로 보여 준다.
 
+## 영어 화면 번역 (선택)
+
+화면 위 초록 띠의 **KO | EN** 스위치로 영어 화면을 볼 수 있다. 화면 문구는 `frontend/public/prototype/i18n-en.js` 사전으로 바꾸고,
+공고명·주소·금융상품명처럼 서버에서 오는 데이터는 Google Cloud Translation으로 번역한다 (키가 없으면 한국어 원문 그대로).
+
+`backend/.env`:
+
+- `GOOGLE_TRANSLATE_API_KEY` — [Google Cloud](https://console.cloud.google.com) 프로젝트에서 **Cloud Translation API** 사용 설정 후 만든 API 키 (Cloud Translation API만 허용하도록 제한 권장)
+
+DB 마이그레이션: `alembic upgrade head` (016_translation_cache — 한 번 번역한 문장을 저장해 API를 다시 부르지 않는다).
+
 ## 구글·카카오·네이버·PASS 로그인
 
 백엔드 `GET /auth/google/login`, `/auth/kakao/login`, `/auth/naver/login`, `/auth/pass/login`으로 시작하고, 콜백 후 프론트 `/auth/callback`으로 돌아온다.
