@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, chat, commute, community, diagnoses, listings, loans, public_config, recommendations, savings, users
+from app.api.routes import auth, chat, commute, community, diagnoses, listings, loans, public_config, recommendations, savings, translate, users
 from app.core.config import settings
 from app.core.errors import install_error_handling
 from app.core.logging_setup import setup_logging
@@ -62,6 +62,7 @@ app.include_router(commute.router)
 app.include_router(public_config.router)
 app.include_router(community.router)
 app.include_router(savings.router)
+app.include_router(translate.router)
 
 
 @app.get("/health")
